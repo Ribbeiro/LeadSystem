@@ -66,11 +66,13 @@ class AppTopBar extends StatelessWidget {
     super.key,
     required this.cartCount,
     required this.onCartTap,
+    required this.onProfileTap,
     this.title,
   });
 
   final int cartCount;
   final VoidCallback onCartTap;
+  final VoidCallback onProfileTap;
   final String? title;
 
   @override
@@ -94,7 +96,7 @@ class AppTopBar extends StatelessWidget {
           if (title == null) const Spacer(),
           IconButton(
             tooltip: 'Minha conta',
-            onPressed: () {},
+            onPressed: onProfileTap,
             icon: const Icon(Icons.person_outline_rounded),
           ),
           Badge(

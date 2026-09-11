@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../core/app_state.dart';
 import '../core/app_theme.dart';
+import '../models/app_models.dart';
 import '../models/product.dart';
 import '../widgets/shared.dart';
 import 'auth_admin.dart';
 import 'detail_flows.dart';
+import 'profile_flows.dart';
 
 class AppShell extends StatelessWidget {
   const AppShell({super.key});
@@ -78,12 +80,16 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = AppScope.of(context);
+    final featuredProducts = state.products
+        .where((product) => product.active)
+        .toList();
     return CustomScrollView(
       slivers: [
         SliverToBoxAdapter(
           child: AppTopBar(
             cartCount: state.cartCount,
             onCartTap: () => _openCart(context),
+            onProfileTap: () => state.setNavigationIndex(4),
           ),
         ),
         SliverPadding(
@@ -111,53 +117,54 @@ class HomeScreen extends StatelessWidget {
                 },
               ),
               const SizedBox(height: 18),
-              _PromoBanner(onTap: () => _openProduct(context, demoProducts[1])),
-              const SizedBox(height: 24),
+              if (featuredProducts.isNotEmpty) ...[
+                _PromoBanner(
+                  onTap: () => _openProduct(
+                    context,
+                    featuredProducts.length > 1
+                        ? featuredProducts[1]
+                        : featuredProducts.first,
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
               const SectionHeading(title: 'Categorias'),
               const SizedBox(height: 10),
               SizedBox(
                 height: 92,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
-                  children: [
-                    _CategoryTile(
-                      icon: Icons.outdoor_grill,
-                      label: 'Churrasqueiras',
-                      onTap: () => _selectCategory(state, 'Churrasqueiras'),
-                    ),
-                    _CategoryTile(
-                      icon: Icons.view_in_ar_outlined,
-                      label: 'Grelhas',
-                      onTap: () => _selectCategory(state, 'Grelhas'),
-                    ),
-                    _CategoryTile(
-                      icon: Icons.horizontal_rule_rounded,
-                      label: 'Espetos',
-                      onTap: () => _selectCategory(state, 'Espetos'),
-                    ),
-                    _CategoryTile(
-                      icon: Icons.inventory_2_outlined,
-                      label: 'Kits',
-                      onTap: () => _selectCategory(state, 'Kits'),
-                    ),
-                  ],
+                  children: state.categories
+                      .where((item) => item != 'Todos')
+                      .map(
+                        (item) => _CategoryTile(
+                          icon: _categoryIcon(item),
+                          label: item,
+                          onTap: () => _selectCategory(state, item),
+                        ),
+                      )
+                      .toList(),
                 ),
               ),
               const SizedBox(height: 20),
               SectionHeading(
                 title: 'Mais vendidos',
                 action: 'Ver todos',
-                onAction: () => state.setNavigationIndex(1),
+                onAction: () {
+                  state.setSearch('');
+                  state.setCategory('Todos');
+                  state.setNavigationIndex(1);
+                },
               ),
               const SizedBox(height: 10),
               SizedBox(
                 height: 302,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  itemCount: demoProducts.length,
+                  itemCount: featuredProducts.length,
                   separatorBuilder: (_, _) => const SizedBox(width: 12),
                   itemBuilder: (context, index) {
-                    final product = demoProducts[index];
+                    final product = featuredProducts[index];
                     return SizedBox(
                       width: 220,
                       child: ProductCard(
@@ -190,6 +197,14 @@ class HomeScreen extends StatelessWidget {
     state.setCategory(category);
     state.setNavigationIndex(1);
   }
+
+  IconData _categoryIcon(String category) => switch (category) {
+    'Churrasqueiras' => Icons.outdoor_grill,
+    'Grelhas' => Icons.view_in_ar_outlined,
+    'Espetos' => Icons.horizontal_rule_rounded,
+    'Kits' => Icons.inventory_2_outlined,
+    _ => Icons.category_outlined,
+  };
 }
 
 class _PromoBanner extends StatelessWidget {
@@ -377,8 +392,31 @@ class _TrustItem extends StatelessWidget {
   }
 }
 
-class CatalogScreen extends StatelessWidget {
+class CatalogScreen extends StatefulWidget {
   const CatalogScreen({super.key});
+
+  @override
+  State<CatalogScreen> createState() => _CatalogScreenState();
+}
+
+class _CatalogScreenState extends State<CatalogScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  bool _initialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _searchController.text = AppScope.of(context).searchQuery;
+      _initialized = true;
+    }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -390,6 +428,7 @@ class CatalogScreen extends StatelessWidget {
           title: 'Catálogo',
           cartCount: state.cartCount,
           onCartTap: () => _openCart(context),
+          onProfileTap: () => state.setNavigationIndex(4),
         ),
         Expanded(
           child: CustomScrollView(
@@ -399,12 +438,26 @@ class CatalogScreen extends StatelessWidget {
                 sliver: SliverList.list(
                   children: [
                     TextField(
-                      decoration: const InputDecoration(
+                      controller: _searchController,
+                      decoration: InputDecoration(
                         hintText: 'Buscar produto',
-                        prefixIcon: Icon(Icons.search),
-                        suffixIcon: Icon(Icons.tune),
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: _searchController.text.isEmpty
+                            ? null
+                            : IconButton(
+                                tooltip: 'Limpar busca',
+                                onPressed: () {
+                                  _searchController.clear();
+                                  state.setSearch('');
+                                  setState(() {});
+                                },
+                                icon: const Icon(Icons.close),
+                              ),
                       ),
-                      onChanged: state.setSearch,
+                      onChanged: (value) {
+                        state.setSearch(value);
+                        setState(() {});
+                      },
                     ),
                     const SizedBox(height: 12),
                     SingleChildScrollView(
@@ -413,10 +466,9 @@ class CatalogScreen extends StatelessWidget {
                         children:
                             [
                                   'Todos',
-                                  'Churrasqueiras',
-                                  'Grelhas',
-                                  'Espetos',
-                                  'Kits',
+                                  ...state.categories.where(
+                                    (item) => item != 'Todos',
+                                  ),
                                 ]
                                 .map(
                                   (category) => Padding(
@@ -440,11 +492,30 @@ class CatalogScreen extends StatelessWidget {
                           style: const TextStyle(color: AppColors.muted),
                         ),
                         const Spacer(),
-                        const Icon(Icons.swap_vert, size: 18),
-                        const SizedBox(width: 4),
-                        const Text(
-                          'Relevância',
-                          style: TextStyle(fontWeight: FontWeight.w700),
+                        PopupMenuButton<ProductSort>(
+                          tooltip: 'Ordenar produtos',
+                          initialValue: state.productSort,
+                          onSelected: state.setProductSort,
+                          itemBuilder: (context) => ProductSort.values
+                              .map(
+                                (value) => PopupMenuItem(
+                                  value: value,
+                                  child: Text(value.label),
+                                ),
+                              )
+                              .toList(),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.swap_vert, size: 18),
+                              const SizedBox(width: 4),
+                              Text(
+                                state.productSort.label,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -461,8 +532,10 @@ class CatalogScreen extends StatelessWidget {
                         'Tente outro termo ou limpe os filtros aplicados.',
                     actionLabel: 'Limpar filtros',
                     onAction: () {
+                      _searchController.clear();
                       state.setSearch('');
                       state.setCategory('Todos');
+                      setState(() {});
                     },
                   ),
                 )
@@ -516,68 +589,154 @@ class OrdersScreen extends StatelessWidget {
           title: 'Meus pedidos',
           cartCount: state.cartCount,
           onCartTap: () => _openCart(context),
+          onProfileTap: () => state.setNavigationIndex(4),
         ),
         Expanded(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+          child: !state.loggedIn
+              ? EmptyState(
+                  icon: Icons.lock_outline,
+                  title: 'Entre para ver seus pedidos',
+                  description: 'Seu histórico, rastreamento e orçamentos ficam protegidos na sua conta.',
+                  actionLabel: 'Entrar',
+                  onAction: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  ),
+                )
+              : ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+                  children: [
+                    if (state.orders.isEmpty && state.quotes.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 80),
+                        child: EmptyState(
+                          icon: Icons.receipt_long_outlined,
+                          title: 'Nenhum pedido ainda',
+                          description: 'Seus pedidos e solicitações de orçamento aparecerão aqui.',
+                        ),
+                      ),
+                    ...state.orders.map(
+                      (order) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _OrderCard(
+                          number: order.id,
+                          date: _shortDate(order.createdAt),
+                          total: money(order.total),
+                          status: order.status.label,
+                          current:
+                              order.status != OrderStatus.delivered &&
+                              order.status != OrderStatus.cancelled,
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => TrackingScreen(order: order),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (state.quotes.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Orçamentos',
+                        style: TextStyle(
+                          fontSize: 19,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      ...state.quotes.map(
+                        (quote) => Card(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.all(16),
+                            leading: CircleAvatar(
+                              backgroundColor:
+                                  quote.status == QuoteStatus.approved
+                                  ? AppColors.successSoft
+                                  : AppColors.warningSoft,
+                              foregroundColor:
+                                  quote.status == QuoteStatus.approved
+                                  ? AppColors.success
+                                  : AppColors.warning,
+                              child: const Icon(Icons.request_quote_outlined),
+                            ),
+                            title: Text(
+                              quote.id,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            subtitle: Text(
+                              '${quote.productName} · ${quote.status.label}',
+                            ),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: () => _showQuote(context, quote),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+        ),
+      ],
+    );
+  }
+
+  static String _shortDate(DateTime date) {
+    const months = [
+      'jan',
+      'fev',
+      'mar',
+      'abr',
+      'mai',
+      'jun',
+      'jul',
+      'ago',
+      'set',
+      'out',
+      'nov',
+      'dez',
+    ];
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
+  static Future<void> _showQuote(BuildContext context, QuoteRequest quote) {
+    return showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: const Icon(Icons.request_quote_outlined, color: AppColors.red),
+        title: Text('Orçamento ${quote.id}'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (state.orderPlaced) ...[
-                const _OrderCard(
-                  number: '#SG-2026-0148',
-                  date: '10 set 2026',
-                  total: 'R\$ 951,72',
-                  status: 'Pedido recebido',
-                  current: true,
+              Text(
+                quote.productName,
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 8),
+              StatusPill(label: quote.status.label),
+              const SizedBox(height: 14),
+              Text(quote.details),
+              if (quote.response?.trim().isNotEmpty ?? false) ...[
+                const Divider(height: 28),
+                const Text(
+                  'Resposta da equipe',
+                  style: TextStyle(fontWeight: FontWeight.w800),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 6),
+                Text(quote.response!),
               ],
-              _OrderCard(
-                number: '#SG-2026-0147',
-                date: '10 set 2026',
-                total: 'R\$ 951,72',
-                status: 'Em transporte',
-                current: true,
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const TrackingScreen()),
-                ),
-              ),
-              const SizedBox(height: 12),
-              const _OrderCard(
-                number: '#SG-2026-0121',
-                date: '18 ago 2026',
-                total: 'R\$ 249,90',
-                status: 'Entregue',
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Orçamentos',
-                style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 12),
-              Card(
-                child: ListTile(
-                  contentPadding: const EdgeInsets.all(16),
-                  leading: const CircleAvatar(
-                    backgroundColor: AppColors.warningSoft,
-                    foregroundColor: AppColors.warning,
-                    child: Icon(Icons.request_quote_outlined),
-                  ),
-                  title: const Text(
-                    '#ORC-2026-0084',
-                    style: TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                  subtitle: const Text('Evento corporativo · Em análise'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => showAppSnackBar(
-                    context,
-                    'O orçamento está em análise. Retorno previsto para hoje.',
-                  ),
-                ),
-              ),
             ],
           ),
         ),
-      ],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Fechar'),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -673,48 +832,73 @@ class HelpScreen extends StatefulWidget {
 
 class _HelpScreenState extends State<HelpScreen> {
   final TextEditingController _messageController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
+  String _faqQuery = '';
 
   @override
   void dispose() {
     _messageController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final state = AppScope.of(context);
+    final query = _faqQuery.trim().toLowerCase();
+    final faqs = _faqEntries
+        .where(
+          (faq) =>
+              query.isEmpty ||
+              faq.title.toLowerCase().contains(query) ||
+              faq.subtitle.toLowerCase().contains(query) ||
+              faq.answer.toLowerCase().contains(query),
+        )
+        .toList();
     return Column(
       children: [
         AppTopBar(
           title: 'Ajuda e atendimento',
           cartCount: state.cartCount,
           onCartTap: () => _openCart(context),
+          onProfileTap: () => state.setNavigationIndex(4),
         ),
         Expanded(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 6, 20, 32),
             children: [
-              const TextField(
+              TextField(
+                controller: _searchController,
                 decoration: InputDecoration(
                   hintText: 'Como podemos ajudar?',
-                  prefixIcon: Icon(Icons.search),
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: _faqQuery.isEmpty
+                      ? null
+                      : IconButton(
+                          tooltip: 'Limpar busca',
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _faqQuery = '');
+                          },
+                          icon: const Icon(Icons.close),
+                        ),
                 ),
+                onChanged: (value) => setState(() => _faqQuery = value),
               ),
               const SizedBox(height: 20),
               const SectionHeading(title: 'Encontre uma resposta'),
               const SizedBox(height: 8),
-              const _FaqTile(
-                title: 'Entrega e frete',
-                subtitle: 'Prazo, CEP e rastreio',
-              ),
-              const _FaqTile(
-                title: 'Pagamento',
-                subtitle: 'Pix, cartão e boleto',
-              ),
-              const _FaqTile(
-                title: 'Trocas e garantia',
-                subtitle: 'Prazos e condições',
-              ),
+              if (faqs.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Text(
+                    'Nenhuma resposta encontrada. Envie sua dúvida no atendimento abaixo.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppColors.muted),
+                  ),
+                )
+              else
+                ...faqs.map((faq) => _FaqTile(faq: faq)),
               const SizedBox(height: 24),
               const SectionHeading(title: 'Converse com a equipe'),
               const SizedBox(height: 8),
@@ -781,9 +965,18 @@ class _HelpScreenState extends State<HelpScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
-                'Fora do horário? Abra um chamado. Resposta em até 1 dia útil.',
-                style: TextStyle(color: AppColors.muted, fontSize: 12),
+              TextButton.icon(
+                onPressed: () {
+                  state.sendMessage(
+                    'Gostaria de abrir um chamado para receber atendimento.',
+                  );
+                  showAppSnackBar(
+                    context,
+                    'Chamado registrado. Acompanhe a resposta nesta conversa.',
+                  );
+                },
+                icon: const Icon(Icons.confirmation_number_outlined),
+                label: const Text('Fora do horário? Abrir um chamado'),
               ),
             ],
           ),
@@ -799,10 +992,9 @@ class _HelpScreenState extends State<HelpScreen> {
 }
 
 class _FaqTile extends StatelessWidget {
-  const _FaqTile({required this.title, required this.subtitle});
+  const _FaqTile({required this.faq});
 
-  final String title;
-  final String subtitle;
+  final _FaqData faq;
 
   @override
   Widget build(BuildContext context) {
@@ -815,13 +1007,16 @@ class _FaqTile extends StatelessWidget {
           foregroundColor: AppColors.red,
           child: Icon(Icons.question_mark, size: 17),
         ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
-        subtitle: Text(subtitle),
+        title: Text(
+          faq.title,
+          style: const TextStyle(fontWeight: FontWeight.w800),
+        ),
+        subtitle: Text(faq.subtitle),
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: Text(
-              'Consulte os dados do pedido nesta seção ou fale com nossa equipe para receber orientação personalizada.',
+              faq.answer,
               style: TextStyle(color: Colors.grey.shade700, height: 1.4),
             ),
           ),
@@ -830,6 +1025,36 @@ class _FaqTile extends StatelessWidget {
     );
   }
 }
+
+class _FaqData {
+  const _FaqData({
+    required this.title,
+    required this.subtitle,
+    required this.answer,
+  });
+
+  final String title;
+  final String subtitle;
+  final String answer;
+}
+
+const _faqEntries = <_FaqData>[
+  _FaqData(
+    title: 'Entrega e frete',
+    subtitle: 'Prazo, CEP e rastreio',
+    answer: 'Informe o CEP na página do produto para ver o prazo. Depois da compra, abra Meus pedidos e toque em Acompanhar pedido para consultar cada etapa.',
+  ),
+  _FaqData(
+    title: 'Pagamento',
+    subtitle: 'Pix, cartão e boleto',
+    answer: 'O Pix é aprovado imediatamente. O cartão pode ser parcelado em até 6 vezes e o boleto vence em dois dias úteis.',
+  ),
+  _FaqData(
+    title: 'Trocas e garantia',
+    subtitle: 'Prazos e condições',
+    answer: 'Você pode solicitar troca em até 7 dias após o recebimento. A garantia varia por produto e aparece nas especificações do catálogo.',
+  ),
+];
 
 class _MessageBubble extends StatelessWidget {
   const _MessageBubble({required this.message});
@@ -880,6 +1105,7 @@ class ProfileScreen extends StatelessWidget {
           title: 'Perfil',
           cartCount: state.cartCount,
           onCartTap: () => _openCart(context),
+          onProfileTap: () => _openAccount(context, state),
         ),
         Expanded(
           child: ListView(
@@ -911,7 +1137,7 @@ class ProfileScreen extends StatelessWidget {
                             const SizedBox(height: 3),
                             Text(
                               state.loggedIn
-                                  ? 'leandro@email.com'
+                                  ? state.userEmail
                                   : 'Entre para acessar pedidos e orçamentos',
                               style: const TextStyle(color: AppColors.muted),
                             ),
@@ -936,31 +1162,46 @@ class ProfileScreen extends StatelessWidget {
                 icon: Icons.favorite_border,
                 title: 'Favoritos',
                 subtitle: '${state.favorites.length} produtos salvos',
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const FavoritesScreen()),
+                ),
               ),
-              const _ProfileTile(
+              _ProfileTile(
                 icon: Icons.location_on_outlined,
                 title: 'Endereços',
                 subtitle: 'Gerencie seus locais de entrega',
+                onTap: () =>
+                    _openProtected(context, state, const AddressesScreen()),
               ),
-              const _ProfileTile(
+              _ProfileTile(
                 icon: Icons.notifications_none,
                 title: 'Notificações',
                 subtitle: 'Pedidos, ofertas e atendimento',
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const NotificationsScreen(),
+                  ),
+                ),
               ),
-              const _ProfileTile(
+              _ProfileTile(
                 icon: Icons.shield_outlined,
                 title: 'Privacidade e segurança',
                 subtitle: 'Senha, dados e consentimentos',
+                onTap: () => _openProtected(
+                  context,
+                  state,
+                  const AccountSecurityScreen(),
+                ),
               ),
               const SizedBox(height: 20),
               OutlinedButton.icon(
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const AdminDashboardScreen(),
-                  ),
-                ),
+                onPressed: () => _openAdmin(context, state),
                 icon: const Icon(Icons.admin_panel_settings_outlined),
-                label: const Text('Abrir painel administrativo'),
+                label: Text(
+                  state.isAdmin
+                      ? 'Abrir painel administrativo'
+                      : 'Acesso administrativo',
+                ),
               ),
               if (state.loggedIn) ...[
                 const SizedBox(height: 10),
@@ -973,7 +1214,7 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 24),
               const Center(
                 child: Text(
-                  'LeadSystem · versão acadêmica 1.0.0',
+                  'LeadSystem · versão acadêmica 1.1.0',
                   style: TextStyle(color: AppColors.muted, fontSize: 12),
                 ),
               ),
@@ -983,6 +1224,48 @@ class ProfileScreen extends StatelessWidget {
       ],
     );
   }
+
+  static Future<void> _openAccount(BuildContext context, AppState state) async {
+    if (!state.loggedIn) {
+      await Navigator.of(context)
+          .push(MaterialPageRoute(builder: (_) => const LoginScreen()));
+      return;
+    }
+    if (!context.mounted) return;
+    await Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const AccountSecurityScreen()));
+  }
+
+  static Future<void> _openProtected(
+    BuildContext context,
+    AppState state,
+    Widget screen,
+  ) async {
+    if (!state.loggedIn) {
+      await Navigator.of(context)
+          .push(MaterialPageRoute(builder: (_) => const LoginScreen()));
+      if (!context.mounted || !state.loggedIn) return;
+    }
+    if (!context.mounted) return;
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+  }
+
+  static Future<void> _openAdmin(BuildContext context, AppState state) async {
+    if (!state.isAdmin) {
+      await Navigator.of(context)
+          .push(MaterialPageRoute(builder: (_) => const LoginScreen()));
+    }
+    if (!context.mounted) return;
+    if (!state.isAdmin) {
+      showAppSnackBar(
+        context,
+        'Entre com a conta administrativa para acessar este painel.',
+      );
+      return;
+    }
+    await Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const AdminDashboardScreen()));
+  }
 }
 
 class _ProfileTile extends StatelessWidget {
@@ -990,11 +1273,13 @@ class _ProfileTile extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.subtitle,
+    required this.onTap,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -1005,10 +1290,7 @@ class _ProfileTile extends StatelessWidget {
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
         subtitle: Text(subtitle),
         trailing: const Icon(Icons.chevron_right),
-        onTap: () => showAppSnackBar(
-          context,
-          '$title disponível na próxima atualização.',
-        ),
+        onTap: onTap,
       ),
     );
   }

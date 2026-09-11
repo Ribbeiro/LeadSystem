@@ -6,16 +6,17 @@ Aplicativo acadêmico multiplataforma para catálogo, vendas, orçamentos e aten
 
 - início com promoções, categorias e busca;
 - catálogo pesquisável e filtrável;
-- detalhes, favoritos, cálculo demonstrativo de frete e orçamento;
+- detalhes, favoritos, cálculo validado de frete e orçamentos persistentes;
 - carrinho com quantidades, remoção com desfazer e cupom `PRIMEIRACOMPRA`;
 - checkout com endereço, pagamento, validação e confirmação;
 - histórico e acompanhamento visual de pedidos;
 - login, recuperação de senha e cadastro com validação inline;
-- central de ajuda e chat demonstrativo;
-- painel administrativo com indicadores e ações rápidas;
+- central de ajuda pesquisável, abertura de chamado e respostas automáticas locais;
+- perfil com endereços, notificações, dados pessoais e alteração de senha;
+- painel administrativo com CRUD de produtos, estoque, categorias, cupons e campanhas, além da gestão de pedidos, usuários e orçamentos;
 - API Node.js inicial, preparada para conexão com MongoDB.
 
-Os dados do aplicativo estão em memória nesta primeira versão. Assim, todos os fluxos podem ser demonstrados mesmo sem internet ou banco configurado.
+Os dados do aplicativo são persistidos localmente no aparelho com `shared_preferences`. Login, carrinho, favoritos, pedidos, orçamentos, endereços e alterações administrativas continuam disponíveis depois de fechar e abrir o app. A aplicação funciona offline para a apresentação; a API Node.js permanece como a próxima camada de sincronização com MongoDB.
 
 ## Estrutura
 
@@ -26,7 +27,7 @@ LeadSystem/
 ├── assets/images/           Imagens do catálogo
 ├── lib/
 │   ├── core/                Tema e estado da aplicação
-│   ├── models/              Modelos e catálogo demonstrativo
+│   ├── models/              Modelos de domínio e catálogo persistente
 │   ├── screens/             Telas e fluxos
 │   ├── widgets/             Componentes reutilizáveis
 │   └── main.dart            Inicialização do app

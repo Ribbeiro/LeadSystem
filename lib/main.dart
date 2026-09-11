@@ -4,24 +4,28 @@ import 'core/app_state.dart';
 import 'core/app_theme.dart';
 import 'screens/app_shell.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const LeadSystemApp());
+  final state = await AppState.initialize();
+  runApp(LeadSystemApp(state: state));
 }
 
 class LeadSystemApp extends StatefulWidget {
-  const LeadSystemApp({super.key});
+  const LeadSystemApp({super.key, this.state});
+
+  final AppState? state;
 
   @override
   State<LeadSystemApp> createState() => _LeadSystemAppState();
 }
 
 class _LeadSystemAppState extends State<LeadSystemApp> {
-  final AppState _state = AppState();
+  late final AppState _state = widget.state ?? AppState();
+  late final bool _ownsState = widget.state == null;
 
   @override
   void dispose() {
-    _state.dispose();
+    if (_ownsState) _state.dispose();
     super.dispose();
   }
 

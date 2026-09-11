@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../core/app_state.dart';
 import '../core/app_theme.dart';
+import '../models/app_models.dart';
 import '../models/product.dart';
 import '../widgets/shared.dart';
+import 'auth_admin.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   const ProductDetailScreen({super.key, required this.product});
@@ -16,6 +18,15 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   int quantity = 1;
+  final TextEditingController _postalCodeController = TextEditingController();
+  String? _deliveryResult;
+  String? _postalCodeError;
+
+  @override
+  void dispose() {
+    _postalCodeController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -158,28 +169,58 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           const SizedBox(height: 8),
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: TextField(
+                  controller: _postalCodeController,
                   keyboardType: TextInputType.number,
+                  maxLength: 9,
                   decoration: InputDecoration(
                     hintText: 'CEP',
                     prefixIcon: Icon(Icons.location_on_outlined),
+                    errorText: _postalCodeError,
+                    counterText: '',
                   ),
+                  onSubmitted: (_) => _calculateDelivery(),
                 ),
               ),
               const SizedBox(width: 10),
               SizedBox(
                 width: 112,
                 child: OutlinedButton(
-                  onPressed: () => showAppSnackBar(
-                    context,
-                    'Entrega entre 12 e 14 set · frete R\$ 24,90',
-                  ),
+                  onPressed: _calculateDelivery,
                   child: const Text('Calcular'),
                 ),
               ),
             ],
           ),
+          if (_deliveryResult != null) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.successSoft,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.local_shipping_outlined,
+                    color: AppColors.success,
+                  ),
+                  const SizedBox(width: 9),
+                  Expanded(
+                    child: Text(
+                      _deliveryResult!,
+                      style: const TextStyle(
+                        color: AppColors.success,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           Row(
             children: [
@@ -226,15 +267,44 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
           const SizedBox(height: 10),
           OutlinedButton.icon(
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => QuoteScreen(product: product)),
-            ),
+            onPressed: () async {
+              if (!state.loggedIn) {
+                await Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const LoginScreen()));
+                if (!context.mounted || !state.loggedIn) return;
+              }
+              if (!context.mounted) return;
+              await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => QuoteScreen(product: product),
+                ),
+              );
+            },
             icon: const Icon(Icons.request_quote_outlined),
             label: const Text('Solicitar orçamento'),
           ),
         ],
       ),
     );
+  }
+
+  void _calculateDelivery() {
+    final estimate = AppScope.of(context)
+        .calculateShipping(_postalCodeController.text);
+    if (estimate == null) {
+      setState(() {
+        _postalCodeError = 'Digite os 8 números do CEP.';
+        _deliveryResult = null;
+      });
+      return;
+    }
+    setState(() {
+      _postalCodeError = null;
+      _deliveryResult =
+          'Entrega estimada entre ${estimate.estimatedStart.day}/${estimate.estimatedStart.month} e '
+          '${estimate.estimatedEnd.day}/${estimate.estimatedEnd.month} · ${money(estimate.cost)}';
+    });
   }
 }
 
@@ -296,8 +366,16 @@ class _CartScreenState extends State<CartScreen> {
                       quantity: entry.value,
                       onDecrease: () =>
                           state.setQuantity(product.id, entry.value - 1),
-                      onIncrease: () =>
-                          state.setQuantity(product.id, entry.value + 1),
+                      onIncrease: () {
+                        if (entry.value >= product.stock) {
+                          showAppSnackBar(
+                            context,
+                            'Estoque máximo disponível: ${product.stock}.',
+                          );
+                          return;
+                        }
+                        state.setQuantity(product.id, entry.value + 1);
+                      },
                       onRemove: () =>
                           _remove(context, state, product, entry.value),
                     ),
@@ -361,9 +439,18 @@ class _CartScreenState extends State<CartScreen> {
                 _OrderSummary(state: state),
                 const SizedBox(height: 18),
                 FilledButton(
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const CheckoutScreen()),
-                  ),
+                  onPressed: () async {
+                    if (!state.loggedIn) {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      );
+                      if (!context.mounted || !state.loggedIn) return;
+                    }
+                    if (!context.mounted) return;
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const CheckoutScreen()),
+                    );
+                  },
                   child: const Text('Ir para pagamento'),
                 ),
                 const SizedBox(height: 8),
@@ -469,7 +556,7 @@ class _CartItem extends StatelessWidget {
                   ),
                   IconButton(
                     visualDensity: VisualDensity.compact,
-                    onPressed: onIncrease,
+                    onPressed: quantity < product.stock ? onIncrease : null,
                     icon: const Icon(Icons.add, size: 17),
                   ),
                 ],
@@ -567,9 +654,48 @@ class CheckoutScreen extends StatefulWidget {
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
   final _formKey = GlobalKey<FormState>();
+  final TextEditingController _streetController = TextEditingController();
+  final TextEditingController _numberController = TextEditingController();
+  final TextEditingController _neighborhoodController = TextEditingController();
+  final TextEditingController _cityController = TextEditingController();
+  final TextEditingController _stateController = TextEditingController();
+  final TextEditingController _postalCodeController = TextEditingController();
+  final TextEditingController _cardNumberController = TextEditingController();
+  final TextEditingController _cardHolderController = TextEditingController();
+  final TextEditingController _cardCvvController = TextEditingController();
   String payment = 'Pix';
   bool accepted = true;
   bool processing = false;
+  bool _initialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_initialized) return;
+    final address = AppScope.of(context).defaultAddress;
+    _streetController.text = address?.street ?? '';
+    _numberController.text = address?.number ?? '';
+    _neighborhoodController.text = address?.neighborhood ?? '';
+    _cityController.text = address?.city ?? '';
+    _stateController.text = address?.state ?? 'SP';
+    _postalCodeController.text = address?.postalCode ?? '';
+    _cardHolderController.text = AppScope.of(context).userName;
+    _initialized = true;
+  }
+
+  @override
+  void dispose() {
+    _streetController.dispose();
+    _numberController.dispose();
+    _neighborhoodController.dispose();
+    _cityController.dispose();
+    _stateController.dispose();
+    _postalCodeController.dispose();
+    _cardNumberController.dispose();
+    _cardHolderController.dispose();
+    _cardCvvController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -593,39 +719,112 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 10),
-            TextFormField(
-              initialValue: 'Rua Amazonas, 50',
-              decoration: const InputDecoration(labelText: 'Endereço'),
-              validator: (value) => value == null || value.trim().length < 5
-                  ? 'Informe o endereço completo.'
-                  : null,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: TextFormField(
+                    controller: _streetController,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: const InputDecoration(labelText: 'Rua'),
+                    validator: (value) =>
+                        value == null || value.trim().length < 3
+                        ? 'Informe a rua.'
+                        : null,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextFormField(
+                    controller: _numberController,
+                    keyboardType: TextInputType.streetAddress,
+                    decoration: const InputDecoration(labelText: 'Número'),
+                    validator: (value) => value == null || value.trim().isEmpty
+                        ? 'Obrigatório.'
+                        : null,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 10),
             Row(
               children: [
                 Expanded(
                   child: TextFormField(
-                    initialValue: 'Centro',
+                    controller: _neighborhoodController,
                     decoration: const InputDecoration(labelText: 'Bairro'),
+                    validator: (value) => value == null || value.trim().isEmpty
+                        ? 'Informe o bairro.'
+                        : null,
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: TextFormField(
-                    initialValue: '09520-070',
+                    controller: _postalCodeController,
+                    keyboardType: TextInputType.number,
                     decoration: const InputDecoration(labelText: 'CEP'),
+                    validator: (value) =>
+                        (value ?? '').replaceAll(RegExp(r'\D'), '').length == 8
+                        ? null
+                        : 'CEP inválido.',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: TextFormField(
+                    controller: _cityController,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: const InputDecoration(labelText: 'Cidade'),
+                    validator: (value) => value == null || value.trim().isEmpty
+                        ? 'Informe a cidade.'
+                        : null,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextFormField(
+                    controller: _stateController,
+                    textCapitalization: TextCapitalization.characters,
+                    maxLength: 2,
+                    decoration: const InputDecoration(
+                      labelText: 'UF',
+                      counterText: '',
+                    ),
+                    validator: (value) =>
+                        value == null || value.trim().length != 2
+                        ? 'UF inválida.'
+                        : null,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            const Row(
+            Row(
               children: [
-                Icon(Icons.verified, color: AppColors.success, size: 18),
-                SizedBox(width: 6),
-                Text(
-                  'Endereço verificado · São Caetano do Sul/SP',
-                  style: TextStyle(color: AppColors.success, fontSize: 12),
+                const Icon(
+                  Icons.location_on_outlined,
+                  color: AppColors.success,
+                  size: 18,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    state.defaultAddress == null
+                        ? 'O endereço será salvo para as próximas compras.'
+                        : 'Você pode alterar os dados para este pedido.',
+                    style: const TextStyle(
+                      color: AppColors.success,
+                      fontSize: 12,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -660,6 +859,87 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ],
               ),
             ),
+            if (payment == 'Cartão') ...[
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _cardNumberController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Número do cartão',
+                  prefixIcon: Icon(Icons.credit_card),
+                ),
+                validator: (value) {
+                  if (payment != 'Cartão') return null;
+                  final digits = (value ?? '').replaceAll(RegExp(r'\D'), '');
+                  return digits.length >= 13 ? null : 'Número inválido.';
+                },
+              ),
+              const SizedBox(height: 10),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: TextFormField(
+                      controller: _cardHolderController,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: const InputDecoration(
+                        labelText: 'Nome no cartão',
+                      ),
+                      validator: (value) =>
+                          payment == 'Cartão' &&
+                              (value == null || value.trim().length < 3)
+                          ? 'Informe o nome.'
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _cardCvvController,
+                      keyboardType: TextInputType.number,
+                      obscureText: true,
+                      decoration: const InputDecoration(labelText: 'CVV'),
+                      validator: (value) =>
+                          payment == 'Cartão' &&
+                              (value ?? '')
+                                      .replaceAll(RegExp(r'\D'), '')
+                                      .length <
+                                  3
+                          ? 'Inválido.'
+                          : null,
+                    ),
+                  ),
+                ],
+              ),
+            ] else ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0ECE7),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      payment == 'Pix'
+                          ? Icons.qr_code_2_rounded
+                          : Icons.receipt_long_outlined,
+                      color: AppColors.red,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        payment == 'Pix'
+                            ? 'O código Pix será exibido após a confirmação.'
+                            : 'O boleto será gerado com vencimento em 2 dias úteis.',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 18),
             _OrderSummary(state: state),
             const SizedBox(height: 10),
@@ -698,15 +978,43 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Future<void> _finish(BuildContext context, AppState state) async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => processing = true);
-    final orderTotal = state.total;
-    await Future<void>.delayed(const Duration(milliseconds: 700));
-    if (!context.mounted) return;
-    state.placeOrder();
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => OrderSuccessScreen(total: orderTotal, payment: payment),
-      ),
-    );
+    try {
+      state.calculateShipping(_postalCodeController.text);
+      final current = state.defaultAddress;
+      late final Address address;
+      if (current == null) {
+        address = state.addAddress(
+          label: 'Entrega',
+          street: _streetController.text,
+          number: _numberController.text,
+          neighborhood: _neighborhoodController.text,
+          city: _cityController.text,
+          state: _stateController.text,
+          postalCode: _postalCodeController.text,
+          makeDefault: true,
+        );
+      } else {
+        address = current.copyWith(
+          street: _streetController.text.trim(),
+          number: _numberController.text.trim(),
+          neighborhood: _neighborhoodController.text.trim(),
+          city: _cityController.text.trim(),
+          state: _stateController.text.trim().toUpperCase(),
+          postalCode: _postalCodeController.text.trim(),
+        );
+        state.updateAddress(address);
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 350));
+      final order = state.placeOrder(address: address, paymentMethod: payment);
+      if (!context.mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => OrderSuccessScreen(order: order)),
+      );
+    } on StateError catch (error) {
+      if (!context.mounted) return;
+      setState(() => processing = false);
+      showAppSnackBar(context, error.message.toString());
+    }
   }
 }
 
@@ -796,14 +1104,9 @@ class _PaymentTile extends StatelessWidget {
 }
 
 class OrderSuccessScreen extends StatelessWidget {
-  const OrderSuccessScreen({
-    super.key,
-    required this.total,
-    required this.payment,
-  });
+  const OrderSuccessScreen({super.key, required this.order});
 
-  final double total;
-  final String payment;
+  final CustomerOrder order;
 
   @override
   Widget build(BuildContext context) {
@@ -839,16 +1142,16 @@ class OrderSuccessScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(18),
                   child: Column(
                     children: [
-                      const _SummaryRow(
-                        label: 'Pedido',
-                        value: '#SG-2026-0148',
-                      ),
+                      _SummaryRow(label: 'Pedido', value: order.id),
                       const SizedBox(height: 10),
-                      _SummaryRow(label: 'Pagamento', value: payment),
+                      _SummaryRow(
+                        label: 'Pagamento',
+                        value: order.paymentMethod,
+                      ),
                       const SizedBox(height: 10),
                       _SummaryRow(
                         label: 'Total',
-                        value: money(total),
+                        value: money(order.total),
                         emphasis: true,
                       ),
                       const SizedBox(height: 10),
@@ -885,10 +1188,17 @@ class OrderSuccessScreen extends StatelessWidget {
 }
 
 class TrackingScreen extends StatelessWidget {
-  const TrackingScreen({super.key});
+  const TrackingScreen({super.key, required this.order});
+
+  final CustomerOrder order;
 
   @override
   Widget build(BuildContext context) {
+    final state = AppScope.of(context);
+    final updatedAt = order.timeline.isEmpty
+        ? order.createdAt
+        : order.timeline.last.createdAt;
+    final stages = _stages(order);
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -910,22 +1220,22 @@ class TrackingScreen extends StatelessWidget {
                     child: Icon(Icons.local_shipping_outlined),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Pedido #SG-2026-0147',
-                          style: TextStyle(fontWeight: FontWeight.w900),
+                          'Pedido ${order.id}',
+                          style: const TextStyle(fontWeight: FontWeight.w900),
                         ),
-                        SizedBox(height: 3),
+                        const SizedBox(height: 3),
                         Text(
-                          'Em transporte',
-                          style: TextStyle(color: AppColors.success),
+                          order.status.label,
+                          style: const TextStyle(color: AppColors.success),
                         ),
                         Text(
-                          'Atualizado hoje às 14:28',
-                          style: TextStyle(
+                          'Atualizado em ${_dateTime(updatedAt)}',
+                          style: const TextStyle(
                             color: AppColors.muted,
                             fontSize: 12,
                           ),
@@ -933,7 +1243,17 @@ class TrackingScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const StatusPill(label: 'No prazo'),
+                  StatusPill(
+                    label: order.status == OrderStatus.cancelled
+                        ? 'Cancelado'
+                        : 'No prazo',
+                    color: order.status == OrderStatus.cancelled
+                        ? AppColors.red
+                        : AppColors.success,
+                    background: order.status == OrderStatus.cancelled
+                        ? const Color(0xFFFFE7E8)
+                        : AppColors.successSoft,
+                  ),
                 ],
               ),
             ),
@@ -944,45 +1264,29 @@ class TrackingScreen extends StatelessWidget {
             style: TextStyle(fontSize: 19, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 12),
-          const _TimelineItem(
-            title: 'Pedido recebido',
-            subtitle: '10 set · 14:32',
-            done: true,
-          ),
-          const _TimelineItem(
-            title: 'Pagamento aprovado',
-            subtitle: '10 set · 14:35',
-            done: true,
-          ),
-          const _TimelineItem(
-            title: 'Em transporte',
-            subtitle: '11 set · 09:10',
-            done: true,
-            current: true,
-          ),
-          const _TimelineItem(
-            title: 'Entregue',
-            subtitle: 'Previsto até 14 set',
-          ),
+          ...stages,
           const SizedBox(height: 20),
           Card(
-            child: const Padding(
-              padding: EdgeInsets.all(18),
+            child: Padding(
+              padding: const EdgeInsets.all(18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     'Entrega estimada',
                     style: TextStyle(color: AppColors.muted),
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
-                    '12 a 14 de setembro',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+                    _deliveryDate(order.createdAt),
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                   Text(
-                    'Rua Amazonas, 50 · Centro',
-                    style: TextStyle(color: AppColors.muted),
+                    order.deliveryAddress.formatted,
+                    style: const TextStyle(color: AppColors.muted),
                   ),
                 ],
               ),
@@ -990,16 +1294,72 @@ class TrackingScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           OutlinedButton.icon(
-            onPressed: () => showAppSnackBar(
-              context,
-              'Atendimento avisado sobre o pedido #SG-2026-0147.',
-            ),
+            onPressed: () {
+              state.sendMessage('Preciso de ajuda com o pedido ${order.id}.');
+              state.setNavigationIndex(3);
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            },
             icon: const Icon(Icons.support_agent),
             label: const Text('Falar com o atendimento'),
           ),
         ],
       ),
     );
+  }
+
+  List<Widget> _stages(CustomerOrder order) {
+    if (order.status == OrderStatus.cancelled) {
+      return order.timeline
+          .map(
+            (entry) => _TimelineItem(
+              title: entry.title,
+              subtitle: '${_dateTime(entry.createdAt)} · ${entry.note}',
+              done: true,
+              current: entry.status == order.status,
+            ),
+          )
+          .toList();
+    }
+    const statusFlow = [
+      OrderStatus.received,
+      OrderStatus.paymentApproved,
+      OrderStatus.preparing,
+      OrderStatus.shipped,
+      OrderStatus.delivered,
+    ];
+    final currentIndex = statusFlow.indexOf(order.status);
+    return statusFlow.map((status) {
+      final entry = order.timeline
+          .where((item) => item.status == status)
+          .firstOrNull;
+      final index = statusFlow.indexOf(status);
+      final done = index <= currentIndex;
+      return _TimelineItem(
+        title: status.label,
+        subtitle: entry == null
+            ? (status == OrderStatus.delivered
+                  ? 'Previsão: ${_deliveryDate(order.createdAt)}'
+                  : 'Aguardando atualização')
+            : '${_dateTime(entry.createdAt)} · ${entry.note}',
+        done: done,
+        current: index == currentIndex,
+      );
+    }).toList();
+  }
+
+  static String _dateTime(DateTime value) {
+    final day = value.day.toString().padLeft(2, '0');
+    final month = value.month.toString().padLeft(2, '0');
+    final hour = value.hour.toString().padLeft(2, '0');
+    final minute = value.minute.toString().padLeft(2, '0');
+    return '$day/$month às $hour:$minute';
+  }
+
+  static String _deliveryDate(DateTime createdAt) {
+    final start = createdAt.add(const Duration(days: 3));
+    final end = createdAt.add(const Duration(days: 5));
+    return '${start.day.toString().padLeft(2, '0')}/${start.month.toString().padLeft(2, '0')} a '
+        '${end.day.toString().padLeft(2, '0')}/${end.month.toString().padLeft(2, '0')}';
   }
 }
 
@@ -1080,7 +1440,32 @@ class QuoteScreen extends StatefulWidget {
 
 class _QuoteScreenState extends State<QuoteScreen> {
   final _formKey = GlobalKey<FormState>();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _detailsController = TextEditingController();
   bool sending = false;
+  bool _initialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_initialized) return;
+    final state = AppScope.of(context);
+    _nameController.text = state.loggedIn ? state.userName : '';
+    _phoneController.text = state.userPhone;
+    _emailController.text = state.userEmail;
+    _initialized = true;
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
+    _detailsController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1134,7 +1519,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
             ),
             const SizedBox(height: 18),
             TextFormField(
-              initialValue: 'Leandro Gonçalves Ribeiro Junior',
+              controller: _nameController,
               decoration: const InputDecoration(labelText: 'Nome completo'),
               validator: (value) => value == null || value.trim().isEmpty
                   ? 'Informe seu nome.'
@@ -1142,7 +1527,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
             ),
             const SizedBox(height: 10),
             TextFormField(
-              initialValue: '(11) 99999-4321',
+              controller: _phoneController,
               keyboardType: TextInputType.phone,
               decoration: const InputDecoration(labelText: 'Telefone'),
               validator: (value) => value == null || value.trim().length < 8
@@ -1151,7 +1536,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
             ),
             const SizedBox(height: 10),
             TextFormField(
-              initialValue: 'leandro@email.com',
+              controller: _emailController,
               keyboardType: TextInputType.emailAddress,
               decoration: const InputDecoration(labelText: 'E-mail'),
               validator: (value) => value != null && value.contains('@')
@@ -1159,12 +1544,16 @@ class _QuoteScreenState extends State<QuoteScreen> {
                   : 'Informe um e-mail válido.',
             ),
             const SizedBox(height: 10),
-            const TextField(
+            TextFormField(
+              controller: _detailsController,
               maxLines: 4,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Detalhes da solicitação',
                 hintText: 'Quantidade, data do evento e observações',
               ),
+              validator: (value) => value == null || value.trim().length < 10
+                  ? 'Descreva a quantidade e a necessidade do orçamento.'
+                  : null,
             ),
             const SizedBox(height: 12),
             const Row(
@@ -1203,10 +1592,18 @@ class _QuoteScreenState extends State<QuoteScreen> {
   Future<void> _send() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => sending = true);
-    await Future<void>.delayed(const Duration(milliseconds: 600));
+    final state = AppScope.of(context);
+    final quote = state.submitQuote(
+      product: widget.product,
+      customerName: _nameController.text,
+      email: _emailController.text,
+      phone: _phoneController.text,
+      details: _detailsController.text,
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 300));
     if (!mounted) return;
     setState(() => sending = false);
-    await showDialog<void>(
+    final openOrders = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         icon: const Icon(
@@ -1215,16 +1612,27 @@ class _QuoteScreenState extends State<QuoteScreen> {
           size: 42,
         ),
         title: const Text('Orçamento enviado'),
-        content: const Text(
-          'Protocolo #ORC-2026-0085. Você receberá atualizações na área de pedidos.',
+        content: Text(
+          'Protocolo ${quote.id}. A solicitação já está salva e aparecerá na área de pedidos.',
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Entendi'),
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Continuar no produto'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Ver orçamento'),
           ),
         ],
       ),
     );
+    if (!mounted) return;
+    if (openOrders == true) {
+      state.setNavigationIndex(2);
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    } else {
+      Navigator.of(context).pop();
+    }
   }
 }

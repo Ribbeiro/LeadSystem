@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../core/app_state.dart';
 import '../core/app_theme.dart';
+import '../models/app_models.dart';
+import '../models/product.dart';
 import '../widgets/shared.dart';
+import 'admin_flows.dart';
+import 'profile_flows.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -128,10 +132,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                                 TextButton(
-                                  onPressed: () => showAppSnackBar(
-                                    context,
-                                    'Enviamos um link de recuperação para o e-mail informado.',
-                                  ),
+                                  onPressed: _openPasswordReset,
                                   child: const Text('Esqueci minha senha'),
                                 ),
                               ],
@@ -157,8 +158,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 18),
                   OutlinedButton.icon(
                     onPressed: _demoLogin,
-                    icon: const Icon(Icons.play_circle_outline),
-                    label: const Text('Entrar no modo demonstração'),
+                    icon: const Icon(Icons.admin_panel_settings_outlined),
+                    label: const Text('Entrar com a conta administrativa'),
                   ),
                   const SizedBox(height: 10),
                   TextButton(
@@ -179,15 +180,158 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _login() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => loading = true);
-    await Future<void>.delayed(const Duration(milliseconds: 650));
+    final state = AppScope.of(context);
+    final success = await state.login(
+      email: _emailController.text,
+      password: _passwordController.text,
+      remember: remember,
+    );
     if (!mounted) return;
-    AppScope.of(context).signIn();
+    setState(() => loading = false);
+    if (!success) {
+      showAppSnackBar(
+        context,
+        state.lastAuthMessage ?? 'Não foi possível entrar.',
+      );
+      return;
+    }
     Navigator.of(context).pop();
   }
 
-  void _demoLogin() {
-    AppScope.of(context).signIn(name: 'Leandro Gonçalves');
-    Navigator.of(context).pop();
+  Future<void> _demoLogin() async {
+    _emailController.text = 'leandro@email.com';
+    _passwordController.text = 'Santi@2026';
+    await _login();
+  }
+
+  Future<void> _openPasswordReset() async {
+    final updated = await showDialog<bool>(
+      context: context,
+      builder: (_) => PasswordResetDialog(initialEmail: _emailController.text),
+    );
+    if (!mounted || updated != true) return;
+    showAppSnackBar(context, 'Senha atualizada. Você já pode entrar.');
+  }
+}
+
+class PasswordResetDialog extends StatefulWidget {
+  const PasswordResetDialog({super.key, required this.initialEmail});
+
+  final String initialEmail;
+
+  @override
+  State<PasswordResetDialog> createState() => _PasswordResetDialogState();
+}
+
+class _PasswordResetDialogState extends State<PasswordResetDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _emailController = TextEditingController(
+    text: widget.initialEmail,
+  );
+  final TextEditingController _passwordController = TextEditingController();
+  bool _loading = false;
+  bool _obscure = true;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      icon: const Icon(Icons.lock_reset, color: AppColors.red),
+      title: const Text('Criar nova senha'),
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'No modo offline, a nova senha é salva com segurança neste aparelho.',
+              style: TextStyle(color: AppColors.muted),
+            ),
+            const SizedBox(height: 14),
+            TextFormField(
+              controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(labelText: 'E-mail da conta'),
+              validator: (value) => value != null && value.contains('@')
+                  ? null
+                  : 'Informe um e-mail válido.',
+            ),
+            const SizedBox(height: 10),
+            TextFormField(
+              controller: _passwordController,
+              obscureText: _obscure,
+              decoration: InputDecoration(
+                labelText: 'Nova senha',
+                helperText: '8 caracteres, maiúscula e número',
+                suffixIcon: IconButton(
+                  tooltip: _obscure ? 'Mostrar senha' : 'Ocultar senha',
+                  onPressed: () => setState(() => _obscure = !_obscure),
+                  icon: Icon(
+                    _obscure
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                  ),
+                ),
+              ),
+              validator: (value) {
+                final password = value ?? '';
+                if (password.length < 8 ||
+                    !password.contains(RegExp(r'[A-Z]')) ||
+                    !password.contains(RegExp(r'\d'))) {
+                  return 'Use 8 caracteres, maiúscula e número.';
+                }
+                return null;
+              },
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _loading ? null : () => Navigator.of(context).pop(false),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: _loading ? null : _save,
+          child: _loading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Text('Atualizar senha'),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _save() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    setState(() => _loading = true);
+    final state = AppScope.of(context);
+    final success = await state.resetPassword(
+      email: _emailController.text,
+      newPassword: _passwordController.text,
+    );
+    if (!mounted) return;
+    setState(() => _loading = false);
+    if (!success) {
+      showAppSnackBar(
+        context,
+        state.lastAuthMessage ?? 'Não foi possível atualizar a senha.',
+      );
+      return;
+    }
+    Navigator.of(context).pop(true);
   }
 }
 
@@ -317,6 +461,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 style: TextStyle(fontSize: 13),
               ),
             ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const PrivacyPolicyScreen(),
+                  ),
+                ),
+                icon: const Icon(Icons.description_outlined),
+                label: const Text('Ler a Política de Privacidade'),
+              ),
+            ),
             const SizedBox(height: 10),
             FilledButton(
               onPressed: accepted ? _register : null,
@@ -338,10 +494,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return null;
   }
 
-  void _register() {
+  Future<void> _register() async {
     setState(() => submitted = true);
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    AppScope.of(context).signIn(name: _nameController.text);
+    final state = AppScope.of(context);
+    final created = await state.registerUser(
+      name: _nameController.text,
+      email: _emailController.text,
+      phone: _phoneController.text,
+      password: _passwordController.text,
+    );
+    if (!mounted) return;
+    if (!created) {
+      showAppSnackBar(
+        context,
+        state.lastAuthMessage ?? 'Não foi possível criar a conta.',
+      );
+      return;
+    }
     showAppSnackBar(context, 'Conta criada com sucesso.');
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
@@ -352,6 +522,20 @@ class AdminDashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final state = AppScope.of(context);
+    if (!state.isAdmin) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Área administrativa')),
+        body: EmptyState(
+          icon: Icons.admin_panel_settings_outlined,
+          title: 'Acesso restrito',
+          description:
+              'Entre com uma conta administrativa para gerenciar o sistema.',
+          actionLabel: 'Voltar',
+          onAction: () => Navigator.of(context).pop(),
+        ),
+      );
+    }
     return Scaffold(
       appBar: AppBar(
         title: const BrandLogo(compact: true),
@@ -375,34 +559,34 @@ class AdminDashboardScreen extends StatelessWidget {
             'Visão geral',
             style: TextStyle(fontSize: 25, fontWeight: FontWeight.w900),
           ),
-          const Text(
-            'Quarta-feira, 10 de setembro',
-            style: TextStyle(color: AppColors.muted),
+          Text(
+            'Atualizado agora · ${state.products.length} produtos ativos',
+            style: const TextStyle(color: AppColors.muted),
           ),
           const SizedBox(height: 16),
-          const Row(
+          Row(
             children: [
               Expanded(
                 child: _MetricCard(
-                  value: '8',
+                  value: '${state.pendingOrderCount}',
                   label: 'pedidos\npendentes',
-                  color: Color(0xFFFFE7E8),
+                  color: const Color(0xFFFFE7E8),
                   valueColor: AppColors.darkRed,
                 ),
               ),
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
               Expanded(
                 child: _MetricCard(
-                  value: '5',
+                  value: '${state.pendingQuoteCount}',
                   label: 'orçamentos\nnovos',
-                  color: Color(0xFFE7F1FA),
-                  valueColor: Color(0xFF2F6495),
+                  color: const Color(0xFFE7F1FA),
+                  valueColor: const Color(0xFF2F6495),
                 ),
               ),
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
               Expanded(
                 child: _MetricCard(
-                  value: '3',
+                  value: '${state.lowStockProducts.length}',
                   label: 'itens com\nestoque baixo',
                   color: AppColors.warningSoft,
                   valueColor: AppColors.warning,
@@ -424,22 +608,22 @@ class AdminDashboardScreen extends StatelessWidget {
               _AdminAction(
                 icon: Icons.add_box_outlined,
                 label: 'Novo\nproduto',
-                onTap: () => _action(context, 'Cadastro de produto aberto.'),
+                onTap: () => _open(context, const ProductFormScreen()),
               ),
               _AdminAction(
                 icon: Icons.percent,
                 label: 'Criar\ncupom',
-                onTap: () => _action(context, 'Editor de cupom aberto.'),
+                onTap: () => _open(context, const CouponFormScreen()),
               ),
               _AdminAction(
                 icon: Icons.campaign_outlined,
                 label: 'Nova\ncampanha',
-                onTap: () => _action(context, 'Nova campanha preparada.'),
+                onTap: () => _open(context, const CampaignFormScreen()),
               ),
               _AdminAction(
                 icon: Icons.analytics_outlined,
                 label: 'Ver\nrelatórios',
-                onTap: () => _action(context, 'Relatórios atualizados.'),
+                onTap: () => _open(context, const AdminReportsScreen()),
               ),
             ],
           ),
@@ -455,30 +639,24 @@ class AdminDashboardScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          _AdminOrder(
-            number: '#SG-0147',
-            customer: 'Carlos Silva',
-            total: 'R\$ 951,72',
-            status: 'Pendente',
-            onTap: () => _action(context, 'Pedido #SG-0147 selecionado.'),
-          ),
-          _AdminOrder(
-            number: '#SG-0146',
-            customer: 'Ana Costa',
-            total: 'R\$ 249,90',
-            status: 'Aprovado',
-            onTap: () => _action(context, 'Pedido #SG-0146 selecionado.'),
-          ),
-          _AdminOrder(
-            number: '#SG-0145',
-            customer: 'João Lima',
-            total: 'R\$ 1.089,80',
-            status: 'Enviado',
-            onTap: () => _action(context, 'Pedido #SG-0145 selecionado.'),
-          ),
+          ...state.orders
+              .take(3)
+              .map(
+                (order) => _AdminOrder(
+                  number: order.id,
+                  customer:
+                      '${order.itemCount} ${order.itemCount == 1 ? 'item' : 'itens'} · ${order.paymentMethod}',
+                  total: money(order.total),
+                  status: order.status.label,
+                  onTap: () =>
+                      _open(context, AdminOrderDetailScreen(orderId: order.id)),
+                ),
+              ),
           const SizedBox(height: 18),
           FilledButton.icon(
-            onPressed: () => _action(context, '2 pedidos atualizados em lote.'),
+            onPressed: state.pendingOrderCount == 0
+                ? null
+                : () => _advancePendingOrders(context, state),
             style: FilledButton.styleFrom(backgroundColor: AppColors.ink),
             icon: const Icon(Icons.done_all),
             label: const Text('Atualizar pedidos em lote'),
@@ -486,33 +664,61 @@ class AdminDashboardScreen extends StatelessWidget {
           const SizedBox(height: 24),
           const SectionHeading(title: 'Gestão do sistema'),
           const SizedBox(height: 8),
-          const _ManagementTile(
+          _ManagementTile(
             icon: Icons.inventory_2_outlined,
             title: 'Produtos',
             subtitle: 'Cadastrar, editar e controlar estoque',
+            onTap: () => _open(context, const ProductManagementScreen()),
           ),
-          const _ManagementTile(
+          _ManagementTile(
             icon: Icons.category_outlined,
             title: 'Categorias',
             subtitle: 'Organizar o catálogo',
+            onTap: () => _open(context, const CategoryManagementScreen()),
           ),
-          const _ManagementTile(
+          _ManagementTile(
             icon: Icons.people_outline,
             title: 'Usuários',
             subtitle: 'Consultar, editar e bloquear acessos',
+            onTap: () => _open(context, const UserManagementScreen()),
           ),
-          const _ManagementTile(
+          _ManagementTile(
             icon: Icons.request_quote_outlined,
             title: 'Orçamentos',
             subtitle: 'Analisar e responder solicitações',
+            onTap: () => _open(context, const QuoteManagementScreen()),
           ),
         ],
       ),
     );
   }
 
-  static void _action(BuildContext context, String message) =>
-      showAppSnackBar(context, message);
+  static Future<void> _open(BuildContext context, Widget screen) =>
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+
+  static void _advancePendingOrders(BuildContext context, AppState state) {
+    var updated = 0;
+    for (final order in [...state.orders]) {
+      final next = switch (order.status) {
+        OrderStatus.received => OrderStatus.paymentApproved,
+        OrderStatus.paymentApproved => OrderStatus.preparing,
+        _ => null,
+      };
+      if (next == null) continue;
+      state.updateOrderStatus(
+        order.id,
+        next,
+        note: 'Atualização administrativa em lote.',
+      );
+      updated++;
+    }
+    showAppSnackBar(
+      context,
+      updated == 0
+          ? 'Nenhum pedido aguardava atualização.'
+          : '$updated pedido(s) atualizado(s) com sucesso.',
+    );
+  }
 }
 
 class _MetricCard extends StatelessWidget {
@@ -613,7 +819,9 @@ class _AdminOrder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pending = status == 'Pendente';
+    final pending =
+        status != OrderStatus.delivered.label &&
+        status != OrderStatus.cancelled.label;
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
@@ -646,11 +854,13 @@ class _ManagementTile extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.subtitle,
+    required this.onTap,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -665,10 +875,7 @@ class _ManagementTile extends StatelessWidget {
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
         subtitle: Text(subtitle),
         trailing: const Icon(Icons.chevron_right),
-        onTap: () => showAppSnackBar(
-          context,
-          '$title: módulo disponível para demonstração.',
-        ),
+        onTap: onTap,
       ),
     );
   }
