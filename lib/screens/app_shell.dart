@@ -228,44 +228,48 @@ class _PromoBanner extends StatelessWidget {
                 flex: 6,
                 child: Padding(
                   padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'CHURRASCO DE\nDOMINGO COMEÇA AQUI',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          height: 1.05,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        '10% na primeira compra',
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                      const SizedBox(height: 10),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: const Text(
-                          'PRIMEIRACOMPRA',
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'CHURRASCO DE\nDOMINGO COMEÇA AQUI',
                           style: TextStyle(
-                            color: AppColors.darkRed,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            fontSize: 20,
+                            height: 1.05,
+                            fontWeight: FontWeight.w900,
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 8),
+                        const Text(
+                          '10% na primeira compra',
+                          style: TextStyle(color: Colors.white70),
+                        ),
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: const Text(
+                            'PRIMEIRACOMPRA',
+                            style: TextStyle(
+                              color: AppColors.darkRed,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
