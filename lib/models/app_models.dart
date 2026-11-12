@@ -284,6 +284,7 @@ class CustomerOrder {
     required this.total,
     required this.paymentMethod,
     required this.deliveryAddress,
+    this.customerEmail,
     this.status = OrderStatus.received,
     this.timeline = const [],
   });
@@ -297,6 +298,10 @@ class CustomerOrder {
   final double total;
   final String paymentMethod;
   final Address deliveryAddress;
+
+  /// E-mail (normalizado) do cliente dono do pedido. Nulo em pedidos antigos,
+  /// criados antes de existir esse vínculo; esses só aparecem para a equipe.
+  final String? customerEmail;
   final OrderStatus status;
   final List<OrderTimelineEntry> timeline;
 
@@ -312,6 +317,7 @@ class CustomerOrder {
     double? total,
     String? paymentMethod,
     Address? deliveryAddress,
+    String? customerEmail,
     OrderStatus? status,
     List<OrderTimelineEntry>? timeline,
   }) {
@@ -325,6 +331,7 @@ class CustomerOrder {
       total: total ?? this.total,
       paymentMethod: paymentMethod ?? this.paymentMethod,
       deliveryAddress: deliveryAddress ?? this.deliveryAddress,
+      customerEmail: customerEmail ?? this.customerEmail,
       status: status ?? this.status,
       timeline: timeline ?? this.timeline,
     );
@@ -340,6 +347,7 @@ class CustomerOrder {
     'total': total,
     'paymentMethod': paymentMethod,
     'deliveryAddress': deliveryAddress.toJson(),
+    'customerEmail': customerEmail,
     'status': status.name,
     'timeline': timeline.map((item) => item.toJson()).toList(),
   };
@@ -354,6 +362,7 @@ class CustomerOrder {
     total: (json['total'] as num?)?.toDouble() ?? 0,
     paymentMethod: json['paymentMethod']?.toString() ?? '',
     deliveryAddress: Address.fromJson(_map(json['deliveryAddress'])),
+    customerEmail: json['customerEmail']?.toString(),
     status: _enumByName(
       OrderStatus.values,
       json['status'],

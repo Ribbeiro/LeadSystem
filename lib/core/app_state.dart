@@ -61,8 +61,30 @@ class AppState extends ChangeNotifier {
   List<String> get categories => List.unmodifiable(_categories);
   List<AppUser> get users => List.unmodifiable(_users);
   List<Address> get addresses => List.unmodifiable(_addresses);
+
+  /// Todos os pedidos/orçamentos (uso administrativo).
   List<CustomerOrder> get orders => List.unmodifiable(_orders);
   List<QuoteRequest> get quotes => List.unmodifiable(_quotes);
+
+  /// Pedidos e orçamentos do usuário conectado (área do cliente).
+  List<CustomerOrder> get myOrders {
+    final email = currentUser?.email;
+    if (email == null) return const [];
+    final normalized = _normalizeEmail(email);
+    return List.unmodifiable(
+      _orders.where((order) => order.customerEmail == normalized),
+    );
+  }
+
+  List<QuoteRequest> get myQuotes {
+    final email = currentUser?.email;
+    if (email == null) return const [];
+    final normalized = _normalizeEmail(email);
+    return List.unmodifiable(
+      _quotes.where((quote) => _normalizeEmail(quote.email) == normalized),
+    );
+  }
+
   List<Coupon> get coupons => List.unmodifiable(_coupons);
   List<Campaign> get campaigns => List.unmodifiable(_campaigns);
   List<ChatMessage> get messages => List.unmodifiable(_messages);
@@ -708,6 +730,9 @@ class AppState extends ChangeNotifier {
       total: total,
       paymentMethod: paymentMethod,
       deliveryAddress: deliveryAddress,
+      customerEmail: currentUser == null
+          ? null
+          : _normalizeEmail(currentUser!.email),
       timeline: [
         OrderTimelineEntry(
           status: OrderStatus.received,
@@ -1071,6 +1096,7 @@ class AppState extends ChangeNotifier {
         total: 924.80,
         paymentMethod: 'Pix',
         deliveryAddress: address,
+        customerEmail: 'carlos@email.com',
         status: OrderStatus.shipped,
         timeline: [
           OrderTimelineEntry(
@@ -1111,6 +1137,7 @@ class AppState extends ChangeNotifier {
         total: 249.90,
         paymentMethod: 'Cartão',
         deliveryAddress: address,
+        customerEmail: 'carlos@email.com',
         status: OrderStatus.delivered,
         timeline: [
           OrderTimelineEntry(

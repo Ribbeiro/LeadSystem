@@ -406,14 +406,19 @@ class CatalogScreen extends StatefulWidget {
 
 class _CatalogScreenState extends State<CatalogScreen> {
   final TextEditingController _searchController = TextEditingController();
-  bool _initialized = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!_initialized) {
-      _searchController.text = AppScope.of(context).searchQuery;
-      _initialized = true;
+    // A busca pode ser alterada fora desta tela (ex.: campo da Home). O
+    // catálogo fica vivo no IndexedStack, então sincronizamos o campo sempre
+    // que o termo do estado divergir do texto exibido.
+    final query = AppScope.of(context).searchQuery;
+    if (_searchController.text != query) {
+      _searchController.value = TextEditingValue(
+        text: query,
+        selection: TextSelection.collapsed(offset: query.length),
+      );
     }
   }
 
@@ -615,7 +620,7 @@ class OrdersScreen extends StatelessWidget {
               : ListView(
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
                   children: [
-                    if (state.orders.isEmpty && state.quotes.isEmpty)
+                    if (state.myOrders.isEmpty && state.myQuotes.isEmpty)
                       const Padding(
                         padding: EdgeInsets.only(top: 80),
                         child: EmptyState(
@@ -625,7 +630,7 @@ class OrdersScreen extends StatelessWidget {
                               'Seus pedidos e solicitações de orçamento aparecerão aqui.',
                         ),
                       ),
-                    ...state.orders.map(
+                    ...state.myOrders.map(
                       (order) => Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: _OrderCard(
@@ -644,7 +649,7 @@ class OrdersScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (state.quotes.isNotEmpty) ...[
+                    if (state.myQuotes.isNotEmpty) ...[
                       const SizedBox(height: 12),
                       const Text(
                         'Orçamentos',
@@ -654,7 +659,7 @@ class OrdersScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      ...state.quotes.map(
+                      ...state.myQuotes.map(
                         (quote) => Card(
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
