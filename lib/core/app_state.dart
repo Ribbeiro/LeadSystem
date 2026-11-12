@@ -12,6 +12,7 @@ import '../data/santigrill_catalog.dart';
 import '../models/app_models.dart';
 import '../models/product.dart';
 import 'api_client.dart';
+import 'background_sync.dart';
 
 part 'app_state_sync.dart';
 
@@ -38,6 +39,10 @@ class AppState extends ChangeNotifier {
   final Set<String> _knownRemoteIds = {};
   Future<void>? _syncRun;
   bool _syncAgain = false;
+
+  /// Modo demonstração da API: link da caixa de teste (Ethereal) com o
+  /// e-mail do código de senha.
+  String? passwordEmailPreviewUrl;
 
   /// URL da API em uso (null = modo offline, só no aparelho).
   String? apiUrl;

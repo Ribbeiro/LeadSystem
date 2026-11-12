@@ -27,7 +27,7 @@ class NotificationService {
     color: Color(0xFFD10D0D),
   );
 
-  Future<void> init() async {
+  Future<void> init({bool requestPermission = true}) async {
     if (_ready || kIsWeb) return;
     try {
       await _plugin.initialize(
@@ -36,11 +36,13 @@ class NotificationService {
           iOS: DarwinInitializationSettings(),
         ),
       );
-      await _plugin
-          .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin
-          >()
-          ?.requestNotificationsPermission();
+      if (requestPermission) {
+        await _plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >()
+            ?.requestNotificationsPermission();
+      }
       _ready = true;
     } catch (error) {
       debugPrint('Notificações indisponíveis: $error');

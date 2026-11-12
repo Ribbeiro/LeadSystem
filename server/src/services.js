@@ -6,28 +6,46 @@ const config = require('./config');
 let transport;
 
 /**
- * Envia e-mail via SMTP (configurado no .env). Sem SMTP configurado, a
- * mensagem é registrada no console — útil em desenvolvimento e na
- * apresentação, sem enviar nada para fora.
+ * Envia e-mail. Modos (config.mailMode):
+ * - smtp: servidor SMTP do .env (ex.: Gmail com senha de app);
+ * - ethereal: caixa de teste gratuita do nodemailer, criada na hora e sem
+ *   cadastro; devolve previewUrl para abrir o e-mail no navegador;
+ * - console: apenas registra no console (padrão sem configuração).
  */
 async function sendMail({ to, subject, text }) {
-  if (!config.smtp.host) {
+  sendMail.outbox.push({ to, subject, text });
+  if (config.mailMode === 'console') {
     if (!config.isTest) {
-      console.info(`[e-mail simulado] Para: ${to}\nAssunto: ${subject}\n${text}`);
+      console.info(`[e-mail simulado] Para: ${to}
+Assunto: ${subject}
+${text}`);
     }
-    sendMail.outbox.push({ to, subject, text });
     return { simulated: true };
   }
-  transport ??= nodemailer.createTransport({
-    host: config.smtp.host,
-    port: config.smtp.port,
-    secure: config.smtp.secure,
-    auth: config.smtp.user
-      ? { user: config.smtp.user, pass: config.smtp.pass }
-      : undefined,
-  });
-  await transport.sendMail({ from: config.smtp.from, to, subject, text });
-  return { simulated: false };
+  if (!transport) {
+    if (config.mailMode === 'ethereal') {
+      const account = await nodemailer.createTestAccount();
+      transport = nodemailer.createTransport({
+        host: account.smtp.host,
+        port: account.smtp.port,
+        secure: account.smtp.secure,
+        auth: { user: account.user, pass: account.pass },
+      });
+    } else {
+      transport = nodemailer.createTransport({
+        host: config.smtp.host,
+        port: config.smtp.port,
+        secure: config.smtp.secure,
+        auth: config.smtp.user
+          ? { user: config.smtp.user, pass: config.smtp.pass }
+          : undefined,
+      });
+    }
+  }
+  const info = await transport.sendMail({ from: config.smtp.from, to, subject, text });
+  const previewUrl = nodemailer.getTestMessageUrl(info) || undefined;
+  if (previewUrl) console.info(`[e-mail de teste] ${subject} -> ver em ${previewUrl}`);
+  return { simulated: false, previewUrl };
 }
 sendMail.outbox = [];
 

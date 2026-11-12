@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/app_state.dart';
 import '../core/app_theme.dart';
+import '../core/external_links.dart';
 import '../models/app_models.dart';
 import '../models/product.dart';
 import '../widgets/shared.dart';
@@ -330,6 +331,20 @@ class _PasswordResetDialogState extends State<PasswordResetDialog> {
                 },
               ),
             ],
+            if (online &&
+                _codeSent &&
+                AppScope.of(context).passwordEmailPreviewUrl != null)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: () => ExternalLinks.url(
+                    context,
+                    AppScope.of(context).passwordEmailPreviewUrl!,
+                  ),
+                  icon: const Icon(Icons.mark_email_read_outlined),
+                  label: const Text('Abrir e-mail de teste'),
+                ),
+              ),
             if (online && _codeSent)
               Align(
                 alignment: Alignment.centerLeft,

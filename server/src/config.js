@@ -23,6 +23,13 @@ module.exports = {
   catalogPath:
     env.CATALOG_PATH ||
     path.join(__dirname, '..', '..', 'assets', 'data', 'santigrill.json'),
+  // 'smtp' (padrão com SMTP_HOST), 'ethereal' (caixa de teste gratuita, sem
+  // cadastro) ou 'console'. Ethereal é bloqueado em produção.
+  mailMode: env.SMTP_HOST
+    ? 'smtp'
+    : isProduction || isTest
+      ? 'console'
+      : env.MAIL_MODE || 'console',
   smtp: {
     host: env.SMTP_HOST,
     port: Number(env.SMTP_PORT || 587),

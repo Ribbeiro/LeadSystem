@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'core/app_state.dart';
 import 'core/app_theme.dart';
+import 'core/background_sync.dart';
 import 'core/notification_service.dart';
 import 'screens/app_shell.dart';
 
@@ -10,6 +11,8 @@ Future<void> main() async {
   final state = await AppState.initialize();
   await NotificationService.instance.init();
   state.onSystemNotification = NotificationService.instance.show;
+  // Avisos com o app fechado (Android): consulta a API a cada ~15 min.
+  await BackgroundSync.register();
   runApp(LeadSystemApp(state: state));
 }
 

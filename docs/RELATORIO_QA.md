@@ -89,14 +89,16 @@ Também entraram: excluir conta de usuário (RF14), selo de pedido pendente/recu
 
 Bugs encontrados nesta etapa: o checkout offline notificava o estado durante a construção da tela; sincronizações simultâneas descartavam a segunda chamada; o merge de orçamentos apagava orçamentos ainda não enviados; o estado podia ser notificado após o descarte; e o APK de release não tinha a permissão de INTERNET. Todos corrigidos e cobertos por teste.
 
-## 6. Pendências e decisões suas
+## 6. Sem depender da SantiGrill (alternativas gratuitas)
 
-- **Push com o app fechado**: exige um projeto Firebase (FCM) da SantiGrill.
-- **Correios**: exige contrato e credenciais. Sem eles, o frete é estimado.
-- **SMTP**: exige uma conta de e-mail de envio (ex.: vendas@santigrill.com.br) para o código de senha.
-- **Hospedagem da API** com HTTPS (Render, Railway ou VPS) e MongoDB Atlas, para uso fora da rede local.
-- Cupons e campanhas continuam sendo gerenciados só no aparelho.
-- O token de sessão fica no armazenamento do app; para produção, recomenda-se `flutter_secure_storage`.
+| Antes dependia de | Solução gratuita adotada | Limitação |
+|---|---|---|
+| Firebase (push) | Verificação em segundo plano do Android (WorkManager) a cada ~15 min | Intervalo mínimo de 15 min; no iOS, só com o app aberto |
+| Contrato dos Correios | Estimativa PAC/SEDEX por região, sinalizada; integração oficial pronta para o futuro | Valor aproximado |
+| Conta de e-mail (SMTP) | Caixa de teste Ethereal (sem cadastro), com link no app | E-mails não chegam a caixas reais |
+| Hospedagem com HTTPS | `npm run demo` (MongoDB local, sem Docker) + `npm run demo:tunnel` (Cloudflare, sem conta) | O computador precisa ficar ligado; o endereço muda a cada execução |
+
+Verificado nesta máquina: `npm run demo` subiu o MongoDB local, e o e-mail de recuperação foi entregue na caixa Ethereal com o código. O túnel não foi aberto daqui, porque a exposição pública precisa da sua autorização. Basta rodar `npm run demo:tunnel`.
 
 ## 7. Pendências da primeira etapa (atualizadas)
 

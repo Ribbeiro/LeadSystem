@@ -181,6 +181,7 @@ extension AppStateSync on AppState {
         'email': AppState._normalizeEmail(email),
       });
       lastAuthMessage = data['message']?.toString();
+      passwordEmailPreviewUrl = data['previewUrl']?.toString();
       _notify();
       return true;
     } on ApiException catch (error) {
@@ -421,13 +422,26 @@ extension AppStateSync on AppState {
 
     if (_apiToken == null || currentUser == null) return;
     final scope = isAdmin ? {'scope': 'all'} : null;
+    // Status já avisados pela verificação em segundo plano (app fechado).
+    final preferences = _preferences;
+    var seen = const <String, String>{};
+    if (preferences != null) {
+      await preferences.reload();
+      seen = BackgroundSync.readSeen(preferences);
+    }
     final remoteOrders = [
       for (final raw in _asList(
         (await api.get('/api/orders', query: scope))['data'],
       ))
         _orderFromServer(AppState._asMap(raw)),
     ];
-    _mergeOrders(remoteOrders);
+    _mergeOrders(remoteOrders, seen);
+    if (preferences != null) {
+      await BackgroundSync.writeSeen(preferences, [
+        for (final order in remoteOrders)
+          {'id': order.id, 'status': order.status.name},
+      ]);
+    }
 
     final remoteQuotes = [
       for (final raw in _asList(
@@ -448,7 +462,10 @@ extension AppStateSync on AppState {
     }
   }
 
-  void _mergeOrders(List<CustomerOrder> remote) {
+  void _mergeOrders(
+    List<CustomerOrder> remote, [
+    Map<String, String> seen = const {},
+  ]) {
     final previous = {for (final order in _orders) order.id: order};
     final remoteClientIds = {
       for (final order in remote)
@@ -463,7 +480,11 @@ extension AppStateSync on AppState {
       final mine =
           order.customerEmail != null &&
           order.customerEmail == currentUser?.email;
-      if (mine && old != null && old.status != order.status) {
+      final alreadyNotified = seen[order.id] == order.status.name;
+      if (mine &&
+          old != null &&
+          old.status != order.status &&
+          !alreadyNotified) {
         if (orderNotifications) {
           _addNotification(
             title: order.status.label,
@@ -471,7 +492,10 @@ extension AppStateSync on AppState {
             category: 'order',
           );
         }
-      } else if (isAdmin && knew && !_knownRemoteIds.contains(order.id)) {
+      } else if (isAdmin &&
+          knew &&
+          !_knownRemoteIds.contains(order.id) &&
+          !seen.containsKey(order.id)) {
         if (orderNotifications) {
           _addNotification(
             title: 'Novo pedido',

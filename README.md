@@ -76,40 +76,51 @@ A pasta `ios` já faz parte do mesmo projeto. O código Dart e as funcionalidade
 
 ## API e MongoDB (sincronização entre aparelhos)
 
-O app funciona sozinho no aparelho (modo offline). Conectado à API da pasta `server/`, os pedidos do cliente chegam ao painel do admin, as mudanças de status viram notificação, a senha é recuperada por código enviado por e-mail e as fotos de produtos ficam no servidor.
+O app funciona sozinho no aparelho (modo offline). Conectado à API da pasta `server/`, os pedidos do cliente chegam ao painel do admin, as mudanças de status viram notificação (inclusive com o app fechado), a senha é recuperada por código enviado por e-mail e as fotos dos produtos ficam no servidor.
 
-1. Suba o MongoDB (Docker Desktop aberto):
+Tudo roda **de graça, sem Docker e sem criar conta em nenhum serviço**.
 
-   ```powershell
-   cd server
-   docker compose up -d
-   ```
+### Modo demonstração (recomendado para testar e apresentar)
 
-   Sem Docker, use um MongoDB Atlas gratuito e coloque a URL em `MONGODB_URI`.
+```powershell
+cd server
+npm install
+npm run demo
+```
 
-2. Configure e inicie a API:
+O comando:
 
-   ```powershell
-   copy .env.example .env
-   npm install
-   npm run dev
-   ```
+- sobe um **MongoDB local** (o binário oficial é baixado na primeira vez, cerca de 70 MB) com os dados salvos em `server/.data`;
+- carrega os 24 produtos reais e as contas `leandro@email.com` / `Santi@2026` (admin) e `carlos@email.com` / `Cliente@2026` (cliente);
+- envia os e-mails para uma **caixa de teste Ethereal**, gratuita e sem cadastro. O link para abrir o e-mail (com o código de senha) aparece no console e no próprio app;
+- mostra os endereços para colar no app em **Perfil › Servidor e sincronização**: `http://10.0.2.2:3000` no emulador ou `http://IP-DO-COMPUTADOR:3000` no celular, na mesma rede Wi-Fi.
 
-   Na primeira execução, o banco recebe os 24 produtos de `assets/data/santigrill.json`, o cupom de demonstração e as contas `leandro@email.com` (admin) e `carlos@email.com` (cliente).
+**Acesso de qualquer rede, com HTTPS:**
 
-3. Conecte o app: **Perfil › Servidor e sincronização**, informe `http://10.0.2.2:3000` no emulador Android ou `http://IP-DO-COMPUTADOR:3000` no celular (mesma rede Wi-Fi). Também é possível compilar já apontando para a API:
+```powershell
+npm run demo:tunnel
+```
 
-   ```powershell
-   flutter run --dart-define=API_URL=http://10.0.2.2:3000
-   ```
+Abre um túnel gratuito da Cloudflare (`https://xxxx.trycloudflare.com`), sem conta. O endereço muda a cada execução e só funciona enquanto o computador estiver ligado, o que basta para a apresentação.
 
-Configurações opcionais no `.env`:
+### Notificações com o app fechado
 
-- **E-mail (SMTP_*)**: envia o código de recuperação de senha e os avisos de pedido. Sem SMTP, as mensagens aparecem no console da API.
-- **Correios (CORREIOS_*)**: cotação oficial de frete. Exige contrato com os Correios; sem ele, o app mostra a estimativa por região, sinalizada como "estimativa".
+No Android, o app agenda uma verificação em segundo plano (WorkManager) que consulta a API a cada ~15 minutos e avisa sobre mudança de status, ou sobre pedido novo para o admin. Não usa Firebase. O intervalo mínimo do Android é 15 minutos; com o app aberto, a sincronização ocorre a cada 30 segundos.
 
-Testes da API (MongoDB em memória, não precisa de Docker): `npm test`.
-Teste de ponta a ponta app + API: `node scripts/e2e-server.js 3999` e, em outro terminal, `E2E_API_URL=http://127.0.0.1:3999 flutter test test/e2e_api_test.dart`.
+### Frete
+
+A API tem integração pronta com os Correios, mas a cotação oficial exige contrato pago. Sem ele, o app mostra uma **estimativa** PAC/SEDEX por região, sinalizada na tela. O endereço é preenchido pelo CEP (ViaCEP, gratuito).
+
+### Outras formas de rodar (opcional)
+
+- **MongoDB com Docker**: `docker compose up -d` e depois `npm run dev`, com o `.env` copiado de `.env.example`.
+- **E-mail de verdade**: preencha `SMTP_*` no `.env`, por exemplo Gmail com "senha de app".
+- **Hospedagem permanente gratuita**: Render (API) e MongoDB Atlas M0 (banco) aceitam este projeto sem alterações, mas exigem que você crie as contas.
+
+### Testes
+
+- API (MongoDB em memória): `npm test`
+- Ponta a ponta, app + API: `node scripts/e2e-server.js 3999` e, em outro terminal, `E2E_API_URL=http://127.0.0.1:3999 flutter test test/e2e_api_test.dart`
 
 ## Vídeo da primeira entrega
 

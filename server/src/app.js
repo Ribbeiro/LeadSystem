@@ -195,6 +195,7 @@ function createApp() {
     asyncRoute(async (req, res) => {
       const email = normalizeEmail(req.body?.email);
       const user = validEmail(email) ? await User.findOne({ email }) : null;
+      let previewUrl;
       if (user && !user.blocked) {
         const code = String(crypto.randomInt(0, 1_000_000)).padStart(6, '0');
         await PasswordReset.deleteMany({ user: user._id });
@@ -203,7 +204,7 @@ function createApp() {
           codeHash: await bcrypt.hash(code, 8),
           expiresAt: new Date(Date.now() + 15 * 60 * 1000),
         });
-        await sendMail({
+        const sent = await sendMail({
           to: user.email,
           subject: 'Código para redefinir sua senha - SantiGrill',
           text:
@@ -211,9 +212,13 @@ function createApp() {
             `Seu código para redefinir a senha no app SantiGrill é: ${code}\n\n` +
             'Ele vale por 15 minutos. Se você não pediu a troca, ignore este e-mail.',
         });
+        previewUrl = sent.previewUrl;
       }
       res.json({
         message: 'Se o e-mail estiver cadastrado, enviaremos um código em instantes.',
+        // Somente no modo demonstração (caixa de teste Ethereal, nunca em
+        // produção): link para abrir o e-mail de teste e ver o código.
+        ...(config.mailMode === 'ethereal' && previewUrl ? { previewUrl } : {}),
       });
     }),
   );
