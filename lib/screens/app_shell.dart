@@ -64,8 +64,9 @@ class AppShell extends StatelessWidget {
 }
 
 void _openCart(BuildContext context) {
-  Navigator.of(context)
-      .push(MaterialPageRoute(builder: (_) => const CartScreen()));
+  Navigator.of(
+    context,
+  ).push(MaterialPageRoute(builder: (_) => const CartScreen()));
 }
 
 void _openProduct(BuildContext context, Product product) {
@@ -600,7 +601,8 @@ class OrdersScreen extends StatelessWidget {
               ? EmptyState(
                   icon: Icons.lock_outline,
                   title: 'Entre para ver seus pedidos',
-                  description: 'Seu histórico, rastreamento e orçamentos ficam protegidos na sua conta.',
+                  description:
+                      'Seu histórico, rastreamento e orçamentos ficam protegidos na sua conta.',
                   actionLabel: 'Entrar',
                   onAction: () => Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -615,7 +617,8 @@ class OrdersScreen extends StatelessWidget {
                         child: EmptyState(
                           icon: Icons.receipt_long_outlined,
                           title: 'Nenhum pedido ainda',
-                          description: 'Seus pedidos e solicitações de orçamento aparecerão aqui.',
+                          description:
+                              'Seus pedidos e solicitações de orçamento aparecerão aqui.',
                         ),
                       ),
                     ...state.orders.map(
@@ -1046,17 +1049,20 @@ const _faqEntries = <_FaqData>[
   _FaqData(
     title: 'Entrega e frete',
     subtitle: 'Prazo, CEP e rastreio',
-    answer: 'Informe o CEP na página do produto para ver o prazo. Depois da compra, abra Meus pedidos e toque em Acompanhar pedido para consultar cada etapa.',
+    answer:
+        'Informe o CEP na página do produto para ver o prazo. Depois da compra, abra Meus pedidos e toque em Acompanhar pedido para consultar cada etapa.',
   ),
   _FaqData(
     title: 'Pagamento',
     subtitle: 'Pix, cartão e boleto',
-    answer: 'O Pix é aprovado imediatamente. O cartão pode ser parcelado em até 6 vezes e o boleto vence em dois dias úteis.',
+    answer:
+        'O Pix é aprovado imediatamente. O cartão pode ser parcelado em até 6 vezes e o boleto vence em dois dias úteis.',
   ),
   _FaqData(
     title: 'Trocas e garantia',
     subtitle: 'Prazos e condições',
-    answer: 'Você pode solicitar troca em até 7 dias após o recebimento. A garantia varia por produto e aparece nas especificações do catálogo.',
+    answer:
+        'Você pode solicitar troca em até 7 dias após o recebimento. A garantia varia por produto e aparece nas especificações do catálogo.',
   ),
 ];
 
@@ -1231,13 +1237,15 @@ class ProfileScreen extends StatelessWidget {
 
   static Future<void> _openAccount(BuildContext context, AppState state) async {
     if (!state.loggedIn) {
-      await Navigator.of(context)
-          .push(MaterialPageRoute(builder: (_) => const LoginScreen()));
+      await Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const LoginScreen()));
       return;
     }
     if (!context.mounted) return;
-    await Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => const AccountSecurityScreen()));
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const AccountSecurityScreen()));
   }
 
   static Future<void> _openProtected(
@@ -1246,8 +1254,9 @@ class ProfileScreen extends StatelessWidget {
     Widget screen,
   ) async {
     if (!state.loggedIn) {
-      await Navigator.of(context)
-          .push(MaterialPageRoute(builder: (_) => const LoginScreen()));
+      await Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const LoginScreen()));
       if (!context.mounted || !state.loggedIn) return;
     }
     if (!context.mounted) return;
@@ -1256,8 +1265,9 @@ class ProfileScreen extends StatelessWidget {
 
   static Future<void> _openAdmin(BuildContext context, AppState state) async {
     if (!state.isAdmin) {
-      await Navigator.of(context)
-          .push(MaterialPageRoute(builder: (_) => const LoginScreen()));
+      await Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const LoginScreen()));
     }
     if (!context.mounted) return;
     if (!state.isAdmin) {
@@ -1267,8 +1277,9 @@ class ProfileScreen extends StatelessWidget {
       );
       return;
     }
-    await Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => const AdminDashboardScreen()));
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const AdminDashboardScreen()));
   }
 }
 

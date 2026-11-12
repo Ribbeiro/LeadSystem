@@ -258,7 +258,8 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     final confirmed = await _confirmDelete(
       context,
       title: 'Excluir ${product.shortName}?',
-      description: 'O produto será removido do catálogo. Pedidos já registrados continuarão preservados.',
+      description:
+          'O produto será removido do catálogo. Pedidos já registrados continuarão preservados.',
     );
     if (!confirmed || !context.mounted) return;
     final removed = AppScope.of(context).removeProduct(product.id);
@@ -877,7 +878,8 @@ class CouponManagementScreen extends StatelessWidget {
                                     final confirmed = await _confirmDelete(
                                       context,
                                       title: 'Excluir ${coupon.code}?',
-                                      description: 'O código deixará de ser aceito imediatamente no carrinho.',
+                                      description:
+                                          'O código deixará de ser aceito imediatamente no carrinho.',
                                     );
                                     if (confirmed && context.mounted) {
                                       final removed = state.removeCoupon(
@@ -1218,7 +1220,9 @@ class CampaignManagementScreen extends StatelessWidget {
                                     );
                                     showAppSnackBar(
                                       context,
-                                      removed ? 'Campanha excluída.' : 'Não foi possível excluir a campanha.',
+                                      removed
+                                          ? 'Campanha excluída.'
+                                          : 'Não foi possível excluir a campanha.',
                                     );
                                   }
                                 }
@@ -1331,7 +1335,8 @@ class _CampaignFormScreenState extends State<CampaignFormScreen> {
           children: [
             const _AdminFormHeading(
               title: 'Comunicação da campanha',
-              subtitle: 'A mensagem fica salva e pode ser pausada a qualquer momento.',
+              subtitle:
+                  'A mensagem fica salva e pode ser pausada a qualquer momento.',
             ),
             const SizedBox(height: 14),
             TextFormField(
@@ -2076,8 +2081,9 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
                   return ListTile(
                     leading: CircleAvatar(
                       radius: 15,
-                      backgroundColor: _orderColor(entry.status)
-                          .withValues(alpha: .12),
+                      backgroundColor: _orderColor(
+                        entry.status,
+                      ).withValues(alpha: .12),
                       foregroundColor: _orderColor(entry.status),
                       child: const Icon(Icons.check, size: 16),
                     ),

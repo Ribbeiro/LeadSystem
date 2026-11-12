@@ -109,7 +109,8 @@ const demoProducts = <Product>[
     name: 'Churrasqueira Premium Aço',
     shortName: 'Churrasqueira Premium',
     category: 'Churrasqueiras',
-    description: 'Churrasqueira em aço inox com tampa, termômetro e cinco níveis de grelha para um churrasco preciso.',
+    description:
+        'Churrasqueira em aço inox com tampa, termômetro e cinco níveis de grelha para um churrasco preciso.',
     price: 899.90,
     rating: 4.8,
     reviewCount: 127,
@@ -128,7 +129,8 @@ const demoProducts = <Product>[
     name: 'Espeto Giratório 4 Hastes',
     shortName: 'Espeto Giratório 4 hastes',
     category: 'Espetos',
-    description: 'Conjunto giratório em aço inox com quatro hastes e motor bivolt de baixo ruído.',
+    description:
+        'Conjunto giratório em aço inox com quatro hastes e motor bivolt de baixo ruído.',
     price: 249.90,
     rating: 4.7,
     reviewCount: 84,
@@ -146,7 +148,8 @@ const demoProducts = <Product>[
     name: 'Grelha Dupla Ferro Fundido',
     shortName: 'Grelha Ferro Fundido',
     category: 'Grelhas',
-    description: 'Chapa dupla de ferro fundido com alças térmicas, ideal para carnes, legumes e acompanhamentos.',
+    description:
+        'Chapa dupla de ferro fundido com alças térmicas, ideal para carnes, legumes e acompanhamentos.',
     price: 129.90,
     rating: 4.9,
     reviewCount: 96,
@@ -164,7 +167,8 @@ const demoProducts = <Product>[
     name: 'Kit Churrasco Profissional',
     shortName: 'Kit Churrasco Pro',
     category: 'Kits',
-    description: 'Kit completo com espátula, pegador, garfo e pincel em estojo resistente para transporte.',
+    description:
+        'Kit completo com espátula, pegador, garfo e pincel em estojo resistente para transporte.',
     price: 189.90,
     rating: 4.6,
     reviewCount: 63,

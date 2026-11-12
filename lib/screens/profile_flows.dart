@@ -26,7 +26,8 @@ class FavoritesScreen extends StatelessWidget {
           ? const EmptyState(
               icon: Icons.favorite_border_rounded,
               title: 'Nenhum favorito ainda',
-              description: 'Toque no coração de um produto para encontrá-lo rapidamente aqui.',
+              description:
+                  'Toque no coração de um produto para encontrá-lo rapidamente aqui.',
             )
           : ListView.separated(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
@@ -847,7 +848,8 @@ class NotificationsScreen extends StatelessWidget {
                 child: EmptyState(
                   icon: Icons.notifications_none_rounded,
                   title: 'Tudo tranquilo por aqui',
-                  description: 'As atualizações de pedidos e atendimento aparecerão nesta área.',
+                  description:
+                      'As atualizações de pedidos e atendimento aparecerão nesta área.',
                 ),
               ),
             )
@@ -1054,7 +1056,8 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
         body: EmptyState(
           icon: Icons.lock_person_outlined,
           title: 'Entre para gerenciar sua conta',
-          description: 'Seus dados pessoais e opções de segurança ficam disponíveis após o login.',
+          description:
+              'Seus dados pessoais e opções de segurança ficam disponíveis após o login.',
           actionLabel: 'Voltar ao perfil',
           onAction: () => Navigator.of(context).pop(),
         ),
@@ -1139,7 +1142,8 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
                 labelText: 'E-mail da conta',
                 prefixIcon: Icon(Icons.email_outlined),
                 suffixIcon: Icon(Icons.lock_outline, size: 18),
-                helperText: 'O e-mail identifica sua conta e não pode ser alterado aqui.',
+                helperText:
+                    'O e-mail identifica sua conta e não pode ser alterado aqui.',
               ),
             ),
             const SizedBox(height: 10),
@@ -1453,32 +1457,38 @@ class PrivacyPolicyScreen extends StatelessWidget {
           _PolicySection(
             number: '1',
             title: 'Dados coletados',
-            text: 'O LeadSystem utiliza os dados informados no cadastro, como nome, e-mail e telefone, além dos endereços necessários para entrega. Também são registrados itens do carrinho, pedidos, orçamentos, preferências e mensagens enviadas ao atendimento.',
+            text:
+                'O LeadSystem utiliza os dados informados no cadastro, como nome, e-mail e telefone, além dos endereços necessários para entrega. Também são registrados itens do carrinho, pedidos, orçamentos, preferências e mensagens enviadas ao atendimento.',
           ),
           _PolicySection(
             number: '2',
             title: 'Como usamos as informações',
-            text: 'Os dados são usados para autenticar sua conta, processar compras e orçamentos, organizar entregas, prestar atendimento e enviar as notificações escolhidas por você. Não utilizamos informações pessoais para finalidades incompatíveis com esses serviços.',
+            text:
+                'Os dados são usados para autenticar sua conta, processar compras e orçamentos, organizar entregas, prestar atendimento e enviar as notificações escolhidas por você. Não utilizamos informações pessoais para finalidades incompatíveis com esses serviços.',
           ),
           _PolicySection(
             number: '3',
             title: 'Compartilhamento',
-            text: 'Informações são compartilhadas somente quando necessárias à operação do serviço, por exemplo com meios de pagamento e parceiros de entrega. O projeto não comercializa dados pessoais.',
+            text:
+                'Informações são compartilhadas somente quando necessárias à operação do serviço, por exemplo com meios de pagamento e parceiros de entrega. O projeto não comercializa dados pessoais.',
           ),
           _PolicySection(
             number: '4',
             title: 'Armazenamento e segurança',
-            text: 'Aplicamos medidas de acesso, validação e proteção compatíveis com a finalidade acadêmica do sistema. Senhas não devem ser exibidas em texto simples e o acesso administrativo é separado do acesso do cliente.',
+            text:
+                'Aplicamos medidas de acesso, validação e proteção compatíveis com a finalidade acadêmica do sistema. Senhas não devem ser exibidas em texto simples e o acesso administrativo é separado do acesso do cliente.',
           ),
           _PolicySection(
             number: '5',
             title: 'Seus direitos',
-            text: 'Você pode consultar e corrigir seus dados nesta área, ajustar notificações e solicitar esclarecimentos sobre o tratamento das informações. Pedidos de exclusão serão avaliados conforme as obrigações de conservação aplicáveis.',
+            text:
+                'Você pode consultar e corrigir seus dados nesta área, ajustar notificações e solicitar esclarecimentos sobre o tratamento das informações. Pedidos de exclusão serão avaliados conforme as obrigações de conservação aplicáveis.',
           ),
           _PolicySection(
             number: '6',
             title: 'Contato',
-            text: 'Dúvidas sobre privacidade podem ser encaminhadas pela área Ajuda e atendimento do aplicativo. A equipe registrará a solicitação e apresentará um retorno ao usuário.',
+            text:
+                'Dúvidas sobre privacidade podem ser encaminhadas pela área Ajuda e atendimento do aplicativo. A equipe registrará a solicitação e apresentará um retorno ao usuário.',
           ),
           SizedBox(height: 6),
           Center(

@@ -9,8 +9,9 @@ const app = express();
 const port = Number(process.env.PORT || 3000);
 const mongoUri = process.env.MONGODB_URI;
 
+app.disable('x-powered-by');
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '100kb' }));
 
 const products = [
   {
@@ -67,36 +68,46 @@ app.get('/api/products', (request, response) => {
 });
 
 app.post('/api/auth/login', (request, response) => {
-  const { email, password } = request.body;
+  const { email, password } = request.body ?? {};
   if (!email || !password) {
     return response.status(400).json({ message: 'E-mail e senha são obrigatórios.' });
   }
-  return response.json({
-    token: 'demo-token',
-    user: { id: 'USR-001', name: 'Leandro Gonçalves', email, role: 'client' },
-  });
+  // A autenticação real ainda não está implementada no servidor: o app valida localmente.
+  return response.status(501).json({ message: 'Autenticação no servidor ainda não disponível.' });
 });
 
 app.post('/api/orders', (request, response) => {
-  const { items, total, payment } = request.body;
+  const { items, payment } = request.body ?? {};
   if (!Array.isArray(items) || items.length === 0) {
     return response.status(400).json({ message: 'Inclua ao menos um item.' });
   }
+  let total = 0;
+  for (const item of items) {
+    const product = products.find((candidate) => candidate.id === item?.productId);
+    const quantity = Number(item?.quantity);
+    if (!product || !Number.isInteger(quantity) || quantity < 1 || quantity > product.stock) {
+      return response.status(400).json({ message: 'Item inválido ou sem estoque suficiente.' });
+    }
+    total += product.price * quantity;
+  }
   return response.status(201).json({
-    id: 'SG-2026-0148',
+    id: `SG-${Date.now()}`,
     status: 'received',
-    total,
-    payment,
-    estimatedDelivery: '2026-09-14',
+    total: Math.round(total * 100) / 100,
+    payment: String(payment ?? ''),
   });
 });
 
 app.post('/api/quotes', (request, response) => {
-  const { productId, contact } = request.body;
+  const { productId, contact } = request.body ?? {};
   if (!productId || !contact) {
     return response.status(400).json({ message: 'Produto e contato são obrigatórios.' });
   }
-  return response.status(201).json({ id: 'ORC-2026-0085', status: 'pending' });
+  return response.status(201).json({ id: `ORC-${Date.now()}`, status: 'pending' });
+});
+
+app.use((_request, response) => {
+  response.status(404).json({ message: 'Rota não encontrada.' });
 });
 
 app.use((error, _request, response, _next) => {

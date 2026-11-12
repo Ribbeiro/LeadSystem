@@ -272,8 +272,7 @@ class AppState extends ChangeNotifier {
         break;
       }
     }
-    if (user == null ||
-        user.passwordHash != _hashPassword(normalized, password)) {
+    if (user == null || !_passwordMatches(user, normalized, password)) {
       lastAuthMessage = 'E-mail ou senha incorretos.';
       notifyListeners();
       return false;
@@ -357,7 +356,8 @@ class AppState extends ChangeNotifier {
       return false;
     }
     if (!_validPassword(newPassword)) {
-      lastAuthMessage = 'A nova senha deve ter 8 caracteres, uma letra maiúscula e um número.';
+      lastAuthMessage =
+          'A nova senha deve ter 8 caracteres, uma letra maiúscula e um número.';
       notifyListeners();
       return false;
     }
@@ -380,7 +380,7 @@ class AppState extends ChangeNotifier {
       notifyListeners();
       return false;
     }
-    if (user.passwordHash != _hashPassword(user.email, currentPassword)) {
+    if (!_passwordMatches(user, user.email, currentPassword)) {
       lastAuthMessage = 'A senha atual está incorreta.';
       notifyListeners();
       return false;
@@ -1371,7 +1371,19 @@ class AppState extends ChangeNotifier {
       RegExp(r'\d').hasMatch(value);
 
   static String _hashPassword(String email, String password) {
-    return sha256.convert(utf8.encode('leadsystem-v1|$password')).toString();
+    final salt = _normalizeEmail(email);
+    return sha256
+        .convert(utf8.encode('leadsystem-v2|$salt|$password'))
+        .toString();
+  }
+
+  /// Aceita também o hash legado (v1, sem sal) de dados já salvos no aparelho.
+  static bool _passwordMatches(AppUser user, String email, String password) {
+    final legacy = sha256
+        .convert(utf8.encode('leadsystem-v1|$password'))
+        .toString();
+    return user.passwordHash == _hashPassword(email, password) ||
+        user.passwordHash == legacy;
   }
 
   static Map<String, Object?> _asMap(Object? value) {

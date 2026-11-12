@@ -45,8 +45,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             label: Text('${state.cartCount}'),
             child: IconButton(
               tooltip: 'Carrinho',
-              onPressed: () => Navigator.of(context)
-                  .push(MaterialPageRoute(builder: (_) => const CartScreen())),
+              onPressed: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const CartScreen())),
               icon: const Icon(Icons.shopping_bag_outlined),
             ),
           ),
@@ -290,8 +291,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   void _calculateDelivery() {
-    final estimate = AppScope.of(context)
-        .calculateShipping(_postalCodeController.text);
+    final estimate = AppScope.of(
+      context,
+    ).calculateShipping(_postalCodeController.text);
     if (estimate == null) {
       setState(() {
         _postalCodeError = 'Digite os 8 números do CEP.';
@@ -340,7 +342,8 @@ class _CartScreenState extends State<CartScreen> {
           ? EmptyState(
               icon: Icons.shopping_bag_outlined,
               title: 'Seu carrinho está vazio',
-              description: 'Adicione produtos para revisar quantidades, usar cupom e concluir a compra.',
+              description:
+                  'Adicione produtos para revisar quantidades, usar cupom e concluir a compra.',
               actionLabel: 'Continuar comprando',
               onAction: () => Navigator.of(context).pop(),
             )
