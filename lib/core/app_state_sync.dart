@@ -623,6 +623,32 @@ extension AppStateSync on AppState {
     }
   }
 
+  /// Consulta o endereço pelo CEP no ViaCEP (serviço público dos Correios
+  /// via viacep.com.br). Devolve null se o CEP não existir ou sem internet.
+  Future<Map<String, String>?> lookupPostalCode(String postalCode) async {
+    final digits = postalCode.replaceAll(RegExp(r'\D'), '');
+    if (digits.length != 8) return null;
+    final client = _httpClient ?? http.Client();
+    try {
+      final response = await client
+          .get(Uri.parse('https://viacep.com.br/ws/$digits/json/'))
+          .timeout(const Duration(seconds: 8));
+      if (response.statusCode != 200) return null;
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+      if (data is! Map || data['erro'] != null) return null;
+      return {
+        'street': '${data['logradouro'] ?? ''}',
+        'neighborhood': '${data['bairro'] ?? ''}',
+        'city': '${data['localidade'] ?? ''}',
+        'state': '${data['uf'] ?? ''}',
+      };
+    } catch (_) {
+      return null;
+    } finally {
+      if (_httpClient == null) client.close();
+    }
+  }
+
   // ------------------------------------------------------------ fotos
 
   /// Guarda a foto escolhida no painel: envia para a API (online) ou copia

@@ -123,7 +123,7 @@ class CompanyScreen extends StatelessWidget {
                 if (company.cnpj != null) 'CNPJ ${company.cnpj}',
               ].whereType<String>().join(' · '),
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.muted, fontSize: 12),
+              style: TextStyle(color: AppColors.muted, fontSize: 12),
             ),
         ],
       ),
@@ -208,10 +208,10 @@ class _ContactButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: AppColors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: AppColors.border),
+        side: BorderSide(color: AppColors.border),
       ),
       child: InkWell(
         onTap: onTap,
@@ -270,10 +270,7 @@ class _InfoTile extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: AppColors.muted,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: AppColors.muted, fontSize: 12),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -286,7 +283,7 @@ class _InfoTile extends StatelessWidget {
             if (onTap != null)
               Tooltip(
                 message: actionLabel ?? 'Abrir',
-                child: const Icon(Icons.chevron_right, color: AppColors.muted),
+                child: Icon(Icons.chevron_right, color: AppColors.muted),
               ),
           ],
         ),
@@ -329,7 +326,7 @@ class InfoSectionTile extends StatelessWidget {
         children: [
           Text(
             section.body,
-            style: const TextStyle(color: AppColors.muted, height: 1.45),
+            style: TextStyle(color: AppColors.muted, height: 1.45),
           ),
           if (section.url != null)
             TextButton.icon(

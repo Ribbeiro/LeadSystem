@@ -8,6 +8,7 @@ import 'package:leadsystem/screens/auth_admin.dart';
 import 'package:leadsystem/screens/detail_flows.dart';
 import 'package:leadsystem/screens/company_screen.dart';
 import 'package:leadsystem/screens/profile_flows.dart';
+import 'package:leadsystem/screens/settings_screens.dart';
 
 import 'test_helpers.dart';
 
@@ -17,6 +18,7 @@ void main() {
   const sizes = <String, Size>{
     'pequeno 320x568': Size(320, 568),
     'grande 430x932': Size(430, 932),
+    'escuro 390x844': Size(390, 844),
   };
 
   final screens = <String, Widget Function(AppState)>{
@@ -43,6 +45,7 @@ void main() {
     'Conta e segurança': (_) => const AccountSecurityScreen(),
     'Privacidade': (_) => const PrivacyPolicyScreen(),
     'Fale com a SantiGrill': (_) => const CompanyScreen(),
+    'Servidor': (_) => const ServerSettingsScreen(),
     'Admin produtos': (_) => const ProductManagementScreen(),
     'Form produto novo': (_) => const ProductFormScreen(),
     'Form produto edição': (s) => ProductFormScreen(product: s.products.first),
@@ -66,6 +69,9 @@ void main() {
         tester.view.devicePixelRatio = 2;
         addTearDown(tester.view.reset);
 
+        final dark = size.key.startsWith('escuro');
+        AppColors.usePalette(dark ? AppPalette.dark : AppPalette.light);
+        addTearDown(() => AppColors.usePalette(AppPalette.light));
         final state = buildTestState();
         addTearDown(state.dispose);
         await state.login(email: 'leandro@email.com', password: 'Santi@2026');
@@ -75,7 +81,7 @@ void main() {
           AppScope(
             notifier: state,
             child: MaterialApp(
-              theme: AppTheme.light,
+              theme: dark ? AppTheme.dark : AppTheme.light,
               home: Builder(builder: (_) => screen.value(state)),
             ),
           ),

@@ -43,7 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
               constraints: const BoxConstraints(maxWidth: 480),
               child: Column(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.local_fire_department_rounded,
                     color: AppColors.red,
                     size: 58,
@@ -53,7 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     'SantiGrill',
                     style: TextStyle(fontSize: 29, fontWeight: FontWeight.w900),
                   ),
-                  const Text(
+                  Text(
                     'Entre para concluir sua compra',
                     style: TextStyle(color: AppColors.muted),
                   ),
@@ -74,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                             const SizedBox(height: 5),
-                            const Text(
+                            Text(
                               'Acesse pedidos, orçamentos e atendimento.',
                               style: TextStyle(color: AppColors.muted),
                             ),
@@ -237,20 +237,27 @@ class _PasswordResetDialogState extends State<PasswordResetDialog> {
     text: widget.initialEmail,
   );
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _codeController = TextEditingController();
   bool _loading = false;
   bool _obscure = true;
+
+  /// Online: etapa 1 envia o código por e-mail; etapa 2 confirma.
+  bool _codeSent = false;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _codeController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final online = AppScope.of(context).onlineMode;
+    final askPassword = !online || _codeSent;
     return AlertDialog(
-      icon: const Icon(Icons.lock_reset, color: AppColors.red),
+      icon: Icon(Icons.lock_reset, color: AppColors.red),
       title: const Text('Criar nova senha'),
       scrollable: true,
       content: Form(
@@ -258,46 +265,79 @@ class _PasswordResetDialogState extends State<PasswordResetDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'No modo offline, a nova senha é salva com segurança neste aparelho.',
+            Text(
+              !online
+                  ? 'Modo offline: a nova senha é salva neste aparelho.'
+                  : _codeSent
+                  ? 'Enviamos um código de 6 dígitos para o seu e-mail. '
+                        'Ele vale por 15 minutos.'
+                  : 'Informe o e-mail da conta. Enviaremos um código para '
+                        'confirmar que é você.',
               style: TextStyle(color: AppColors.muted),
             ),
             const SizedBox(height: 14),
             TextFormField(
               controller: _emailController,
+              enabled: !_codeSent,
               keyboardType: TextInputType.emailAddress,
               decoration: const InputDecoration(labelText: 'E-mail da conta'),
               validator: (value) => value != null && value.contains('@')
                   ? null
                   : 'Informe um e-mail válido.',
             ),
-            const SizedBox(height: 10),
-            TextFormField(
-              controller: _passwordController,
-              obscureText: _obscure,
-              decoration: InputDecoration(
-                labelText: 'Nova senha',
-                helperText: '8 caracteres, maiúscula e número',
-                suffixIcon: IconButton(
-                  tooltip: _obscure ? 'Mostrar senha' : 'Ocultar senha',
-                  onPressed: () => setState(() => _obscure = !_obscure),
-                  icon: Icon(
-                    _obscure
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
+            if (online && _codeSent) ...[
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _codeController,
+                keyboardType: TextInputType.number,
+                maxLength: 6,
+                decoration: const InputDecoration(
+                  labelText: 'Código recebido',
+                  counterText: '',
+                ),
+                validator: (value) =>
+                    RegExp(r'^\d{6}$').hasMatch(value?.trim() ?? '')
+                    ? null
+                    : 'Digite os 6 números do código.',
+              ),
+            ],
+            if (askPassword) ...[
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _passwordController,
+                obscureText: _obscure,
+                decoration: InputDecoration(
+                  labelText: 'Nova senha',
+                  helperText: '8 caracteres, maiúscula e número',
+                  suffixIcon: IconButton(
+                    tooltip: _obscure ? 'Mostrar senha' : 'Ocultar senha',
+                    onPressed: () => setState(() => _obscure = !_obscure),
+                    icon: Icon(
+                      _obscure
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                    ),
                   ),
                 ),
+                validator: (value) {
+                  final password = value ?? '';
+                  if (password.length < 8 ||
+                      !password.contains(RegExp(r'[A-Z]')) ||
+                      !password.contains(RegExp(r'\d'))) {
+                    return 'Use 8 caracteres, maiúscula e número.';
+                  }
+                  return null;
+                },
               ),
-              validator: (value) {
-                final password = value ?? '';
-                if (password.length < 8 ||
-                    !password.contains(RegExp(r'[A-Z]')) ||
-                    !password.contains(RegExp(r'\d'))) {
-                  return 'Use 8 caracteres, maiúscula e número.';
-                }
-                return null;
-              },
-            ),
+            ],
+            if (online && _codeSent)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: _loading ? null : _sendCode,
+                  child: const Text('Reenviar código'),
+                ),
+              ),
           ],
         ),
       ),
@@ -307,7 +347,9 @@ class _PasswordResetDialogState extends State<PasswordResetDialog> {
           child: const Text('Cancelar'),
         ),
         FilledButton(
-          onPressed: _loading ? null : _save,
+          onPressed: _loading
+              ? null
+              : (online && !_codeSent ? _sendCode : _save),
           child: _loading
               ? const SizedBox(
                   width: 20,
@@ -317,9 +359,28 @@ class _PasswordResetDialogState extends State<PasswordResetDialog> {
                     color: Colors.white,
                   ),
                 )
-              : const Text('Atualizar senha'),
+              : Text(
+                  online && !_codeSent ? 'Enviar código' : 'Atualizar senha',
+                ),
         ),
       ],
+    );
+  }
+
+  Future<void> _sendCode() async {
+    if (!(_formKey.currentState?.validate() ?? false) && !_codeSent) return;
+    setState(() => _loading = true);
+    final state = AppScope.of(context);
+    final sent = await state.requestPasswordCode(_emailController.text);
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      if (sent) _codeSent = true;
+    });
+    showAppSnackBar(
+      context,
+      state.lastAuthMessage ??
+          (sent ? 'Código enviado.' : 'Não foi possível enviar o código.'),
     );
   }
 
@@ -327,10 +388,16 @@ class _PasswordResetDialogState extends State<PasswordResetDialog> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _loading = true);
     final state = AppScope.of(context);
-    final success = await state.resetPassword(
-      email: _emailController.text,
-      newPassword: _passwordController.text,
-    );
+    final success = state.onlineMode
+        ? await state.confirmPasswordCode(
+            email: _emailController.text,
+            code: _codeController.text,
+            newPassword: _passwordController.text,
+          )
+        : await state.resetPassword(
+            email: _emailController.text,
+            newPassword: _passwordController.text,
+          );
     if (!mounted) return;
     setState(() => _loading = false);
     if (!success) {
@@ -392,7 +459,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               'Seus dados',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
             ),
-            const Text(
+            Text(
               'Etapa 2 de 2 · revise os campos destacados',
               style: TextStyle(color: AppColors.muted),
             ),
@@ -405,11 +472,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   border: Border.all(color: AppColors.red),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
                     Icon(Icons.error_outline, color: AppColors.red),
-                    SizedBox(width: 9),
-                    Expanded(
+                    const SizedBox(width: 9),
+                    const Expanded(
                       child: Text(
                         'Revise os campos em vermelho. Os demais dados foram preservados.',
                       ),
@@ -548,9 +615,9 @@ class AdminDashboardScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const BrandLogo(compact: true),
-        actions: const [
+        actions: [
           Padding(
-            padding: EdgeInsets.only(right: 14),
+            padding: const EdgeInsets.only(right: 14),
             child: Center(
               child: StatusPill(
                 label: 'Admin',
@@ -561,143 +628,151 @@ class AdminDashboardScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 30),
-        children: [
-          const Text(
-            'Visão geral',
-            style: TextStyle(fontSize: 25, fontWeight: FontWeight.w900),
-          ),
-          Text(
-            'Atualizado agora · ${state.products.length} produtos ativos',
-            style: const TextStyle(color: AppColors.muted),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _MetricCard(
-                  value: '${state.pendingOrderCount}',
-                  label: 'pedidos\npendentes',
-                  color: AppColors.redSoft,
-                  valueColor: AppColors.darkRed,
+      body: RefreshIndicator(
+        onRefresh: state.syncNow,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 30),
+          children: [
+            const Text(
+              'Visão geral',
+              style: TextStyle(fontSize: 25, fontWeight: FontWeight.w900),
+            ),
+            Text(
+              'Atualizado agora · ${state.products.length} produtos ativos',
+              style: TextStyle(color: AppColors.muted),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _MetricCard(
+                    value: '${state.pendingOrderCount}',
+                    label: 'pedidos\npendentes',
+                    color: AppColors.redSoft,
+                    valueColor: AppColors.darkRed,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _MetricCard(
-                  value: '${state.pendingQuoteCount}',
-                  label: 'orçamentos\nnovos',
-                  color: const Color(0xFFE7F1FA),
-                  valueColor: const Color(0xFF2F6495),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _MetricCard(
+                    value: '${state.pendingQuoteCount}',
+                    label: 'orçamentos\nnovos',
+                    color: AppColors.infoSoft,
+                    valueColor: AppColors.info,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _MetricCard(
-                  value: '${state.lowStockProducts.length}',
-                  label: 'itens com\nestoque baixo',
-                  color: AppColors.warningSoft,
-                  valueColor: AppColors.warning,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _MetricCard(
+                    value: '${state.lowStockProducts.length}',
+                    label: 'itens com\nestoque baixo',
+                    color: AppColors.warningSoft,
+                    valueColor: AppColors.warning,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          const SectionHeading(title: 'Ações rápidas'),
-          const SizedBox(height: 10),
-          GridView.count(
-            crossAxisCount: 4,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-            childAspectRatio: .82,
-            children: [
-              _AdminAction(
-                icon: Icons.add_box_outlined,
-                label: 'Novo\nproduto',
-                onTap: () => _open(context, const ProductFormScreen()),
-              ),
-              _AdminAction(
-                icon: Icons.percent,
-                label: 'Criar\ncupom',
-                onTap: () => _open(context, const CouponFormScreen()),
-              ),
-              _AdminAction(
-                icon: Icons.campaign_outlined,
-                label: 'Nova\ncampanha',
-                onTap: () => _open(context, const CampaignFormScreen()),
-              ),
-              _AdminAction(
-                icon: Icons.analytics_outlined,
-                label: 'Ver\nrelatórios',
-                onTap: () => _open(context, const AdminReportsScreen()),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              const Expanded(child: SectionHeading(title: 'Pedidos recentes')),
-              const StatusPill(
-                label: 'Pendentes',
-                color: AppColors.red,
-                background: AppColors.redSoft,
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          ...state.orders
-              .take(3)
-              .map(
-                (order) => _AdminOrder(
-                  number: order.id,
-                  customer:
-                      '${order.itemCount} ${order.itemCount == 1 ? 'item' : 'itens'} · ${order.paymentMethod}',
-                  total: money(order.total),
-                  status: order.status.label,
-                  onTap: () =>
-                      _open(context, AdminOrderDetailScreen(orderId: order.id)),
+              ],
+            ),
+            const SizedBox(height: 24),
+            const SectionHeading(title: 'Ações rápidas'),
+            const SizedBox(height: 10),
+            GridView.count(
+              crossAxisCount: 4,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              childAspectRatio: .82,
+              children: [
+                _AdminAction(
+                  icon: Icons.add_box_outlined,
+                  label: 'Novo\nproduto',
+                  onTap: () => _open(context, const ProductFormScreen()),
                 ),
-              ),
-          const SizedBox(height: 18),
-          FilledButton.icon(
-            onPressed: state.pendingOrderCount == 0
-                ? null
-                : () => _advancePendingOrders(context, state),
-            style: FilledButton.styleFrom(backgroundColor: AppColors.ink),
-            icon: const Icon(Icons.done_all),
-            label: const Text('Atualizar pedidos em lote'),
-          ),
-          const SizedBox(height: 24),
-          const SectionHeading(title: 'Gestão do sistema'),
-          const SizedBox(height: 8),
-          _ManagementTile(
-            icon: Icons.inventory_2_outlined,
-            title: 'Produtos',
-            subtitle: 'Cadastrar, editar e controlar estoque',
-            onTap: () => _open(context, const ProductManagementScreen()),
-          ),
-          _ManagementTile(
-            icon: Icons.category_outlined,
-            title: 'Categorias',
-            subtitle: 'Organizar o catálogo',
-            onTap: () => _open(context, const CategoryManagementScreen()),
-          ),
-          _ManagementTile(
-            icon: Icons.people_outline,
-            title: 'Usuários',
-            subtitle: 'Consultar, editar e bloquear acessos',
-            onTap: () => _open(context, const UserManagementScreen()),
-          ),
-          _ManagementTile(
-            icon: Icons.request_quote_outlined,
-            title: 'Orçamentos',
-            subtitle: 'Analisar e responder solicitações',
-            onTap: () => _open(context, const QuoteManagementScreen()),
-          ),
-        ],
+                _AdminAction(
+                  icon: Icons.percent,
+                  label: 'Criar\ncupom',
+                  onTap: () => _open(context, const CouponFormScreen()),
+                ),
+                _AdminAction(
+                  icon: Icons.campaign_outlined,
+                  label: 'Nova\ncampanha',
+                  onTap: () => _open(context, const CampaignFormScreen()),
+                ),
+                _AdminAction(
+                  icon: Icons.analytics_outlined,
+                  label: 'Ver\nrelatórios',
+                  onTap: () => _open(context, const AdminReportsScreen()),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                const Expanded(
+                  child: SectionHeading(title: 'Pedidos recentes'),
+                ),
+                StatusPill(
+                  label: 'Pendentes',
+                  color: AppColors.red,
+                  background: AppColors.redSoft,
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ...state.orders
+                .take(3)
+                .map(
+                  (order) => _AdminOrder(
+                    number: order.id,
+                    customer:
+                        '${order.itemCount} ${order.itemCount == 1 ? 'item' : 'itens'} · ${order.paymentMethod}',
+                    total: money(order.total),
+                    status: order.status.label,
+                    onTap: () => _open(
+                      context,
+                      AdminOrderDetailScreen(orderId: order.id),
+                    ),
+                  ),
+                ),
+            const SizedBox(height: 18),
+            FilledButton.icon(
+              onPressed: state.pendingOrderCount == 0
+                  ? null
+                  : () => _advancePendingOrders(context, state),
+              style: FilledButton.styleFrom(backgroundColor: AppColors.ink),
+              icon: const Icon(Icons.done_all),
+              label: const Text('Atualizar pedidos em lote'),
+            ),
+            const SizedBox(height: 24),
+            const SectionHeading(title: 'Gestão do sistema'),
+            const SizedBox(height: 8),
+            _ManagementTile(
+              icon: Icons.inventory_2_outlined,
+              title: 'Produtos',
+              subtitle: 'Cadastrar, editar e controlar estoque',
+              onTap: () => _open(context, const ProductManagementScreen()),
+            ),
+            _ManagementTile(
+              icon: Icons.category_outlined,
+              title: 'Categorias',
+              subtitle: 'Organizar o catálogo',
+              onTap: () => _open(context, const CategoryManagementScreen()),
+            ),
+            _ManagementTile(
+              icon: Icons.people_outline,
+              title: 'Usuários',
+              subtitle: 'Consultar, editar e bloquear acessos',
+              onTap: () => _open(context, const UserManagementScreen()),
+            ),
+            _ManagementTile(
+              icon: Icons.request_quote_outlined,
+              title: 'Orçamentos',
+              subtitle: 'Analisar e responder solicitações',
+              onTap: () => _open(context, const QuoteManagementScreen()),
+            ),
+          ],
+        ),
       ),
     );
   }

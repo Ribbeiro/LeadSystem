@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../core/app_theme.dart';
@@ -135,7 +137,7 @@ class ProductImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final placeholder = ColoredBox(
-      color: const Color(0xFFF1F1F4),
+      color: AppColors.neutralSoft,
       child: Center(
         child: Icon(
           Icons.outdoor_grill_outlined,
@@ -155,14 +157,14 @@ class ProductImage extends StatelessWidget {
                 final width = constraints.maxWidth.isFinite
                     ? (constraints.maxWidth * ratio).round()
                     : null;
+                final provider = imageProviderFor(source, cacheWidth: width);
                 return ColoredBox(
                   color: Colors.white,
-                  child: Image.asset(
-                    source,
+                  child: Image(
+                    image: provider,
                     fit: fit,
                     width: double.infinity,
                     height: double.infinity,
-                    cacheWidth: width,
                     gaplessPlayback: true,
                     semanticLabel: 'Foto do produto',
                     frameBuilder: (context, child, frame, synchronous) {
@@ -174,6 +176,8 @@ class ProductImage extends StatelessWidget {
                         child: child,
                       );
                     },
+                    loadingBuilder: (context, child, progress) =>
+                        progress == null ? child : placeholder,
                     errorBuilder: (_, _, _) => placeholder,
                   ),
                 );
@@ -181,6 +185,20 @@ class ProductImage extends StatelessWidget {
             ),
     );
   }
+}
+
+/// Resolve a origem da foto: asset do app, foto enviada ao servidor (URL)
+/// ou foto salva no aparelho pelo painel (arquivo).
+ImageProvider imageProviderFor(String source, {int? cacheWidth}) {
+  final ImageProvider provider;
+  if (source.startsWith('http://') || source.startsWith('https://')) {
+    provider = NetworkImage(source);
+  } else if (source.startsWith('assets/')) {
+    provider = AssetImage(source);
+  } else {
+    provider = FileImage(File(source));
+  }
+  return ResizeImage.resizeIfNeeded(cacheWidth, null, provider);
 }
 
 /// Bloco de preço com valor no Pix e parcelamento, como no site.
@@ -236,7 +254,7 @@ class PriceTag extends StatelessWidget {
             padding: const EdgeInsets.only(top: 2),
             child: Text(
               'ou ${installments}x de ${money(installmentValue)} no cartão',
-              style: const TextStyle(color: AppColors.muted, fontSize: 13),
+              style: TextStyle(color: AppColors.muted, fontSize: 13),
             ),
           ),
       ],
@@ -356,16 +374,20 @@ class StatusPill extends StatelessWidget {
   const StatusPill({
     super.key,
     required this.label,
-    this.color = AppColors.success,
-    this.background = AppColors.successSoft,
+    this.color,
+    this.background,
   });
 
   final String label;
-  final Color color;
-  final Color background;
+
+  /// Padrão: verde de sucesso da paleta ativa.
+  final Color? color;
+  final Color? background;
 
   @override
   Widget build(BuildContext context) {
+    final color = this.color ?? AppColors.success;
+    final background = this.background ?? AppColors.successSoft;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -413,7 +435,7 @@ class EmptyState extends StatelessWidget {
             Container(
               width: 72,
               height: 72,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: AppColors.redSoft,
                 shape: BoxShape.circle,
               ),
@@ -428,7 +450,7 @@ class EmptyState extends StatelessWidget {
             Text(
               description,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.muted, height: 1.4),
+              style: TextStyle(color: AppColors.muted, height: 1.4),
             ),
             if (actionLabel != null) ...[
               const SizedBox(height: 20),

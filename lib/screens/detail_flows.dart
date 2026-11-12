@@ -156,7 +156,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           const SizedBox(height: 18),
           Text(
             product.category.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.red,
               fontSize: 12,
               letterSpacing: .8,
@@ -180,10 +180,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               const SizedBox(width: 10),
               product.inStock
                   ? const StatusPill(label: 'Em estoque')
-                  : const StatusPill(
+                  : StatusPill(
                       label: 'Esgotado',
                       color: AppColors.muted,
-                      background: Color(0xFFF0F0F0),
+                      background: AppColors.neutralSoft,
                     ),
             ],
           ),
@@ -254,7 +254,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               flex: 2,
                               child: Text(
                                 entry.key,
-                                style: const TextStyle(color: AppColors.muted),
+                                style: TextStyle(color: AppColors.muted),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -292,8 +292,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Padding(
-                              padding: EdgeInsets.only(top: 7, right: 8),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 7, right: 8),
                               child: Icon(
                                 Icons.circle,
                                 size: 5,
@@ -357,7 +357,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   maxLength: 9,
                   decoration: InputDecoration(
                     hintText: 'CEP',
-                    prefixIcon: Icon(Icons.location_on_outlined),
+                    prefixIcon: const Icon(Icons.location_on_outlined),
                     errorText: _postalCodeError,
                     counterText: '',
                   ),
@@ -384,15 +384,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(
-                    Icons.local_shipping_outlined,
-                    color: AppColors.success,
-                  ),
+                  Icon(Icons.local_shipping_outlined, color: AppColors.success),
                   const SizedBox(width: 9),
                   Expanded(
                     child: Text(
                       _deliveryResult!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.success,
                         fontWeight: FontWeight.w700,
                       ),
@@ -611,14 +608,14 @@ class _CartScreenState extends State<CartScreen> {
                 ),
                 if (state.couponApplied) ...[
                   const SizedBox(height: 10),
-                  const Row(
+                  Row(
                     children: [
                       Icon(
                         Icons.check_circle,
                         color: AppColors.success,
                         size: 18,
                       ),
-                      SizedBox(width: 6),
+                      const SizedBox(width: 6),
                       Text(
                         'PRIMEIRACOMPRA aplicado',
                         style: TextStyle(
@@ -719,14 +716,11 @@ class _CartItem extends StatelessWidget {
                   if (option != null)
                     Text(
                       'Voltagem: $option',
-                      style: const TextStyle(
-                        color: AppColors.muted,
-                        fontSize: 12,
-                      ),
+                      style: TextStyle(color: AppColors.muted, fontSize: 12),
                     ),
                   Text(
                     money(product.salePrice),
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.darkRed,
                       fontWeight: FontWeight.w900,
                     ),
@@ -826,7 +820,7 @@ class _OrderSummary extends StatelessWidget {
                 alignment: Alignment.centerRight,
                 child: Text(
                   'ou ${money(state.totalFor('Pix'))} no Pix',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.success,
                     fontWeight: FontWeight.w700,
                   ),
@@ -903,6 +897,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final TextEditingController _cardHolderController = TextEditingController();
   final TextEditingController _cardCvvController = TextEditingController();
   String payment = 'Pix';
+  bool _lookingUp = false;
   bool accepted = true;
   bool processing = false;
   bool _initialized = false;
@@ -920,6 +915,40 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     _postalCodeController.text = address?.postalCode ?? '';
     _cardHolderController.text = AppScope.of(context).userName;
     _initialized = true;
+    if (_postalCodeController.text.isNotEmpty) {
+      // Depois do primeiro quadro: a cotação notifica o estado.
+      final state = AppScope.of(context);
+      final postalCode = _postalCodeController.text;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) state.quoteShipping(postalCode);
+      });
+    }
+  }
+
+  String? _lastLookup;
+
+  Future<void> _onPostalCodeChanged(String value) async {
+    final digits = value.replaceAll(RegExp(r'\D'), '');
+    if (digits.length != 8 || digits == _lastLookup) return;
+    _lastLookup = digits;
+    final state = AppScope.of(context);
+    setState(() => _lookingUp = true);
+    final results = await Future.wait([
+      state.lookupPostalCode(digits),
+      state.quoteShipping(digits),
+    ]);
+    if (!mounted) return;
+    setState(() => _lookingUp = false);
+    final address = results[0] as Map<String, String>?;
+    if (address == null) return;
+    void fill(TextEditingController controller, String? text) {
+      if (text != null && text.isNotEmpty) controller.text = text;
+    }
+
+    fill(_streetController, address['street']);
+    fill(_neighborhoodController, address['neighborhood']);
+    fill(_cityController, address['city']);
+    fill(_stateController, address['state']);
   }
 
   @override
@@ -1003,7 +1032,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   child: TextFormField(
                     controller: _postalCodeController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'CEP'),
+                    decoration: InputDecoration(
+                      labelText: 'CEP',
+                      suffixIcon: _lookingUp
+                          ? const Padding(
+                              padding: EdgeInsets.all(14),
+                              child: SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            )
+                          : null,
+                    ),
+                    onChanged: _onPostalCodeChanged,
                     validator: (value) =>
                         (value ?? '').replaceAll(RegExp(r'\D'), '').length == 8
                         ? null
@@ -1048,7 +1092,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             const SizedBox(height: 12),
             Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.location_on_outlined,
                   color: AppColors.success,
                   size: 18,
@@ -1059,14 +1103,54 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     state.defaultAddress == null
                         ? 'O endereço será salvo para as próximas compras.'
                         : 'Você pode alterar os dados para este pedido.',
-                    style: const TextStyle(
-                      color: AppColors.success,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: AppColors.success, fontSize: 12),
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: 24),
+            const Text(
+              'Entrega',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 8),
+            if (state.shippingOptions.isEmpty)
+              Text(
+                'Informe o CEP para calcular o frete.',
+                style: TextStyle(color: AppColors.muted),
+              )
+            else
+              RadioGroup<String>(
+                groupValue: state.shippingService,
+                onChanged: (value) {
+                  if (value != null) state.selectShipping(value);
+                },
+                child: Column(
+                  children: [
+                    for (final option in state.shippingOptions)
+                      Card(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        child: RadioListTile<String>(
+                          value: option.service,
+                          title: Text(
+                            '${option.service} · ${money(option.price)}',
+                            style: const TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                          subtitle: Text(
+                            'Até ${option.days} dias úteis após a postagem'
+                            '${option.estimated ? ' (estimativa)' : ''}',
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            if (state.shippingOptions.any((option) => option.estimated))
+              Text(
+                'Valor estimado por região. O frete final é confirmado pelos '
+                'Correios no envio.',
+                style: TextStyle(color: AppColors.muted, fontSize: 12),
+              ),
             const SizedBox(height: 24),
             const Text(
               'Forma de pagamento',
@@ -1156,7 +1240,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF0ECE7),
+                  color: AppColors.neutralSoft,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -1265,12 +1349,12 @@ class _CheckoutSteps extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      children: const [
-        _StepBadge(number: '1', label: 'Entrega', done: true),
+      children: [
+        const _StepBadge(number: '1', label: 'Entrega', done: true),
         Expanded(child: Divider(color: AppColors.red)),
-        _StepBadge(number: '2', label: 'Pagamento', active: true),
-        Expanded(child: Divider()),
-        _StepBadge(number: '3', label: 'Revisão'),
+        const _StepBadge(number: '2', label: 'Pagamento', active: true),
+        const Expanded(child: Divider()),
+        const _StepBadge(number: '3', label: 'Revisão'),
       ],
     );
   }
@@ -1296,7 +1380,7 @@ class _StepBadge extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 15,
-          backgroundColor: highlighted ? AppColors.red : Colors.white,
+          backgroundColor: highlighted ? AppColors.red : AppColors.surface,
           foregroundColor: highlighted ? Colors.white : AppColors.muted,
           child: done ? const Icon(Icons.check, size: 17) : Text(number),
         ),
@@ -1360,11 +1444,11 @@ class OrderSuccessScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 46,
                   backgroundColor: AppColors.successSoft,
                   foregroundColor: AppColors.success,
-                  child: Icon(Icons.check_rounded, size: 52),
+                  child: const Icon(Icons.check_rounded, size: 52),
                 ),
                 const SizedBox(height: 22),
                 const Text(
@@ -1373,7 +1457,7 @@ class OrderSuccessScreen extends StatelessWidget {
                   style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Recebemos seu pedido e enviaremos atualizações a cada mudança de status.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: AppColors.muted, height: 1.5),
@@ -1412,6 +1496,13 @@ class OrderSuccessScreen extends StatelessWidget {
                     Navigator.of(context).popUntil((route) => route.isFirst);
                   },
                   child: const Text('Acompanhar pedido'),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () =>
+                      ExternalLinks.sendOrder(context, state.company, order),
+                  icon: const Icon(Icons.chat_outlined),
+                  label: const Text('Enviar pedido pelo WhatsApp'),
                 ),
                 const SizedBox(height: 8),
                 TextButton(
@@ -1457,10 +1548,10 @@ class TrackingScreen extends StatelessWidget {
               padding: const EdgeInsets.all(18),
               child: Row(
                 children: [
-                  const CircleAvatar(
+                  CircleAvatar(
                     backgroundColor: AppColors.successSoft,
                     foregroundColor: AppColors.success,
-                    child: Icon(Icons.local_shipping_outlined),
+                    child: const Icon(Icons.local_shipping_outlined),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -1474,11 +1565,11 @@ class TrackingScreen extends StatelessWidget {
                         const SizedBox(height: 3),
                         Text(
                           order.status.label,
-                          style: const TextStyle(color: AppColors.success),
+                          style: TextStyle(color: AppColors.success),
                         ),
                         Text(
                           'Atualizado em ${_dateTime(updatedAt)}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.muted,
                             fontSize: 12,
                           ),
@@ -1515,7 +1606,7 @@ class TrackingScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Entrega estimada',
                     style: TextStyle(color: AppColors.muted),
                   ),
@@ -1529,7 +1620,7 @@ class TrackingScreen extends StatelessWidget {
                   ),
                   Text(
                     order.deliveryAddress.formatted,
-                    style: const TextStyle(color: AppColors.muted),
+                    style: TextStyle(color: AppColors.muted),
                   ),
                 ],
               ),
@@ -1631,7 +1722,7 @@ class _TimelineItem extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 12,
-                  backgroundColor: done ? AppColors.red : Colors.white,
+                  backgroundColor: done ? AppColors.red : AppColors.surface,
                   foregroundColor: done ? Colors.white : AppColors.muted,
                   child: done
                       ? const Icon(Icons.check, size: 15)
@@ -1657,10 +1748,7 @@ class _TimelineItem extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     subtitle,
-                    style: const TextStyle(
-                      color: AppColors.muted,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: AppColors.muted, fontSize: 12),
                   ),
                 ],
               ),
@@ -1746,7 +1834,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
                           const SizedBox(height: 5),
                           Text(
                             money(widget.product.salePrice),
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.darkRed,
                               fontWeight: FontWeight.w800,
                             ),
@@ -1797,10 +1885,10 @@ class _QuoteScreenState extends State<QuoteScreen> {
                   : null,
             ),
             const SizedBox(height: 12),
-            const Row(
+            Row(
               children: [
                 Icon(Icons.schedule, color: AppColors.success, size: 18),
-                SizedBox(width: 7),
+                const SizedBox(width: 7),
                 Expanded(
                   child: Text(
                     'Resposta em até 1 dia útil',
@@ -1849,16 +1937,18 @@ class _QuoteScreenState extends State<QuoteScreen> {
     final openOrders = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        icon: const Icon(
-          Icons.check_circle,
-          color: AppColors.success,
-          size: 42,
-        ),
+        icon: Icon(Icons.check_circle, color: AppColors.success, size: 42),
         title: const Text('Orçamento enviado'),
         content: Text(
           'Protocolo ${quote.id}. A solicitação já está salva e aparecerá na área de pedidos.',
         ),
         actions: [
+          TextButton.icon(
+            onPressed: () =>
+                ExternalLinks.sendQuote(context, state.company, quote),
+            icon: const Icon(Icons.chat_outlined),
+            label: const Text('Enviar no WhatsApp'),
+          ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
             child: const Text('Continuar no produto'),

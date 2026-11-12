@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../data/santigrill_catalog.dart';
+import '../models/app_models.dart';
+import '../models/product.dart';
 import '../widgets/shared.dart';
 
 /// Abre links externos (WhatsApp, telefone, e-mail, mapa, site) e avisa o
@@ -65,4 +67,64 @@ abstract final class ExternalLinks {
       'query': address,
     }),
   );
+
+  /// Envia o resumo do pedido para o WhatsApp da loja.
+  static Future<bool> sendOrder(
+    BuildContext context,
+    CompanyInfo company,
+    CustomerOrder order,
+  ) => whatsapp(context, company, message: orderSummary(order));
+
+  /// Envia o resumo do orçamento para o WhatsApp da loja.
+  static Future<bool> sendQuote(
+    BuildContext context,
+    CompanyInfo company,
+    QuoteRequest quote,
+  ) => whatsapp(context, company, message: quoteSummary(quote));
 }
+
+/// Texto do pedido para o WhatsApp (formatação *negrito* do WhatsApp).
+String orderSummary(CustomerOrder order) {
+  final address = order.deliveryAddress;
+  final buffer = StringBuffer()
+    ..writeln('Olá! Fiz um pedido pelo app SantiGrill.')
+    ..writeln()
+    ..writeln('*Pedido ${order.id}*');
+  for (final item in order.items) {
+    final option = item.option == null ? '' : ' (${item.option})';
+    buffer.writeln(
+      '• ${item.quantity}x ${item.name}$option - ${money(item.total)}',
+    );
+  }
+  buffer
+    ..writeln()
+    ..writeln('Subtotal: ${money(order.subtotal)}');
+  if (order.discount > 0) {
+    buffer.writeln('Descontos: - ${money(order.discount)}');
+  }
+  buffer
+    ..writeln('Frete: ${money(order.shipping)}')
+    ..writeln('*Total: ${money(order.total)}* (${order.paymentMethod})')
+    ..writeln()
+    ..writeln(
+      'Entrega: ${address.street}, ${address.number} - '
+      '${address.neighborhood}, ${address.city}/${address.state} - '
+      'CEP ${address.postalCode}',
+    );
+  if (order.customerName != null) {
+    buffer.writeln('Cliente: ${order.customerName}');
+  }
+  return buffer.toString().trim();
+}
+
+String quoteSummary(QuoteRequest quote) => [
+  'Olá! Solicitei um orçamento pelo app SantiGrill.',
+  '',
+  '*Orçamento ${quote.id}*',
+  'Produto: ${quote.productName}',
+  'Necessidade: ${quote.details}',
+  '',
+  'Nome: ${quote.customerName}',
+  'Telefone: ${quote.phone}',
+  'E-mail: ${quote.email}',
+].join('\n');

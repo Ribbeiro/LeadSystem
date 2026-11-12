@@ -119,7 +119,7 @@ class _FavoriteProductCard extends StatelessWidget {
                           tooltip: 'Remover dos favoritos',
                           visualDensity: VisualDensity.compact,
                           onPressed: onRemove,
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.favorite_rounded,
                             color: AppColors.red,
                           ),
@@ -198,14 +198,14 @@ class AddressesScreen extends StatelessWidget {
                     color: AppColors.successSoft,
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
                       Icon(
                         Icons.info_outline_rounded,
                         color: AppColors.success,
                       ),
-                      SizedBox(width: 10),
-                      Expanded(
+                      const SizedBox(width: 10),
+                      const Expanded(
                         child: Text(
                           'O endereço padrão será selecionado automaticamente no checkout.',
                           style: TextStyle(fontSize: 13, height: 1.35),
@@ -301,7 +301,7 @@ class AddressesScreen extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        icon: const Icon(
+        icon: Icon(
           Icons.delete_outline_rounded,
           color: AppColors.red,
           size: 38,
@@ -359,7 +359,7 @@ class _AddressCard extends StatelessWidget {
             CircleAvatar(
               backgroundColor: address.isDefault
                   ? AppColors.redSoft
-                  : const Color(0xFFF0ECE7),
+                  : AppColors.neutralSoft,
               foregroundColor: address.isDefault
                   ? AppColors.red
                   : AppColors.muted,
@@ -383,7 +383,7 @@ class _AddressCard extends StatelessWidget {
                       ),
                       if (address.isDefault) ...[
                         const SizedBox(width: 8),
-                        const StatusPill(
+                        StatusPill(
                           label: 'Padrão',
                           color: AppColors.red,
                           background: AppColors.redSoft,
@@ -394,10 +394,7 @@ class _AddressCard extends StatelessWidget {
                   const SizedBox(height: 7),
                   Text(
                     _addressLines(address),
-                    style: const TextStyle(
-                      color: AppColors.muted,
-                      height: 1.45,
-                    ),
+                    style: TextStyle(color: AppColors.muted, height: 1.45),
                   ),
                   if (onSetDefault != null) ...[
                     const SizedBox(height: 8),
@@ -426,8 +423,8 @@ class _AddressCard extends StatelessWidget {
                     break;
                 }
               },
-              itemBuilder: (_) => const [
-                PopupMenuItem(
+              itemBuilder: (_) => [
+                const PopupMenuItem(
                   value: _AddressAction.edit,
                   child: ListTile(
                     contentPadding: EdgeInsets.zero,
@@ -544,7 +541,7 @@ class _AddressEditorSheetState extends State<_AddressEditorSheet> {
                 ),
               ),
               const SizedBox(height: 4),
-              const Text(
+              Text(
                 'Preencha os dados exatamente como aparecem no endereço de entrega.',
                 style: TextStyle(color: AppColors.muted),
               ),
@@ -695,7 +692,7 @@ class _AddressEditorSheetState extends State<_AddressEditorSheet> {
 }
 
 class _AddressDraft {
-  const _AddressDraft({
+  _AddressDraft({
     required this.label,
     required this.street,
     required this.number,
@@ -750,7 +747,7 @@ class NotificationsScreen extends StatelessWidget {
             style: TextStyle(fontSize: 19, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Escolha quais atualizações deseja receber.',
             style: TextStyle(color: AppColors.muted),
           ),
@@ -785,14 +782,14 @@ class NotificationsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          const Row(
+          Row(
             children: [
               Icon(
                 Icons.cloud_done_outlined,
                 size: 16,
                 color: AppColors.success,
               ),
-              SizedBox(width: 6),
+              const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   'Alterações salvas automaticamente',
@@ -916,7 +913,7 @@ class _NotificationEventCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final visual = _notificationVisual(event.category);
     return Card(
-      color: event.read ? Colors.white : const Color(0xFFFFFAF7),
+      color: event.read ? AppColors.surface : AppColors.redSoft,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(18),
@@ -953,7 +950,7 @@ class _NotificationEventCard extends StatelessWidget {
                             width: 8,
                             height: 8,
                             margin: const EdgeInsets.only(top: 5),
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               color: AppColors.red,
                               shape: BoxShape.circle,
                             ),
@@ -963,18 +960,12 @@ class _NotificationEventCard extends StatelessWidget {
                     const SizedBox(height: 5),
                     Text(
                       event.message,
-                      style: const TextStyle(
-                        color: AppColors.muted,
-                        height: 1.4,
-                      ),
+                      style: TextStyle(color: AppColors.muted, height: 1.4),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       _formatEventDate(event.createdAt),
-                      style: const TextStyle(
-                        color: AppColors.muted,
-                        fontSize: 11,
-                      ),
+                      style: TextStyle(color: AppColors.muted, fontSize: 11),
                     ),
                   ],
                 ),
@@ -1059,11 +1050,11 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
                 padding: const EdgeInsets.all(18),
                 child: Row(
                   children: [
-                    const CircleAvatar(
+                    CircleAvatar(
                       radius: 28,
                       backgroundColor: AppColors.redSoft,
                       foregroundColor: AppColors.red,
-                      child: Icon(Icons.person_rounded, size: 30),
+                      child: const Icon(Icons.person_rounded, size: 30),
                     ),
                     const SizedBox(width: 13),
                     Expanded(
@@ -1080,7 +1071,7 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
                           const SizedBox(height: 3),
                           Text(
                             state.userEmail,
-                            style: const TextStyle(color: AppColors.muted),
+                            style: TextStyle(color: AppColors.muted),
                           ),
                         ],
                       ),
@@ -1154,10 +1145,10 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
                   horizontal: 16,
                   vertical: 8,
                 ),
-                leading: const CircleAvatar(
+                leading: CircleAvatar(
                   backgroundColor: AppColors.redSoft,
                   foregroundColor: AppColors.red,
-                  child: Icon(Icons.password_rounded),
+                  child: const Icon(Icons.password_rounded),
                 ),
                 title: const Text(
                   'Alterar senha',
@@ -1177,10 +1168,10 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
                   horizontal: 16,
                   vertical: 8,
                 ),
-                leading: const CircleAvatar(
+                leading: CircleAvatar(
                   backgroundColor: AppColors.successSoft,
                   foregroundColor: AppColors.success,
-                  child: Icon(Icons.verified_user_outlined),
+                  child: const Icon(Icons.verified_user_outlined),
                 ),
                 title: const Text(
                   'Política de Privacidade',
@@ -1199,16 +1190,16 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: AppColors.border),
               ),
-              child: const Row(
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(Icons.security_rounded, color: AppColors.success),
-                  SizedBox(width: 10),
-                  Expanded(
+                  const SizedBox(width: 10),
+                  const Expanded(
                     child: Text(
                       'Seus dados são armazenados com proteção e usados apenas para operar sua conta e seus pedidos.',
                       style: TextStyle(fontSize: 12, height: 1.4),
@@ -1350,7 +1341,7 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
                     ),
                     child: Text(
                       _error!,
-                      style: const TextStyle(color: AppColors.darkRed),
+                      style: TextStyle(color: AppColors.darkRed),
                     ),
                   ),
                 ],
@@ -1429,46 +1420,46 @@ class PrivacyPolicyScreen extends StatelessWidget {
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 36),
-        children: const [
-          _PolicyIntro(),
-          SizedBox(height: 22),
-          _PolicySection(
+        children: [
+          const _PolicyIntro(),
+          const SizedBox(height: 22),
+          const _PolicySection(
             number: '1',
             title: 'Dados coletados',
             text:
                 'O LeadSystem utiliza os dados informados no cadastro, como nome, e-mail e telefone, além dos endereços necessários para entrega. Também são registrados itens do carrinho, pedidos, orçamentos, preferências e mensagens enviadas ao atendimento.',
           ),
-          _PolicySection(
+          const _PolicySection(
             number: '2',
             title: 'Como usamos as informações',
             text:
                 'Os dados são usados para autenticar sua conta, processar compras e orçamentos, organizar entregas, prestar atendimento e enviar as notificações escolhidas por você. Não utilizamos informações pessoais para finalidades incompatíveis com esses serviços.',
           ),
-          _PolicySection(
+          const _PolicySection(
             number: '3',
             title: 'Compartilhamento',
             text:
                 'Informações são compartilhadas somente quando necessárias à operação do serviço, por exemplo com meios de pagamento e parceiros de entrega. O projeto não comercializa dados pessoais.',
           ),
-          _PolicySection(
+          const _PolicySection(
             number: '4',
             title: 'Armazenamento e segurança',
             text:
                 'Aplicamos medidas de acesso, validação e proteção compatíveis com a finalidade acadêmica do sistema. Senhas não devem ser exibidas em texto simples e o acesso administrativo é separado do acesso do cliente.',
           ),
-          _PolicySection(
+          const _PolicySection(
             number: '5',
             title: 'Seus direitos',
             text:
                 'Você pode consultar e corrigir seus dados nesta área, ajustar notificações e solicitar esclarecimentos sobre o tratamento das informações. Pedidos de exclusão serão avaliados conforme as obrigações de conservação aplicáveis.',
           ),
-          _PolicySection(
+          const _PolicySection(
             number: '6',
             title: 'Contato',
             text:
                 'Dúvidas sobre privacidade podem ser encaminhadas pela área Ajuda e atendimento do aplicativo. A equipe registrará a solicitação e apresentará um retorno ao usuário.',
           ),
-          SizedBox(height: 6),
+          const SizedBox(height: 6),
           Center(
             child: Text(
               'Versão 1.0 · atualizada em setembro de 2026',
@@ -1491,14 +1482,14 @@ class _PolicyIntro extends StatelessWidget {
         padding: const EdgeInsets.all(18),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
+          children: [
             CircleAvatar(
               backgroundColor: AppColors.successSoft,
               foregroundColor: AppColors.success,
-              child: Icon(Icons.privacy_tip_outlined),
+              child: const Icon(Icons.privacy_tip_outlined),
             ),
-            SizedBox(width: 12),
-            Expanded(
+            const SizedBox(width: 12),
+            const Expanded(
               child: Text(
                 'A SantiGrill valoriza a transparência. Este documento resume quais dados o LeadSystem utiliza e quais escolhas estão sob seu controle.',
                 style: TextStyle(height: 1.5),
@@ -1553,7 +1544,7 @@ class _PolicySection extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   text,
-                  style: const TextStyle(color: AppColors.muted, height: 1.55),
+                  style: TextStyle(color: AppColors.muted, height: 1.55),
                 ),
               ],
             ),
@@ -1591,25 +1582,25 @@ String _formatPostalCode(String value) {
 _NotificationVisual _notificationVisual(String category) {
   switch (category) {
     case 'order':
-      return const _NotificationVisual(
+      return _NotificationVisual(
         icon: Icons.local_shipping_outlined,
         color: AppColors.success,
         background: AppColors.successSoft,
       );
     case 'offer':
-      return const _NotificationVisual(
+      return _NotificationVisual(
         icon: Icons.local_offer_outlined,
         color: AppColors.red,
         background: AppColors.redSoft,
       );
     case 'support':
-      return const _NotificationVisual(
+      return _NotificationVisual(
         icon: Icons.support_agent_outlined,
-        color: Color(0xFF2F6495),
-        background: Color(0xFFE7F1FA),
+        color: AppColors.info,
+        background: AppColors.infoSoft,
       );
     default:
-      return const _NotificationVisual(
+      return _NotificationVisual(
         icon: Icons.info_outline_rounded,
         color: AppColors.warning,
         background: AppColors.warningSoft,
@@ -1639,7 +1630,7 @@ bool _sameDate(DateTime a, DateTime b) =>
 String _two(int value) => value.toString().padLeft(2, '0');
 
 class _NotificationVisual {
-  const _NotificationVisual({
+  _NotificationVisual({
     required this.icon,
     required this.color,
     required this.background,
