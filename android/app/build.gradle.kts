@@ -6,7 +6,8 @@ plugins {
 
 android {
     namespace = "br.com.santigrill.leadsystem"
-    compileSdk = flutter.compileSdkVersion
+    // 37: exigido por flutter_local_notifications e androidx.core 1.19.
+    compileSdk = maxOf(flutter.compileSdkVersion, 37)
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
