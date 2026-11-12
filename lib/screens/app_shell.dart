@@ -180,7 +180,7 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               SizedBox(
-                height: 302,
+                height: 330,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: featuredProducts.length,
@@ -335,7 +335,7 @@ class _CategoryTile extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          width: 108,
+          width: 120,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -596,7 +596,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                           crossAxisCount: 2,
                           crossAxisSpacing: 12,
                           mainAxisSpacing: 12,
-                          childAspectRatio: .65,
+                          childAspectRatio: .58,
                         ),
                     itemCount: products.length,
                     itemBuilder: (context, index) {

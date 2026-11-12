@@ -207,9 +207,17 @@ class SantiGrillCatalog {
         .join(' ');
   }
 
+  /// Nome curto para os cards: remove termos repetidos em todos os itens da
+  /// mesma linha (ex.: "e rotatório elétrico"), deixando visível o que os
+  /// diferencia (ex.: "3 espetos"). O nome completo aparece no detalhe.
   static String _shortName(String name) {
     final cleaned = name
         .replaceAll(RegExp(r'\s*Santi\s?grill\s*', caseSensitive: false), ' ')
+        .replaceAll(
+          RegExp(r'(\s+e\s+|/)rotat[óo]rio', caseSensitive: false),
+          '',
+        )
+        .replaceAll(RegExp(r'\s+el[ée]trico', caseSensitive: false), '')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
     return cleaned.isEmpty ? name : cleaned;

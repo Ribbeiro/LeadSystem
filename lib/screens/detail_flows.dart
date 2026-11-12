@@ -557,6 +557,7 @@ class _CartScreenState extends State<CartScreen> {
                     child: _CartItem(
                       product: product,
                       quantity: entry.value,
+                      option: state.cartOption(product.id),
                       onDecrease: () =>
                           state.setQuantity(product.id, entry.value - 1),
                       onIncrease: () {
@@ -681,10 +682,12 @@ class _CartItem extends StatelessWidget {
     required this.onDecrease,
     required this.onIncrease,
     required this.onRemove,
+    this.option,
   });
 
   final Product product;
   final int quantity;
+  final String? option;
   final VoidCallback onDecrease;
   final VoidCallback onIncrease;
   final VoidCallback onRemove;
@@ -713,6 +716,14 @@ class _CartItem extends StatelessWidget {
                     style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 5),
+                  if (option != null)
+                    Text(
+                      'Voltagem: $option',
+                      style: const TextStyle(
+                        color: AppColors.muted,
+                        fontSize: 12,
+                      ),
+                    ),
                   Text(
                     money(product.salePrice),
                     style: const TextStyle(

@@ -82,7 +82,11 @@ abstract final class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
-          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          textStyle: const TextStyle(
+            fontFamily: 'OpenSans',
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -93,7 +97,10 @@ abstract final class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
-          textStyle: const TextStyle(fontWeight: FontWeight.w700),
+          textStyle: const TextStyle(
+            fontFamily: 'OpenSans',
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
@@ -103,6 +110,7 @@ abstract final class AppTheme {
         indicatorColor: AppColors.redSoft,
         labelTextStyle: WidgetStateProperty.resolveWith(
           (states) => TextStyle(
+            fontFamily: 'OpenSans',
             color: states.contains(WidgetState.selected)
                 ? AppColors.red
                 : AppColors.muted,
