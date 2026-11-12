@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 
+/// Paleta baseada nas variáveis CSS do tema de santigrill.com.br
+/// (`--color-primary #d10d0d`, rodapé `#ededef`, textos `#575663`).
+/// Os tons escuros/suaves são derivados para garantir contraste AA.
 abstract final class AppColors {
-  static const red = Color(0xFFC5202A);
-  static const darkRed = Color(0xFF8F1720);
-  static const ink = Color(0xFF242323);
-  static const muted = Color(0xFF6F6A67);
-  static const canvas = Color(0xFFF6F3EF);
+  static const red = Color(0xFFD10D0D);
+  static const darkRed = Color(0xFF9E0A0A);
+  static const redSoft = Color(0xFFFBE3E3);
+  static const ink = Color(0xFF2F2E36);
+  static const muted = Color(0xFF65646F);
+  static const canvas = Color(0xFFF4F4F6);
   static const surface = Color(0xFFFFFFFF);
-  static const success = Color(0xFF21865A);
-  static const successSoft = Color(0xFFE4F4EC);
-  static const warning = Color(0xFFB76A00);
-  static const warningSoft = Color(0xFFFFEFD5);
-  static const border = Color(0xFFE2DDD8);
+  static const success = Color(0xFF1C7D33);
+  static const successSoft = Color(0xFFE3F5E6);
+  static const warning = Color(0xFFA35F00);
+  static const warningSoft = Color(0xFFFFF0D9);
+  static const border = Color(0xFFE1E1E6);
 }
 
 abstract final class AppTheme {
@@ -32,7 +37,7 @@ abstract final class AppTheme {
         outline: AppColors.border,
       ),
       scaffoldBackgroundColor: AppColors.canvas,
-      fontFamily: 'Arial',
+      fontFamily: 'OpenSans',
       appBarTheme: const AppBarTheme(
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -95,7 +100,7 @@ abstract final class AppTheme {
         height: 72,
         elevation: 0,
         backgroundColor: Colors.white,
-        indicatorColor: const Color(0xFFF8DFE1),
+        indicatorColor: AppColors.redSoft,
         labelTextStyle: WidgetStateProperty.resolveWith(
           (states) => TextStyle(
             color: states.contains(WidgetState.selected)
@@ -109,6 +114,12 @@ abstract final class AppTheme {
         ),
       ),
       dividerColor: AppColors.border,
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+        },
+      ),
     );
   }
 }
