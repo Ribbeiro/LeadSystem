@@ -530,12 +530,13 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
             const SizedBox(height: 10),
             DropdownButtonFormField<String>(
               initialValue: _category,
+              isExpanded: true,
               decoration: const InputDecoration(labelText: 'Categoria'),
               items: orderedCategories
                   .map(
                     (category) => DropdownMenuItem(
                       value: category,
-                      child: Text(category),
+                      child: Text(category, overflow: TextOverflow.ellipsis),
                     ),
                   )
                   .toList(),

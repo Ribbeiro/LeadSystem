@@ -31,30 +31,32 @@ class BrandLogo extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 9),
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'SantiGrill',
-              style: TextStyle(
-                color: color,
-                fontSize: compact ? 17 : 21,
-                height: 1,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -.3,
+        Flexible(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'SantiGrill',
+                style: TextStyle(
+                  color: color,
+                  fontSize: compact ? 17 : 21,
+                  height: 1,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -.3,
+                ),
               ),
-            ),
-            Text(
-              'LEADSYSTEM',
-              style: TextStyle(
-                color: light ? Colors.white70 : AppColors.muted,
-                fontSize: 8,
-                letterSpacing: 1.2,
-                fontWeight: FontWeight.w700,
+              Text(
+                'LEADSYSTEM',
+                style: TextStyle(
+                  color: light ? Colors.white70 : AppColors.muted,
+                  fontSize: 8,
+                  letterSpacing: 1.2,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -82,7 +84,12 @@ class AppTopBar extends StatelessWidget {
       child: Row(
         children: [
           if (title == null)
-            const BrandLogo(compact: true)
+            const Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: BrandLogo(compact: true),
+              ),
+            )
           else
             Expanded(
               child: Text(
@@ -93,7 +100,6 @@ class AppTopBar extends StatelessWidget {
                 ),
               ),
             ),
-          if (title == null) const Spacer(),
           IconButton(
             tooltip: 'Minha conta',
             onPressed: onProfileTap,
@@ -205,6 +211,9 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final inStock = product.stock > 0;
+    final availabilityColor = inStock ? AppColors.success : AppColors.muted;
+    final availabilityLabel = inStock ? 'Em estoque' : 'Esgotado';
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -257,16 +266,20 @@ class ProductCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.star_rounded,
-                        color: AppColors.success,
+                        color: availabilityColor,
                         size: 15,
                       ),
-                      Text(
-                        ' ${product.rating.toStringAsFixed(1).replaceAll('.', ',')} · Em estoque',
-                        style: const TextStyle(
-                          color: AppColors.success,
-                          fontSize: 11,
+                      Flexible(
+                        child: Text(
+                          ' ${product.rating.toStringAsFixed(1).replaceAll('.', ',')} · $availabilityLabel',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: availabilityColor,
+                            fontSize: 11,
+                          ),
                         ),
                       ),
                     ],
@@ -277,6 +290,8 @@ class ProductCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           money(product.price),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             color: AppColors.darkRed,
                             fontWeight: FontWeight.w800,
@@ -285,9 +300,11 @@ class ProductCard extends StatelessWidget {
                         ),
                       ),
                       IconButton.filled(
-                        tooltip: 'Adicionar ao carrinho',
+                        tooltip: inStock
+                            ? 'Adicionar ao carrinho'
+                            : 'Produto esgotado',
                         visualDensity: VisualDensity.compact,
-                        onPressed: onAdd,
+                        onPressed: inStock ? onAdd : null,
                         icon: const Icon(Icons.add, size: 18),
                       ),
                     ],

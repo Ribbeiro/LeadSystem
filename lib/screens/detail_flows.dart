@@ -104,25 +104,38 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ),
               ),
               const SizedBox(width: 10),
-              const StatusPill(label: 'Em estoque'),
+              product.stock > 0
+                  ? const StatusPill(label: 'Em estoque')
+                  : const StatusPill(
+                      label: 'Esgotado',
+                      color: AppColors.muted,
+                      background: Color(0xFFF0F0F0),
+                    ),
             ],
           ),
           const SizedBox(height: 8),
-          Row(
+          Wrap(
+            spacing: 12,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              const Icon(
-                Icons.star_rounded,
-                color: AppColors.warning,
-                size: 19,
-              ),
-              Text(
-                ' ${product.rating.toStringAsFixed(1).replaceAll('.', ',')}  ',
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.star_rounded,
+                    color: AppColors.warning,
+                    size: 19,
+                  ),
+                  Text(
+                    ' ${product.rating.toStringAsFixed(1).replaceAll('.', ',')}',
+                  ),
+                ],
               ),
               Text(
                 '${product.reviewCount} avaliações',
                 style: const TextStyle(color: AppColors.muted),
               ),
-              const Spacer(),
               Text(
                 'SKU ${product.id}',
                 style: const TextStyle(color: AppColors.muted, fontSize: 12),
@@ -143,23 +156,43 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           const SizedBox(height: 22),
           const SectionHeading(title: 'Especificações'),
           const SizedBox(height: 8),
+          // Causa do crash: ListTile com `trailing` de texto longo ocupava toda a
+          // largura do tile e o Flutter abortava o layout da lista inteira.
           Card(
-            child: Column(
-              children: product.specifications.entries
-                  .map(
-                    (entry) => ListTile(
-                      dense: true,
-                      title: Text(
-                        entry.key,
-                        style: const TextStyle(color: AppColors.muted),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              child: Column(
+                children: product.specifications.entries
+                    .map(
+                      (entry) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 7),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: Text(
+                                entry.key,
+                                style: const TextStyle(color: AppColors.muted),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              flex: 3,
+                              child: Text(
+                                entry.value,
+                                textAlign: TextAlign.end,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      trailing: Text(
-                        entry.value,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                  )
-                  .toList(),
+                    )
+                    .toList(),
+              ),
             ),
           ),
           const SizedBox(height: 20),
@@ -254,16 +287,22 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
           const SizedBox(height: 16),
           FilledButton.icon(
-            onPressed: () {
-              state.addToCart(product, quantity: quantity);
-              showAppSnackBar(
-                context,
-                '$quantity item(ns) adicionado(s) ao carrinho.',
-              );
-            },
+            onPressed: product.stock <= 0
+                ? null
+                : () {
+                    state.addToCart(product, quantity: quantity);
+                    showAppSnackBar(
+                      context,
+                      '$quantity item(ns) adicionado(s) ao carrinho.',
+                    );
+                  },
             icon: const Icon(Icons.shopping_bag_outlined),
             label: Text(
-              'Adicionar ao carrinho · ${money(product.price * quantity)}',
+              product.stock <= 0
+                  ? 'Produto esgotado'
+                  : 'Adicionar · ${money(product.price * quantity)}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           const SizedBox(height: 10),
@@ -624,6 +663,7 @@ class _SummaryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
@@ -632,15 +672,18 @@ class _SummaryRow extends StatelessWidget {
             fontSize: emphasis ? 17 : 14,
           ),
         ),
-        const Spacer(),
-        Text(
-          value,
-          style: TextStyle(
-            color: success
-                ? AppColors.success
-                : (emphasis ? AppColors.darkRed : AppColors.ink),
-            fontWeight: emphasis ? FontWeight.w900 : FontWeight.w600,
-            fontSize: emphasis ? 18 : 14,
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: TextStyle(
+              color: success
+                  ? AppColors.success
+                  : (emphasis ? AppColors.darkRed : AppColors.ink),
+              fontWeight: emphasis ? FontWeight.w900 : FontWeight.w600,
+              fontSize: emphasis ? 18 : 14,
+            ),
           ),
         ),
       ],
@@ -1116,73 +1159,75 @@ class OrderSuccessScreen extends StatelessWidget {
     final state = AppScope.of(context);
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const CircleAvatar(
-                radius: 46,
-                backgroundColor: AppColors.successSoft,
-                foregroundColor: AppColors.success,
-                child: Icon(Icons.check_rounded, size: 52),
-              ),
-              const SizedBox(height: 22),
-              const Text(
-                'Pedido realizado!',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Recebemos seu pedido e enviaremos atualizações a cada mudança de status.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.muted, height: 1.5),
-              ),
-              const SizedBox(height: 24),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(18),
-                  child: Column(
-                    children: [
-                      _SummaryRow(label: 'Pedido', value: order.id),
-                      const SizedBox(height: 10),
-                      _SummaryRow(
-                        label: 'Pagamento',
-                        value: order.paymentMethod,
-                      ),
-                      const SizedBox(height: 10),
-                      _SummaryRow(
-                        label: 'Total',
-                        value: money(order.total),
-                        emphasis: true,
-                      ),
-                      const SizedBox(height: 10),
-                      const _SummaryRow(
-                        label: 'Previsão',
-                        value: '12 a 14 de setembro',
-                      ),
-                    ],
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const CircleAvatar(
+                  radius: 46,
+                  backgroundColor: AppColors.successSoft,
+                  foregroundColor: AppColors.success,
+                  child: Icon(Icons.check_rounded, size: 52),
+                ),
+                const SizedBox(height: 22),
+                const Text(
+                  'Pedido realizado!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Recebemos seu pedido e enviaremos atualizações a cada mudança de status.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: AppColors.muted, height: 1.5),
+                ),
+                const SizedBox(height: 24),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: Column(
+                      children: [
+                        _SummaryRow(label: 'Pedido', value: order.id),
+                        const SizedBox(height: 10),
+                        _SummaryRow(
+                          label: 'Pagamento',
+                          value: order.paymentMethod,
+                        ),
+                        const SizedBox(height: 10),
+                        _SummaryRow(
+                          label: 'Total',
+                          value: money(order.total),
+                          emphasis: true,
+                        ),
+                        const SizedBox(height: 10),
+                        _SummaryRow(
+                          label: 'Previsão',
+                          value: deliveryWindow(order.createdAt),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed: () {
-                  state.setNavigationIndex(2);
-                  Navigator.of(context).popUntil((route) => route.isFirst);
-                },
-                child: const Text('Acompanhar pedido'),
-              ),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () {
-                  state.setNavigationIndex(0);
-                  Navigator.of(context).popUntil((route) => route.isFirst);
-                },
-                child: const Text('Voltar ao início'),
-              ),
-            ],
+                const SizedBox(height: 24),
+                FilledButton(
+                  onPressed: () {
+                    state.setNavigationIndex(2);
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  },
+                  child: const Text('Acompanhar pedido'),
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () {
+                    state.setNavigationIndex(0);
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  },
+                  child: const Text('Voltar ao início'),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1563,11 +1608,13 @@ class _QuoteScreenState extends State<QuoteScreen> {
               children: [
                 Icon(Icons.schedule, color: AppColors.success, size: 18),
                 SizedBox(width: 7),
-                Text(
-                  'Resposta em até 1 dia útil',
-                  style: TextStyle(
-                    color: AppColors.success,
-                    fontWeight: FontWeight.w700,
+                Expanded(
+                  child: Text(
+                    'Resposta em até 1 dia útil',
+                    style: TextStyle(
+                      color: AppColors.success,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],
@@ -1638,4 +1685,31 @@ class _QuoteScreenState extends State<QuoteScreen> {
       Navigator.of(context).pop();
     }
   }
+}
+
+const _monthNames = [
+  'janeiro',
+  'fevereiro',
+  'março',
+  'abril',
+  'maio',
+  'junho',
+  'julho',
+  'agosto',
+  'setembro',
+  'outubro',
+  'novembro',
+  'dezembro',
+];
+
+/// Janela de entrega estimada (2 a 4 dias após o pedido), mesma regra do
+/// cálculo de frete em [AppState.calculateShipping].
+String deliveryWindow(DateTime createdAt) {
+  final start = createdAt.add(const Duration(days: 2));
+  final end = createdAt.add(const Duration(days: 4));
+  if (start.month == end.month) {
+    return '${start.day} a ${end.day} de ${_monthNames[end.month - 1]}';
+  }
+  return '${start.day} de ${_monthNames[start.month - 1]} a '
+      '${end.day} de ${_monthNames[end.month - 1]}';
 }

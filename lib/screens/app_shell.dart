@@ -492,11 +492,14 @@ class _CatalogScreenState extends State<CatalogScreen> {
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        Text(
-                          '${products.length} produtos',
-                          style: const TextStyle(color: AppColors.muted),
+                        Expanded(
+                          child: Text(
+                            '${products.length} produtos',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: AppColors.muted),
+                          ),
                         ),
-                        const Spacer(),
                         PopupMenuButton<ProductSort>(
                           tooltip: 'Ordenar produtos',
                           initialValue: state.productSort,
@@ -510,6 +513,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                               )
                               .toList(),
                           child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               const Icon(Icons.swap_vert, size: 18),
                               const SizedBox(width: 4),
@@ -778,14 +782,18 @@ class _OrderCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Text(
-                    number,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w900,
+                  Expanded(
+                    child: Text(
+                      number,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 8),
                   StatusPill(
                     label: status,
                     color: current ? AppColors.warning : AppColors.success,
@@ -810,14 +818,15 @@ class _OrderCard extends StatelessWidget {
                       size: 19,
                     ),
                     SizedBox(width: 8),
-                    Text(
-                      'Acompanhar pedido',
-                      style: TextStyle(
-                        color: AppColors.red,
-                        fontWeight: FontWeight.w800,
+                    Expanded(
+                      child: Text(
+                        'Acompanhar pedido',
+                        style: TextStyle(
+                          color: AppColors.red,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
-                    Spacer(),
                     Icon(Icons.chevron_right, color: AppColors.red),
                   ],
                 ),

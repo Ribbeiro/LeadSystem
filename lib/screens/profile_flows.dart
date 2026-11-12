@@ -817,9 +817,11 @@ class NotificationsScreen extends StatelessWidget {
                 color: AppColors.success,
               ),
               SizedBox(width: 6),
-              Text(
-                'Alterações salvas automaticamente',
-                style: TextStyle(color: AppColors.muted, fontSize: 12),
+              Expanded(
+                child: Text(
+                  'Alterações salvas automaticamente',
+                  style: TextStyle(color: AppColors.muted, fontSize: 12),
+                ),
               ),
             ],
           ),

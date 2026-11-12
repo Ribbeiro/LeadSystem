@@ -118,18 +118,26 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ? null
                                   : 'A senha deve ter ao menos 8 caracteres.',
                             ),
-                            Row(
+                            Wrap(
+                              alignment: WrapAlignment.spaceBetween,
+                              crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
-                                Checkbox(
-                                  value: remember,
-                                  onChanged: (value) =>
-                                      setState(() => remember = value ?? false),
-                                ),
-                                const Expanded(
-                                  child: Text(
-                                    'Lembrar de mim',
-                                    style: TextStyle(fontSize: 13),
-                                  ),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Checkbox(
+                                      value: remember,
+                                      onChanged: (value) => setState(
+                                        () => remember = value ?? false,
+                                      ),
+                                    ),
+                                    const Flexible(
+                                      child: Text(
+                                        'Lembrar de mim',
+                                        style: TextStyle(fontSize: 13),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                                 TextButton(
                                   onPressed: _openPasswordReset,
@@ -244,6 +252,7 @@ class _PasswordResetDialogState extends State<PasswordResetDialog> {
     return AlertDialog(
       icon: const Icon(Icons.lock_reset, color: AppColors.red),
       title: const Text('Criar nova senha'),
+      scrollable: true,
       content: Form(
         key: _formKey,
         child: Column(
@@ -783,10 +792,12 @@ class _AdminAction extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: AppColors.red, size: 26),
-              const SizedBox(height: 7),
+              Icon(icon, color: AppColors.red, size: 24),
+              const SizedBox(height: 6),
               Text(
                 label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 11,
@@ -831,18 +842,34 @@ class _AdminOrder extends StatelessWidget {
             Expanded(
               child: Text(
                 number,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontWeight: FontWeight.w900),
               ),
             ),
+            const SizedBox(width: 8),
             Text(total, style: const TextStyle(fontWeight: FontWeight.w700)),
           ],
         ),
-        subtitle: Text(customer),
-        trailing: StatusPill(
-          label: status,
-          color: pending ? AppColors.warning : AppColors.success,
-          background: pending ? AppColors.warningSoft : AppColors.successSoft,
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(customer),
+              StatusPill(
+                label: status,
+                color: pending ? AppColors.warning : AppColors.success,
+                background: pending
+                    ? AppColors.warningSoft
+                    : AppColors.successSoft,
+              ),
+            ],
+          ),
         ),
+        trailing: const Icon(Icons.chevron_right),
         onTap: onTap,
       ),
     );
