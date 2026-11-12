@@ -6,7 +6,8 @@
     "nome": "SantiGrill",
     "razaoSocial": "INDUSTRIA MECANICA SANTI LTDA",
     "cnpj": "44.048.395/0001-78",
-    "slogan": null,
+    "slogan": "Churrasqueiras Práticas",
+    "sloganOrigem": "texto da imagem da logo",
     "sobre": null,
     "destaquesHome": [
       "Os melhores produtos - diversas opções",
@@ -80,7 +81,8 @@
       "gradiente": "#605f6d",
       "menu": "#ffffff",
       "textoClaro": "#f0f0f4",
-      "_origem": "variáveis CSS (--color-*) definidas no HTML da home, tema Tray 7"
+      "fundoLogo": "#d91819",
+      "_origem": "variáveis CSS (--color-*) definidas no HTML da home, tema Tray 7; fundoLogo amostrado da imagem da logo"
     },
     "fontes": [
       "Open Sans",
@@ -1470,12 +1472,12 @@
   "pendencias": [
     "Página \"Empresa\" (/empresa) está vazia no site: campo empresa.sobre = null.",
     "Página \"Representantes\" (/representantes) está vazia no site.",
-    "Slogan não encontrado no site (meta description da home é \"-\"): empresa.slogan = null.",
+    "Slogan não aparece em texto no site (meta description da home é \"-\"); empresa.slogan \"Churrasqueiras Práticas\" foi lido da imagem da logo.",
     "Endereço sem número, complemento e bairro (o site mostra apenas \"Rua Caiapós, Santo André - SP, CEP 09195-510\").",
     "Link do WhatsApp no topo do site está vazio (href=\"\"): apenas o número (11) 98827-7030 está disponível; whatsappUrl = null.",
     "Somente Facebook encontrado como rede social (https://www.facebook.com/churrasqueirassantigrill). Instagram/YouTube/TikTok não aparecem no site. O widget do Facebook também cita https://www.facebook.com/SouSuporteLOL/ (aparentemente resto de template, ignorado).",
     "Horário de atendimento divergente: contato/rodapé dizem \"segunda a sexta 7:30 às 17:30\"; página de trocas diz \"8:00 às 16:30\".",
-    "Logo oficial só existe em JPG (sem transparência, 100x100 no HTML); logo.png foi convertido do JPG, sem canal alfa real. Não há SVG.",
+    "Logo oficial só existe em JPG 476x172 (letreiro branco sobre retângulo vermelho #d91819, sem transparência); logo.png foi convertido do JPG, sem canal alfa. Não há SVG nem versão sem fundo.",
     "Nenhum produto tem preço promocional ativo (promotional_price = 0); dataLayer marca \"promotion: YES\" para os espetos 129 e 133, mas sem preço promocional informado.",
     "Peso e dimensões estruturadas (weight/length/width/height) não são publicados pela loja: especificacoes.peso e especificacoes.dimensoes = null; medidas só aparecem em texto livre (especificacoes.medidasDescricao).",
     "Garantia preenchida apenas em alguns produtos; nos demais especificacoes.garantia = null (página geral diz que varia por produto).",
