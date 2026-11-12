@@ -2,15 +2,23 @@ import 'package:flutter/material.dart';
 
 import '../core/app_state.dart';
 import '../core/app_theme.dart';
+import '../core/external_links.dart';
 import '../models/app_models.dart';
 import '../models/product.dart';
 import '../widgets/shared.dart';
 import 'auth_admin.dart';
 
 class ProductDetailScreen extends StatefulWidget {
-  const ProductDetailScreen({super.key, required this.product});
+  const ProductDetailScreen({
+    super.key,
+    required this.product,
+    this.heroScope = 'list',
+  });
 
   final Product product;
+
+  /// Mesmo valor usado no card de origem para a animação Hero da foto.
+  final String heroScope;
 
   @override
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
@@ -18,6 +26,9 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   int quantity = 1;
+  int _imageIndex = 0;
+  bool _descriptionExpanded = false;
+  String? _voltage;
   final TextEditingController _postalCodeController = TextEditingController();
   String? _deliveryResult;
   String? _postalCodeError;
@@ -31,8 +42,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final state = AppScope.of(context);
-    final product = widget.product;
+    final product = state.findProductById(widget.product.id) ?? widget.product;
     final favorite = state.favorites.contains(product.id);
+    final voltage =
+        _voltage ??
+        state.cartOption(product.id) ??
+        (product.voltageOptions.isEmpty ? null : product.voltageOptions.first);
+    if (quantity > product.stock && product.stock > 0) {
+      quantity = product.stock;
+    }
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -58,12 +76,58 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
         children: [
           AspectRatio(
-            aspectRatio: 1.35,
+            aspectRatio: 1.15,
             child: Stack(
               children: [
                 Positioned.fill(
-                  child: ProductImage(quadrant: product.imageQuadrant),
+                  child: product.images.length <= 1
+                      ? Hero(
+                          tag: 'product-${product.id}-${widget.heroScope}',
+                          child: ProductImage(path: product.coverImage),
+                        )
+                      : PageView.builder(
+                          itemCount: product.images.length,
+                          onPageChanged: (index) =>
+                              setState(() => _imageIndex = index),
+                          itemBuilder: (context, index) {
+                            final image = ProductImage(
+                              path: product.images[index],
+                              fit: BoxFit.contain,
+                            );
+                            return index == 0
+                                ? Hero(
+                                    tag:
+                                        'product-${product.id}-${widget.heroScope}',
+                                    child: image,
+                                  )
+                                : image;
+                          },
+                        ),
                 ),
+                if (product.images.length > 1)
+                  Positioned(
+                    bottom: 10,
+                    left: 0,
+                    right: 0,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        for (var i = 0; i < product.images.length; i++)
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            margin: const EdgeInsets.symmetric(horizontal: 3),
+                            width: i == _imageIndex ? 18 : 7,
+                            height: 7,
+                            decoration: BoxDecoration(
+                              color: i == _imageIndex
+                                  ? AppColors.red
+                                  : AppColors.border,
+                              borderRadius: BorderRadius.circular(99),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                 if (product.badge != null)
                   Positioned(
                     left: 12,
@@ -71,7 +135,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     child: StatusPill(
                       label: product.badge!,
                       color: AppColors.red,
-                      background: const Color(0xFFFFE7E8),
+                      background: AppColors.redSoft,
                     ),
                   ),
                 Positioned(
@@ -89,7 +153,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
+          Text(
+            product.category.toUpperCase(),
+            style: const TextStyle(
+              color: AppColors.red,
+              fontSize: 12,
+              letterSpacing: .8,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -97,14 +171,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 child: Text(
                   product.name,
                   style: const TextStyle(
-                    fontSize: 25,
-                    height: 1.1,
-                    fontWeight: FontWeight.w900,
+                    fontSize: 23,
+                    height: 1.2,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
               const SizedBox(width: 10),
-              product.stock > 0
+              product.inStock
                   ? const StatusPill(label: 'Em estoque')
                   : const StatusPill(
                       label: 'Esgotado',
@@ -113,47 +187,54 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     ),
             ],
           ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 12,
-            runSpacing: 4,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.star_rounded,
-                    color: AppColors.warning,
-                    size: 19,
-                  ),
-                  Text(
-                    ' ${product.rating.toStringAsFixed(1).replaceAll('.', ',')}',
-                  ),
-                ],
-              ),
-              Text(
-                '${product.reviewCount} avaliações',
-                style: const TextStyle(color: AppColors.muted),
-              ),
-              Text(
-                'SKU ${product.id}',
-                style: const TextStyle(color: AppColors.muted, fontSize: 12),
-              ),
-            ],
-          ),
           const SizedBox(height: 14),
-          Text(
-            money(product.price),
-            style: const TextStyle(
-              color: AppColors.darkRed,
-              fontSize: 28,
-              fontWeight: FontWeight.w900,
+          PriceTag(product: product, large: true),
+          if (product.voltageOptions.isNotEmpty) ...[
+            const SizedBox(height: 18),
+            const Text(
+              'Voltagem',
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: [
+                for (final option in product.voltageOptions)
+                  ChoiceChip(
+                    label: Text(option),
+                    selected: voltage == option,
+                    onSelected: (_) => setState(() => _voltage = option),
+                  ),
+              ],
+            ),
+          ],
+          const SizedBox(height: 18),
+          const SectionHeading(title: 'Descrição'),
+          const SizedBox(height: 6),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOut,
+            alignment: Alignment.topCenter,
+            child: Text(
+              product.description,
+              maxLines: _descriptionExpanded ? null : 5,
+              overflow: _descriptionExpanded
+                  ? TextOverflow.visible
+                  : TextOverflow.fade,
+              style: const TextStyle(height: 1.5),
             ),
           ),
-          const SizedBox(height: 8),
-          Text(product.description, style: const TextStyle(height: 1.5)),
-          const SizedBox(height: 22),
+          if (product.description.length > 280)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: () => setState(
+                  () => _descriptionExpanded = !_descriptionExpanded,
+                ),
+                child: Text(_descriptionExpanded ? 'Ver menos' : 'Ver mais'),
+              ),
+            ),
+          const SizedBox(height: 16),
           const SectionHeading(title: 'Especificações'),
           const SizedBox(height: 8),
           // Causa do crash: ListTile com `trailing` de texto longo ocupava toda a
@@ -195,6 +276,72 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ),
             ),
           ),
+          if (product.measures.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            const SectionHeading(title: 'Medidas e detalhes'),
+            const SizedBox(height: 8),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (final line in product.measures)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 3),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.only(top: 7, right: 8),
+                              child: Icon(
+                                Icons.circle,
+                                size: 5,
+                                color: AppColors.red,
+                              ),
+                            ),
+                            Expanded(child: Text(line)),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+          if (product.videoUrl != null || product.url != null) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (product.videoUrl != null)
+                  ActionChip(
+                    avatar: const Icon(Icons.play_circle_outline, size: 18),
+                    label: const Text('Ver vídeo'),
+                    onPressed: () =>
+                        ExternalLinks.url(context, product.videoUrl!),
+                  ),
+                if (product.url != null)
+                  ActionChip(
+                    avatar: const Icon(Icons.open_in_new, size: 18),
+                    label: const Text('Ver no site'),
+                    onPressed: () => ExternalLinks.url(context, product.url!),
+                  ),
+                ActionChip(
+                  avatar: const Icon(Icons.chat_outlined, size: 18),
+                  label: const Text('Dúvidas no WhatsApp'),
+                  onPressed: () => ExternalLinks.whatsapp(
+                    context,
+                    state.company,
+                    message:
+                        'Olá! Tenho interesse no produto ${product.name}'
+                        '${voltage == null ? '' : ' ($voltage)'}.',
+                  ),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: 20),
           const Text(
             'Calcule o frete',
@@ -290,7 +437,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             onPressed: product.stock <= 0
                 ? null
                 : () {
-                    state.addToCart(product, quantity: quantity);
+                    state.addToCart(
+                      product,
+                      quantity: quantity,
+                      option: voltage,
+                    );
                     showAppSnackBar(
                       context,
                       '$quantity item(ns) adicionado(s) ao carrinho.',
@@ -300,7 +451,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             label: Text(
               product.stock <= 0
                   ? 'Produto esgotado'
-                  : 'Adicionar · ${money(product.price * quantity)}',
+                  : 'Adicionar · ${money(product.salePrice * quantity)}',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -395,7 +546,7 @@ class _CartScreenState extends State<CartScreen> {
                     label:
                         '${state.cartCount} ${state.cartCount == 1 ? 'item' : 'itens'}',
                     color: AppColors.red,
-                    background: const Color(0xFFFFE7E8),
+                    background: AppColors.redSoft,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -548,7 +699,7 @@ class _CartItem extends StatelessWidget {
             SizedBox(
               width: 86,
               height: 86,
-              child: ProductImage(quadrant: product.imageQuadrant),
+              child: ProductImage(path: product.coverImage),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -563,7 +714,7 @@ class _CartItem extends StatelessWidget {
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    money(product.price),
+                    money(product.salePrice),
                     style: const TextStyle(
                       color: AppColors.darkRed,
                       fontWeight: FontWeight.w900,
@@ -612,9 +763,12 @@ class _CartItem extends StatelessWidget {
 }
 
 class _OrderSummary extends StatelessWidget {
-  const _OrderSummary({required this.state});
+  const _OrderSummary({required this.state, this.paymentMethod});
 
   final AppState state;
+
+  /// Quando informado (checkout), aplica o desconto do Pix no total.
+  final String? paymentMethod;
 
   @override
   Widget build(BuildContext context) {
@@ -632,14 +786,42 @@ class _OrderSummary extends StatelessWidget {
                   : 'R\$ 0,00',
               success: state.discount > 0,
             ),
+            if (paymentMethod == 'Pix' && state.pixDiscount > 0) ...[
+              const SizedBox(height: 8),
+              _SummaryRow(
+                label: 'Desconto Pix',
+                value: '- ${money(state.pixDiscount)}',
+                success: true,
+              ),
+            ],
             const SizedBox(height: 8),
-            _SummaryRow(label: 'Frete', value: money(state.shipping)),
+            _SummaryRow(
+              label: 'Frete (estimado)',
+              value: money(state.shipping),
+            ),
             const Divider(height: 24),
             _SummaryRow(
               label: 'Total',
-              value: money(state.total),
+              value: money(
+                paymentMethod == null
+                    ? state.total
+                    : state.totalFor(paymentMethod!),
+              ),
               emphasis: true,
             ),
+            if (paymentMethod == null && state.pixDiscount > 0) ...[
+              const SizedBox(height: 6),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  'ou ${money(state.totalFor('Pix'))} no Pix',
+                  style: const TextStyle(
+                    color: AppColors.success,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -889,17 +1071,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 children: [
                   _PaymentTile(
                     value: 'Pix',
-                    subtitle: 'Aprovação imediata',
+                    subtitle: 'À vista, com desconto',
                     selected: payment == 'Pix',
                   ),
                   _PaymentTile(
                     value: 'Cartão',
-                    subtitle: 'Até 6x sem juros',
+                    subtitle: 'Em até 12x (juros de 1,99% a.m.)',
                     selected: payment == 'Cartão',
                   ),
                   _PaymentTile(
                     value: 'Boleto',
-                    subtitle: 'Vencimento em 2 dias',
+                    subtitle: 'Boleto bancário',
                     selected: payment == 'Boleto',
                   ),
                 ],
@@ -987,7 +1169,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
             ],
             const SizedBox(height: 18),
-            _OrderSummary(state: state),
+            _OrderSummary(state: state, paymentMethod: payment),
             const SizedBox(height: 10),
             CheckboxListTile(
               value: accepted,
@@ -1013,7 +1195,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         color: Colors.white,
                       ),
                     )
-                  : Text('Finalizar pedido · ${money(state.total)}'),
+                  : Text(
+                      'Finalizar pedido · ${money(state.totalFor(payment))}',
+                    ),
             ),
           ],
         ),
@@ -1299,7 +1483,7 @@ class TrackingScreen extends StatelessWidget {
                         ? AppColors.red
                         : AppColors.success,
                     background: order.status == OrderStatus.cancelled
-                        ? const Color(0xFFFFE7E8)
+                        ? AppColors.redSoft
                         : AppColors.successSoft,
                   ),
                 ],
@@ -1537,9 +1721,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
                     SizedBox(
                       width: 78,
                       height: 78,
-                      child: ProductImage(
-                        quadrant: widget.product.imageQuadrant,
-                      ),
+                      child: ProductImage(path: widget.product.coverImage),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -1552,7 +1734,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
                           ),
                           const SizedBox(height: 5),
                           Text(
-                            money(widget.product.price),
+                            money(widget.product.salePrice),
                             style: const TextStyle(
                               color: AppColors.darkRed,
                               fontWeight: FontWeight.w800,

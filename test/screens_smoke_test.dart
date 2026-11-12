@@ -6,7 +6,10 @@ import 'package:leadsystem/screens/admin_flows.dart';
 import 'package:leadsystem/screens/app_shell.dart';
 import 'package:leadsystem/screens/auth_admin.dart';
 import 'package:leadsystem/screens/detail_flows.dart';
+import 'package:leadsystem/screens/company_screen.dart';
 import 'package:leadsystem/screens/profile_flows.dart';
+
+import 'test_helpers.dart';
 
 /// Abre cada tela do app em um celular pequeno e em um grande e falha
 /// se qualquer exceção (incluindo overflow de layout) for lançada.
@@ -39,6 +42,7 @@ void main() {
     'Notificações': (_) => const NotificationsScreen(),
     'Conta e segurança': (_) => const AccountSecurityScreen(),
     'Privacidade': (_) => const PrivacyPolicyScreen(),
+    'Fale com a SantiGrill': (_) => const CompanyScreen(),
     'Admin produtos': (_) => const ProductManagementScreen(),
     'Form produto novo': (_) => const ProductFormScreen(),
     'Form produto edição': (s) => ProductFormScreen(product: s.products.first),
@@ -62,7 +66,7 @@ void main() {
         tester.view.devicePixelRatio = 2;
         addTearDown(tester.view.reset);
 
-        final state = AppState();
+        final state = buildTestState();
         addTearDown(state.dispose);
         await state.login(email: 'leandro@email.com', password: 'Santi@2026');
         state.addToCart(state.products.first);

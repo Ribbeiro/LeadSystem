@@ -94,7 +94,7 @@ class _FavoriteProductCard extends StatelessWidget {
               SizedBox(
                 width: 94,
                 height: 104,
-                child: ProductImage(quadrant: product.imageQuadrant),
+                child: ProductImage(path: product.coverImage),
               ),
               const SizedBox(width: 13),
               Expanded(
@@ -126,49 +126,25 @@ class _FavoriteProductCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.star_rounded,
-                          size: 16,
-                          color: AppColors.warning,
-                        ),
-                        const SizedBox(width: 3),
-                        Text(
-                          product.rating
-                              .toStringAsFixed(1)
-                              .replaceAll('.', ','),
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Em estoque',
-                          style: TextStyle(
-                            color: AppColors.success,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      product.inStock ? 'Em estoque' : 'Esgotado',
+                      style: TextStyle(
+                        color: product.inStock
+                            ? AppColors.success
+                            : AppColors.muted,
+                        fontSize: 12,
+                      ),
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            money(product.price),
-                            style: const TextStyle(
-                              color: AppColors.darkRed,
-                              fontSize: 17,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ),
-                        FilledButton.tonalIcon(
-                          onPressed: onAdd,
-                          icon: const Icon(Icons.add_shopping_cart, size: 18),
-                          label: const Text('Adicionar'),
-                        ),
-                      ],
+                    const SizedBox(height: 6),
+                    PriceTag(product: product),
+                    const SizedBox(height: 6),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: FilledButton.tonalIcon(
+                        onPressed: product.inStock ? onAdd : null,
+                        icon: const Icon(Icons.add_shopping_cart, size: 18),
+                        label: const Text('Adicionar'),
+                      ),
                     ),
                   ],
                 ),
@@ -382,7 +358,7 @@ class _AddressCard extends StatelessWidget {
           children: [
             CircleAvatar(
               backgroundColor: address.isDefault
-                  ? const Color(0xFFF8DFE1)
+                  ? AppColors.redSoft
                   : const Color(0xFFF0ECE7),
               foregroundColor: address.isDefault
                   ? AppColors.red
@@ -410,7 +386,7 @@ class _AddressCard extends StatelessWidget {
                         const StatusPill(
                           label: 'Padrão',
                           color: AppColors.red,
-                          background: Color(0xFFF8DFE1),
+                          background: AppColors.redSoft,
                         ),
                       ],
                     ],
@@ -838,7 +814,7 @@ class NotificationsScreen extends StatelessWidget {
                 StatusPill(
                   label: '${events.where((event) => !event.read).length} novas',
                   color: AppColors.red,
-                  background: const Color(0xFFF8DFE1),
+                  background: AppColors.redSoft,
                 ),
             ],
           ),
@@ -919,7 +895,7 @@ class _NotificationToggle extends StatelessWidget {
       value: value,
       onChanged: onChanged,
       secondary: CircleAvatar(
-        backgroundColor: const Color(0xFFF8DFE1),
+        backgroundColor: AppColors.redSoft,
         foregroundColor: AppColors.red,
         child: Icon(icon, size: 21),
       ),
@@ -1085,7 +1061,7 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
                   children: [
                     const CircleAvatar(
                       radius: 28,
-                      backgroundColor: Color(0xFFF8DFE1),
+                      backgroundColor: AppColors.redSoft,
                       foregroundColor: AppColors.red,
                       child: Icon(Icons.person_rounded, size: 30),
                     ),
@@ -1113,7 +1089,7 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
                       label: state.isAdmin ? 'Admin' : 'Cliente',
                       color: state.isAdmin ? AppColors.red : AppColors.success,
                       background: state.isAdmin
-                          ? const Color(0xFFF8DFE1)
+                          ? AppColors.redSoft
                           : AppColors.successSoft,
                     ),
                   ],
@@ -1179,7 +1155,7 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
                   vertical: 8,
                 ),
                 leading: const CircleAvatar(
-                  backgroundColor: Color(0xFFF8DFE1),
+                  backgroundColor: AppColors.redSoft,
                   foregroundColor: AppColors.red,
                   child: Icon(Icons.password_rounded),
                 ),
@@ -1369,7 +1345,7 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFE7E8),
+                      color: AppColors.redSoft,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -1555,7 +1531,7 @@ class _PolicySection extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 15,
-            backgroundColor: const Color(0xFFF8DFE1),
+            backgroundColor: AppColors.redSoft,
             foregroundColor: AppColors.red,
             child: Text(
               number,
@@ -1624,7 +1600,7 @@ _NotificationVisual _notificationVisual(String category) {
       return const _NotificationVisual(
         icon: Icons.local_offer_outlined,
         color: AppColors.red,
-        background: Color(0xFFF8DFE1),
+        background: AppColors.redSoft,
       );
     case 'support':
       return const _NotificationVisual(

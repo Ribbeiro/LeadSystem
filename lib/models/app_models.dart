@@ -30,7 +30,7 @@ extension QuoteStatusLabel on QuoteStatus {
   };
 }
 
-enum ProductSort { relevance, name, priceLowToHigh, priceHighToLow, rating }
+enum ProductSort { relevance, name, priceLowToHigh, priceHighToLow }
 
 extension ProductSortLabel on ProductSort {
   String get label => switch (this) {
@@ -38,7 +38,6 @@ extension ProductSortLabel on ProductSort {
     ProductSort.name => 'Nome',
     ProductSort.priceLowToHigh => 'Menor preço',
     ProductSort.priceHighToLow => 'Maior preço',
-    ProductSort.rating => 'Melhor avaliação',
   };
 }
 
@@ -212,14 +211,20 @@ class OrderItem {
     required this.name,
     required this.unitPrice,
     required this.quantity,
-    required this.imageQuadrant,
+    this.image,
+    this.option,
   });
 
   final String productId;
   final String name;
   final double unitPrice;
   final int quantity;
-  final int imageQuadrant;
+
+  /// Imagem do produto no momento da compra (caminho de asset).
+  final String? image;
+
+  /// Variação escolhida (ex.: voltagem 220V).
+  final String? option;
 
   double get total => unitPrice * quantity;
 
@@ -228,7 +233,8 @@ class OrderItem {
     'name': name,
     'unitPrice': unitPrice,
     'quantity': quantity,
-    'imageQuadrant': imageQuadrant,
+    'image': image,
+    'option': option,
   };
 
   factory OrderItem.fromJson(Map<String, Object?> json) => OrderItem(
@@ -236,7 +242,8 @@ class OrderItem {
     name: json['name']?.toString() ?? '',
     unitPrice: (json['unitPrice'] as num?)?.toDouble() ?? 0,
     quantity: (json['quantity'] as num?)?.toInt() ?? 0,
-    imageQuadrant: (json['imageQuadrant'] as num?)?.toInt() ?? 0,
+    image: json['image']?.toString(),
+    option: json['option']?.toString(),
   );
 }
 

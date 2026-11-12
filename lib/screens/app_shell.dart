@@ -2,15 +2,32 @@ import 'package:flutter/material.dart';
 
 import '../core/app_state.dart';
 import '../core/app_theme.dart';
+import '../core/external_links.dart';
 import '../models/app_models.dart';
 import '../models/product.dart';
 import '../widgets/shared.dart';
 import 'auth_admin.dart';
+import 'company_screen.dart';
 import 'detail_flows.dart';
 import 'profile_flows.dart';
 
-class AppShell extends StatelessWidget {
+class AppShell extends StatefulWidget {
   const AppShell({super.key});
+
+  @override
+  State<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends State<AppShell> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final notice = AppScope.of(context).consumeStartupNotice();
+      if (notice != null) showAppSnackBar(context, notice);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -120,12 +137,8 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 18),
               if (featuredProducts.isNotEmpty) ...[
                 _PromoBanner(
-                  onTap: () => _openProduct(
-                    context,
-                    featuredProducts.length > 1
-                        ? featuredProducts[1]
-                        : featuredProducts.first,
-                  ),
+                  product: featuredProducts.first,
+                  onTap: () => _openProduct(context, featuredProducts.first),
                 ),
                 const SizedBox(height: 24),
               ],
@@ -140,6 +153,14 @@ class HomeScreen extends StatelessWidget {
                       .map(
                         (item) => _CategoryTile(
                           icon: _categoryIcon(item),
+                          image: state.products
+                              .where(
+                                (product) =>
+                                    product.category == item &&
+                                    product.coverImage != null,
+                              )
+                              .map((product) => product.coverImage)
+                              .firstOrNull,
                           label: item,
                           onTap: () => _selectCategory(state, item),
                         ),
@@ -149,7 +170,7 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               SectionHeading(
-                title: 'Mais vendidos',
+                title: 'Destaques da loja',
                 action: 'Ver todos',
                 onAction: () {
                   state.setSearch('');
@@ -200,17 +221,18 @@ class HomeScreen extends StatelessWidget {
   }
 
   IconData _categoryIcon(String category) => switch (category) {
-    'Churrasqueiras' => Icons.outdoor_grill,
-    'Grelhas' => Icons.view_in_ar_outlined,
+    'Churrasqueira' => Icons.outdoor_grill,
+    'Grill Giratório' => Icons.rotate_right,
+    'Grelhas' => Icons.grid_on,
     'Espetos' => Icons.horizontal_rule_rounded,
-    'Kits' => Icons.inventory_2_outlined,
     _ => Icons.category_outlined,
   };
 }
 
 class _PromoBanner extends StatelessWidget {
-  const _PromoBanner({required this.onTap});
+  const _PromoBanner({required this.product, required this.onTap});
 
+  final Product product;
   final VoidCallback onTap;
 
   @override
@@ -274,11 +296,11 @@ class _PromoBanner extends StatelessWidget {
                   ),
                 ),
               ),
-              const Expanded(
+              Expanded(
                 flex: 5,
                 child: ProductImage(
-                  quadrant: 1,
-                  borderRadius: BorderRadius.only(
+                  path: product.coverImage,
+                  borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(38),
                     bottomLeft: Radius.circular(38),
                   ),
@@ -297,9 +319,11 @@ class _CategoryTile extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
+    this.image,
   });
 
   final IconData icon;
+  final String? image;
   final String label;
   final VoidCallback onTap;
 
@@ -321,7 +345,17 @@ class _CategoryTile extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: AppColors.red),
+              if (image != null)
+                SizedBox(
+                  width: 44,
+                  height: 40,
+                  child: ProductImage(
+                    path: image,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                )
+              else
+                Icon(icon, color: AppColors.red),
               const SizedBox(height: 7),
               Text(
                 label,
@@ -866,16 +900,24 @@ class _HelpScreenState extends State<HelpScreen> {
   @override
   Widget build(BuildContext context) {
     final state = AppScope.of(context);
-    final query = _faqQuery.trim().toLowerCase();
-    final faqs = _faqEntries
-        .where(
-          (faq) =>
-              query.isEmpty ||
-              faq.title.toLowerCase().contains(query) ||
-              faq.subtitle.toLowerCase().contains(query) ||
-              faq.answer.toLowerCase().contains(query),
-        )
-        .toList();
+    final query = foldText(_faqQuery);
+    final faqs =
+        [
+              for (final item in state.catalog.faq)
+                _FaqData(title: item.question, answer: item.answer),
+              for (final section in state.catalog.info)
+                _FaqData(
+                  title: section.title,
+                  answer: section.body,
+                  url: section.url,
+                ),
+            ]
+            .where(
+              (faq) =>
+                  query.isEmpty ||
+                  foldText('${faq.title} ${faq.answer}').contains(query),
+            )
+            .toList();
     return Column(
       children: [
         AppTopBar(
@@ -906,7 +948,19 @@ class _HelpScreenState extends State<HelpScreen> {
                 ),
                 onChanged: (value) => setState(() => _faqQuery = value),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
+              ContactActions(company: state.company),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const CompanyScreen()),
+                  ),
+                  icon: const Icon(Icons.storefront_outlined, size: 18),
+                  label: const Text('Endereço, horário e contatos'),
+                ),
+              ),
+              const SizedBox(height: 8),
               const SectionHeading(title: 'Encontre uma resposta'),
               const SizedBox(height: 8),
               if (faqs.isEmpty)
@@ -929,26 +983,27 @@ class _HelpScreenState extends State<HelpScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Row(
+                      Row(
                         children: [
-                          CircleAvatar(
-                            backgroundColor: AppColors.successSoft,
-                            foregroundColor: AppColors.success,
-                            child: Text('M'),
+                          const CircleAvatar(
+                            backgroundColor: AppColors.redSoft,
+                            foregroundColor: AppColors.red,
+                            child: Icon(Icons.support_agent),
                           ),
-                          SizedBox(width: 10),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  'Mariana · Atendimento',
+                                const Text(
+                                  'Assistente SantiGrill',
                                   style: TextStyle(fontWeight: FontWeight.w800),
                                 ),
                                 Text(
-                                  '● Online · responde em cerca de 2 min',
-                                  style: TextStyle(
-                                    color: AppColors.success,
+                                  'Respostas automáticas no app'
+                                  '${state.company.businessHours == null ? '' : ' · equipe: ${state.company.businessHours}'}',
+                                  style: const TextStyle(
+                                    color: AppColors.muted,
                                     fontSize: 12,
                                   ),
                                 ),
@@ -1021,26 +1076,32 @@ class _FaqTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
+      clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
+        shape: const Border(),
         leading: const CircleAvatar(
           radius: 16,
-          backgroundColor: Color(0xFFF8DFE1),
+          backgroundColor: AppColors.redSoft,
           foregroundColor: AppColors.red,
           child: Icon(Icons.question_mark, size: 17),
         ),
         title: Text(
           faq.title,
-          style: const TextStyle(fontWeight: FontWeight.w800),
+          style: const TextStyle(fontWeight: FontWeight.w700),
         ),
-        subtitle: Text(faq.subtitle),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        expandedCrossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Text(
-              faq.answer,
-              style: TextStyle(color: Colors.grey.shade700, height: 1.4),
-            ),
+          Text(
+            faq.answer,
+            style: const TextStyle(color: AppColors.muted, height: 1.45),
           ),
+          if (faq.url != null)
+            TextButton.icon(
+              onPressed: () => ExternalLinks.url(context, faq.url!),
+              icon: const Icon(Icons.open_in_new, size: 16),
+              label: const Text('Ver no site'),
+            ),
         ],
       ),
     );
@@ -1048,37 +1109,12 @@ class _FaqTile extends StatelessWidget {
 }
 
 class _FaqData {
-  const _FaqData({
-    required this.title,
-    required this.subtitle,
-    required this.answer,
-  });
+  const _FaqData({required this.title, required this.answer, this.url});
 
   final String title;
-  final String subtitle;
   final String answer;
+  final String? url;
 }
-
-const _faqEntries = <_FaqData>[
-  _FaqData(
-    title: 'Entrega e frete',
-    subtitle: 'Prazo, CEP e rastreio',
-    answer:
-        'Informe o CEP na página do produto para ver o prazo. Depois da compra, abra Meus pedidos e toque em Acompanhar pedido para consultar cada etapa.',
-  ),
-  _FaqData(
-    title: 'Pagamento',
-    subtitle: 'Pix, cartão e boleto',
-    answer:
-        'O Pix é aprovado imediatamente. O cartão pode ser parcelado em até 6 vezes e o boleto vence em dois dias úteis.',
-  ),
-  _FaqData(
-    title: 'Trocas e garantia',
-    subtitle: 'Prazos e condições',
-    answer:
-        'Você pode solicitar troca em até 7 dias após o recebimento. A garantia varia por produto e aparece nas especificações do catálogo.',
-  ),
-];
 
 class _MessageBubble extends StatelessWidget {
   const _MessageBubble({required this.message});
@@ -1096,9 +1132,7 @@ class _MessageBubble extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: message.fromUser
-              ? const Color(0xFFF8DFE1)
-              : const Color(0xFFF0ECE7),
+          color: message.fromUser ? AppColors.redSoft : const Color(0xFFF0ECE7),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Column(
@@ -1142,7 +1176,7 @@ class ProfileScreen extends StatelessWidget {
                     children: [
                       const CircleAvatar(
                         radius: 30,
-                        backgroundColor: Color(0xFFF8DFE1),
+                        backgroundColor: AppColors.redSoft,
                         foregroundColor: AppColors.red,
                         child: Icon(Icons.person, size: 30),
                       ),
@@ -1215,6 +1249,14 @@ class ProfileScreen extends StatelessWidget {
                   context,
                   state,
                   const AccountSecurityScreen(),
+                ),
+              ),
+              _ProfileTile(
+                icon: Icons.storefront_outlined,
+                title: 'Fale com a SantiGrill',
+                subtitle: 'WhatsApp, telefone, endereço e políticas',
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const CompanyScreen()),
                 ),
               ),
               const SizedBox(height: 20),

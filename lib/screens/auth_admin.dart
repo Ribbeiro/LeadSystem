@@ -401,7 +401,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFE7E8),
+                  color: AppColors.redSoft,
                   border: Border.all(color: AppColors.red),
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -555,7 +555,7 @@ class AdminDashboardScreen extends StatelessWidget {
               child: StatusPill(
                 label: 'Admin',
                 color: AppColors.red,
-                background: Color(0xFFFFE7E8),
+                background: AppColors.redSoft,
               ),
             ),
           ),
@@ -579,7 +579,7 @@ class AdminDashboardScreen extends StatelessWidget {
                 child: _MetricCard(
                   value: '${state.pendingOrderCount}',
                   label: 'pedidos\npendentes',
-                  color: const Color(0xFFFFE7E8),
+                  color: AppColors.redSoft,
                   valueColor: AppColors.darkRed,
                 ),
               ),
@@ -643,7 +643,7 @@ class AdminDashboardScreen extends StatelessWidget {
               const StatusPill(
                 label: 'Pendentes',
                 color: AppColors.red,
-                background: Color(0xFFFFE7E8),
+                background: AppColors.redSoft,
               ),
             ],
           ),
@@ -895,7 +895,7 @@ class _ManagementTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: const Color(0xFFF8DFE1),
+          backgroundColor: AppColors.redSoft,
           foregroundColor: AppColors.red,
           child: Icon(icon),
         ),

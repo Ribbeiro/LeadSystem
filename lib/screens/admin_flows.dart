@@ -296,7 +296,7 @@ class _ProductAdminCard extends StatelessWidget {
             SizedBox(
               width: 72,
               height: 72,
-              child: ProductImage(quadrant: product.imageQuadrant),
+              child: ProductImage(path: product.coverImage),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -416,13 +416,12 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   late final TextEditingController _shortName;
   late final TextEditingController _description;
   late final TextEditingController _price;
-  late final TextEditingController _rating;
-  late final TextEditingController _reviews;
+  late final TextEditingController _promotionalPrice;
   late final TextEditingController _stock;
   late final TextEditingController _badge;
   late final TextEditingController _specifications;
   String? _category;
-  int _imageQuadrant = 0;
+  String? _image;
   bool _active = true;
 
   bool get _editing => widget.product != null;
@@ -438,8 +437,11 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     _price = TextEditingController(
       text: product?.price.toStringAsFixed(2).replaceAll('.', ',') ?? '',
     );
-    _rating = TextEditingController(text: '${product?.rating ?? 5}');
-    _reviews = TextEditingController(text: '${product?.reviewCount ?? 0}');
+    _promotionalPrice = TextEditingController(
+      text:
+          product?.promotionalPrice?.toStringAsFixed(2).replaceAll('.', ',') ??
+          '',
+    );
     _stock = TextEditingController(text: '${product?.stock ?? 0}');
     _badge = TextEditingController(text: product?.badge ?? '');
     _specifications = TextEditingController(
@@ -450,7 +452,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
           '',
     );
     _category = product?.category;
-    _imageQuadrant = product?.imageQuadrant ?? 0;
+    _image = product?.coverImage;
     _active = product?.active ?? true;
   }
 
@@ -461,8 +463,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     _shortName.dispose();
     _description.dispose();
     _price.dispose();
-    _rating.dispose();
-    _reviews.dispose();
+    _promotionalPrice.dispose();
     _stock.dispose();
     _badge.dispose();
     _specifications.dispose();
@@ -497,10 +498,12 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
             TextFormField(
               controller: _id,
               enabled: !_editing,
-              textCapitalization: TextCapitalization.characters,
-              decoration: const InputDecoration(labelText: 'SKU'),
+              decoration: const InputDecoration(
+                labelText: 'Código (SKU)',
+                helperText: 'Letras minúsculas, números e hífen',
+              ),
               validator: (value) {
-                final id = value?.trim().toUpperCase() ?? '';
+                final id = _normalizeId(value ?? '');
                 if (id.length < 3) {
                   return 'Informe um SKU com ao menos 3 caracteres.';
                 }
@@ -594,41 +597,23 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
               ],
             ),
             const SizedBox(height: 10),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _rating,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: const InputDecoration(labelText: 'Avaliação'),
-                    validator: (value) {
-                      final rating = _decimal(value ?? '');
-                      return rating == null || rating < 0 || rating > 5
-                          ? 'Use 0 a 5.'
-                          : null;
-                    },
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: TextFormField(
-                    controller: _reviews,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Nº avaliações',
-                    ),
-                    validator: (value) {
-                      final reviews = int.tryParse(value ?? '');
-                      return reviews == null || reviews < 0
-                          ? 'Valor inválido.'
-                          : null;
-                    },
-                  ),
-                ),
-              ],
+            TextFormField(
+              controller: _promotionalPrice,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Preço promocional (opcional)',
+                prefixText: 'R\$ ',
+              ),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) return null;
+                final promo = _decimal(value);
+                final price = _decimal(_price.text) ?? 0;
+                if (promo == null || promo <= 0) return 'Preço inválido.';
+                if (promo >= price) return 'Deve ser menor que o preço.';
+                return null;
+              },
             ),
             const SizedBox(height: 10),
             TextFormField(
@@ -639,19 +624,37 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
               ),
             ),
             const SizedBox(height: 10),
-            DropdownButtonFormField<int>(
-              initialValue: _imageQuadrant,
-              decoration: const InputDecoration(
-                labelText: 'Imagem do catálogo',
-              ),
-              items: List.generate(
-                4,
-                (index) => DropdownMenuItem(
-                  value: index,
-                  child: Text('Imagem ${index + 1}'),
+            DropdownButtonFormField<String?>(
+              initialValue: _image,
+              isExpanded: true,
+              decoration: const InputDecoration(labelText: 'Imagem principal'),
+              items: [
+                const DropdownMenuItem<String?>(
+                  value: null,
+                  child: Text('Sem imagem'),
                 ),
-              ),
-              onChanged: (value) => setState(() => _imageQuadrant = value ?? 0),
+                for (final path in _imageOptions(state))
+                  DropdownMenuItem<String?>(
+                    value: path,
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 36,
+                          height: 36,
+                          child: ProductImage(path: path),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            path.split('/').last,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+              onChanged: (value) => setState(() => _image = value),
             ),
             const SizedBox(height: 10),
             TextFormField(
@@ -683,6 +686,20 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     );
   }
 
+  static String _normalizeId(String value) => value
+      .trim()
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+      .replaceAll(RegExp(r'^-+|-+$'), '');
+
+  List<String> _imageOptions(AppState state) {
+    final paths = <String>{
+      ...?widget.product?.images,
+      for (final product in state.products) ...product.images,
+    };
+    return paths.toList();
+  }
+
   void _save() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final specifications = <String, String>{};
@@ -693,18 +710,45 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       final value = line.substring(separator + 1).trim();
       if (key.isNotEmpty && value.isNotEmpty) specifications[key] = value;
     }
+    final base =
+        widget.product ??
+        Product(
+          id: _normalizeId(_id.text),
+          name: '',
+          shortName: '',
+          category: _category!,
+          description: '',
+          price: 0,
+          stock: 0,
+        );
+    final images = [?_image, ...base.images.where((path) => path != _image)];
+    final promo = _promotionalPrice.text.trim().isEmpty
+        ? null
+        : _decimal(_promotionalPrice.text);
     final product = Product(
-      id: _id.text.trim().toUpperCase(),
+      id: base.id,
       name: _name.text.trim(),
       shortName: _shortName.text.trim(),
       category: _category!,
       description: _description.text.trim(),
       price: _decimal(_price.text)!,
-      rating: _decimal(_rating.text)!,
-      reviewCount: int.parse(_reviews.text),
+      promotionalPrice: promo,
+      // Pix/parcelamento vêm do site para o preço publicado; se o preço for
+      // alterado no painel, esses valores deixam de valer.
+      pixPrice: _decimal(_price.text) == base.price ? base.pixPrice : null,
+      installments: _decimal(_price.text) == base.price
+          ? base.installments
+          : null,
+      installmentValue: _decimal(_price.text) == base.price
+          ? base.installmentValue
+          : null,
       stock: int.parse(_stock.text),
-      imageQuadrant: _imageQuadrant,
+      images: _image == null ? const [] : images,
       specifications: specifications,
+      measures: base.measures,
+      voltageOptions: base.voltageOptions,
+      videoUrl: base.videoUrl,
+      url: base.url,
       badge: _badge.text.trim().isEmpty ? null : _badge.text.trim(),
       active: _active,
     );
@@ -809,7 +853,7 @@ class CouponManagementScreen extends StatelessWidget {
                             children: [
                               CircleAvatar(
                                 backgroundColor: coupon.active && !expired
-                                    ? const Color(0xFFF8DFE1)
+                                    ? AppColors.redSoft
                                     : const Color(0xFFEDEAE7),
                                 foregroundColor: coupon.active && !expired
                                     ? AppColors.red
@@ -1524,7 +1568,7 @@ class _AdminSummaryBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8DFE1),
+        color: AppColors.redSoft,
         borderRadius: BorderRadius.circular(18),
       ),
       child: Row(
@@ -1992,7 +2036,7 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
                   leading: SizedBox(
                     width: 52,
                     height: 52,
-                    child: ProductImage(quadrant: item.imageQuadrant),
+                    child: ProductImage(path: item.image),
                   ),
                   title: Text(
                     item.name,
@@ -2188,7 +2232,7 @@ class CategoryManagementScreen extends StatelessWidget {
                       vertical: 6,
                     ),
                     leading: const CircleAvatar(
-                      backgroundColor: Color(0xFFF8DFE1),
+                      backgroundColor: AppColors.redSoft,
                       foregroundColor: AppColors.red,
                       child: Icon(Icons.category_outlined),
                     ),
@@ -2431,7 +2475,7 @@ class _UserAdminCard extends StatelessWidget {
             CircleAvatar(
               backgroundColor: user.blocked
                   ? const Color(0xFFEDEAE7)
-                  : const Color(0xFFF8DFE1),
+                  : AppColors.redSoft,
               foregroundColor: user.blocked ? AppColors.muted : AppColors.red,
               child: Text(initial),
             ),
@@ -2470,7 +2514,7 @@ class _UserAdminCard extends StatelessWidget {
                         const StatusPill(
                           label: 'Bloqueado',
                           color: AppColors.red,
-                          background: Color(0xFFFFE7E8),
+                          background: AppColors.redSoft,
                         ),
                     ],
                   ),

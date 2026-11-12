@@ -6,11 +6,17 @@ class Product {
     required this.category,
     required this.description,
     required this.price,
-    required this.rating,
-    required this.reviewCount,
     required this.stock,
-    required this.imageQuadrant,
-    required this.specifications,
+    this.images = const [],
+    this.specifications = const {},
+    this.measures = const [],
+    this.voltageOptions = const [],
+    this.promotionalPrice,
+    this.pixPrice,
+    this.installments,
+    this.installmentValue,
+    this.videoUrl,
+    this.url,
     this.badge,
     this.active = true,
   });
@@ -20,14 +26,44 @@ class Product {
   final String shortName;
   final String category;
   final String description;
+
+  /// Preço de tabela publicado no site (R\$).
   final double price;
-  final double rating;
-  final int reviewCount;
+
+  /// Preço promocional, quando o site anuncia um.
+  final double? promotionalPrice;
+
+  /// Valor à vista no Pix informado pelo site.
+  final double? pixPrice;
+
+  /// Parcelamento no cartão informado pelo site (ex.: 12x de R\$ 48,21).
+  final int? installments;
+  final double? installmentValue;
   final int stock;
-  final int imageQuadrant;
+
+  /// Caminhos de assets (ex.: assets/images/products/ID-1.jpg).
+  final List<String> images;
   final Map<String, String> specifications;
+
+  /// Medidas e detalhes técnicos descritos em texto livre no site.
+  final List<String> measures;
+
+  /// Opções de voltagem quando o cliente precisa escolher (ex.: 127V/220V).
+  final List<String> voltageOptions;
+  final String? videoUrl;
+
+  /// Página do produto no site oficial.
+  final String? url;
   final String? badge;
   final bool active;
+
+  bool get inStock => stock > 0;
+  String? get coverImage => images.isEmpty ? null : images.first;
+
+  /// Preço efetivo usado no carrinho (promoção, quando houver).
+  double get salePrice => promotionalPrice != null && promotionalPrice! < price
+      ? promotionalPrice!
+      : price;
 
   Product copyWith({
     String? id,
@@ -36,11 +72,17 @@ class Product {
     String? category,
     String? description,
     double? price,
-    double? rating,
-    int? reviewCount,
     int? stock,
-    int? imageQuadrant,
+    List<String>? images,
     Map<String, String>? specifications,
+    List<String>? measures,
+    List<String>? voltageOptions,
+    double? promotionalPrice,
+    double? pixPrice,
+    int? installments,
+    double? installmentValue,
+    String? videoUrl,
+    String? url,
     String? badge,
     bool? active,
   }) {
@@ -51,11 +93,17 @@ class Product {
       category: category ?? this.category,
       description: description ?? this.description,
       price: price ?? this.price,
-      rating: rating ?? this.rating,
-      reviewCount: reviewCount ?? this.reviewCount,
       stock: stock ?? this.stock,
-      imageQuadrant: imageQuadrant ?? this.imageQuadrant,
+      images: images ?? this.images,
       specifications: specifications ?? this.specifications,
+      measures: measures ?? this.measures,
+      voltageOptions: voltageOptions ?? this.voltageOptions,
+      promotionalPrice: promotionalPrice ?? this.promotionalPrice,
+      pixPrice: pixPrice ?? this.pixPrice,
+      installments: installments ?? this.installments,
+      installmentValue: installmentValue ?? this.installmentValue,
+      videoUrl: videoUrl ?? this.videoUrl,
+      url: url ?? this.url,
       badge: badge ?? this.badge,
       active: active ?? this.active,
     );
@@ -68,11 +116,17 @@ class Product {
     'category': category,
     'description': description,
     'price': price,
-    'rating': rating,
-    'reviewCount': reviewCount,
     'stock': stock,
-    'imageQuadrant': imageQuadrant,
+    'images': images,
     'specifications': specifications,
+    'measures': measures,
+    'voltageOptions': voltageOptions,
+    'promotionalPrice': promotionalPrice,
+    'pixPrice': pixPrice,
+    'installments': installments,
+    'installmentValue': installmentValue,
+    'videoUrl': videoUrl,
+    'url': url,
     'badge': badge,
     'active': active,
   };
@@ -85,6 +139,8 @@ class Product {
         specifications[entry.key.toString()] = entry.value.toString();
       }
     }
+    List<String> strings(Object? value) =>
+        value is List ? value.map((item) => item.toString()).toList() : [];
     return Product(
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
@@ -92,97 +148,22 @@ class Product {
       category: json['category']?.toString() ?? 'Outros',
       description: json['description']?.toString() ?? '',
       price: (json['price'] as num?)?.toDouble() ?? 0,
-      rating: (json['rating'] as num?)?.toDouble() ?? 0,
-      reviewCount: (json['reviewCount'] as num?)?.toInt() ?? 0,
       stock: (json['stock'] as num?)?.toInt() ?? 0,
-      imageQuadrant: (json['imageQuadrant'] as num?)?.toInt() ?? 0,
+      images: strings(json['images']),
       specifications: specifications,
+      measures: strings(json['measures']),
+      voltageOptions: strings(json['voltageOptions']),
+      promotionalPrice: (json['promotionalPrice'] as num?)?.toDouble(),
+      pixPrice: (json['pixPrice'] as num?)?.toDouble(),
+      installments: (json['installments'] as num?)?.toInt(),
+      installmentValue: (json['installmentValue'] as num?)?.toDouble(),
+      videoUrl: json['videoUrl']?.toString(),
+      url: json['url']?.toString(),
       badge: json['badge']?.toString(),
       active: json['active'] != false,
     );
   }
 }
-
-const demoProducts = <Product>[
-  Product(
-    id: 'CHU-001',
-    name: 'Churrasqueira Premium Aço',
-    shortName: 'Churrasqueira Premium',
-    category: 'Churrasqueiras',
-    description:
-        'Churrasqueira em aço inox com tampa, termômetro e cinco níveis de grelha para um churrasco preciso.',
-    price: 899.90,
-    rating: 4.8,
-    reviewCount: 127,
-    stock: 10,
-    imageQuadrant: 0,
-    badge: 'MAIS VENDIDO',
-    specifications: {
-      'Material': 'Aço inox e ferro fundido',
-      'Dimensões': '76 x 58 x 96 cm',
-      'Peso': '18,4 kg',
-      'Garantia': '12 meses',
-    },
-  ),
-  Product(
-    id: 'ESP-004',
-    name: 'Espeto Giratório 4 Hastes',
-    shortName: 'Espeto Giratório 4 hastes',
-    category: 'Espetos',
-    description:
-        'Conjunto giratório em aço inox com quatro hastes e motor bivolt de baixo ruído.',
-    price: 249.90,
-    rating: 4.7,
-    reviewCount: 84,
-    stock: 16,
-    imageQuadrant: 1,
-    specifications: {
-      'Material': 'Aço inox 304',
-      'Motor': 'Bivolt automático',
-      'Capacidade': 'Até 8 kg',
-      'Garantia': '12 meses',
-    },
-  ),
-  Product(
-    id: 'GRE-002',
-    name: 'Grelha Dupla Ferro Fundido',
-    shortName: 'Grelha Ferro Fundido',
-    category: 'Grelhas',
-    description:
-        'Chapa dupla de ferro fundido com alças térmicas, ideal para carnes, legumes e acompanhamentos.',
-    price: 129.90,
-    rating: 4.9,
-    reviewCount: 96,
-    stock: 22,
-    imageQuadrant: 2,
-    specifications: {
-      'Material': 'Ferro fundido',
-      'Dimensões': '45 x 30 cm',
-      'Superfície': 'Dupla face',
-      'Garantia': '6 meses',
-    },
-  ),
-  Product(
-    id: 'KIT-008',
-    name: 'Kit Churrasco Profissional',
-    shortName: 'Kit Churrasco Pro',
-    category: 'Kits',
-    description:
-        'Kit completo com espátula, pegador, garfo e pincel em estojo resistente para transporte.',
-    price: 189.90,
-    rating: 4.6,
-    reviewCount: 63,
-    stock: 8,
-    imageQuadrant: 3,
-    badge: 'ÚLTIMAS UNIDADES',
-    specifications: {
-      'Peças': '4 utensílios + estojo',
-      'Material': 'Aço inox e silicone',
-      'Cabos': 'Antitérmicos',
-      'Garantia': '6 meses',
-    },
-  ),
-];
 
 String money(double value) {
   final fixed = value.toStringAsFixed(2).replaceAll('.', ',');

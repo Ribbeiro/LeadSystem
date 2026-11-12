@@ -5,13 +5,20 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../data/santigrill_catalog.dart';
 import '../models/app_models.dart';
 import '../models/product.dart';
 
 class AppState extends ChangeNotifier {
-  AppState([this._preferences]) {
+  AppState([this._preferences, SantiGrillCatalog? catalog])
+    : catalog = catalog ?? SantiGrillCatalog.empty {
     _seed();
   }
+
+  /// Conteúdo oficial (produtos, empresa, políticas) lido de
+  /// assets/data/santigrill.json.
+  final SantiGrillCatalog catalog;
+  CompanyInfo get company => catalog.company;
 
   static const _storageKey = 'leadsystem_state_v2';
   static const _storageVersion = 2;
@@ -21,6 +28,9 @@ class AppState extends ChangeNotifier {
   int _serial = 0;
 
   final Map<String, int> _cart = {};
+
+  /// Variação escolhida por produto no carrinho (ex.: voltagem).
+  final Map<String, String> _cartOptions = {};
   final Set<String> _favorites = {};
   final List<Product> _products = [];
   final List<String> _categories = [];
@@ -47,9 +57,19 @@ class AppState extends ChangeNotifier {
   String? lastAuthMessage;
   String? lastPersistenceError;
 
+  /// Aviso exibido uma única vez na abertura (ex.: dados locais restaurados).
+  String? _startupNotice;
+
+  String? consumeStartupNotice() {
+    final notice = _startupNotice;
+    _startupNotice = null;
+    return notice;
+  }
+
   static Future<AppState> initialize() async {
     final preferences = await SharedPreferences.getInstance();
-    final state = AppState(preferences);
+    final catalog = await SantiGrillCatalog.load();
+    final state = AppState(preferences, catalog);
     await state._hydrate();
     await state.flush();
     return state;
@@ -142,7 +162,7 @@ class AppState extends ChangeNotifier {
   int get cartCount => _cart.values.fold(0, (sum, value) => sum + value);
   double get subtotal => _cart.entries.fold(0, (sum, entry) {
     final product = findProductById(entry.key);
-    return sum + (product?.price ?? 0) * entry.value;
+    return sum + (product?.salePrice ?? 0) * entry.value;
   });
   Coupon? get appliedCoupon {
     final code = _appliedCouponCode;
@@ -159,17 +179,32 @@ class AppState extends ChangeNotifier {
   double get shipping => _cart.isEmpty ? 0 : _shippingCost;
   double get total => subtotal - discount + shipping;
 
+  /// Desconto do pagamento à vista no Pix, conforme o preço Pix publicado no
+  /// site para cada produto (não se aplica a itens em promoção).
+  double get pixDiscount => _cart.entries.fold(0, (sum, entry) {
+    final product = findProductById(entry.key);
+    final pix = product?.pixPrice;
+    if (product == null || pix == null || pix >= product.salePrice) {
+      return sum;
+    }
+    final couponFactor = 1 - (appliedCoupon?.discountPercent ?? 0) / 100;
+    return sum + (product.salePrice - pix) * entry.value * couponFactor;
+  });
+
+  double totalFor(String paymentMethod) =>
+      total - (paymentMethod == 'Pix' ? pixDiscount : 0);
+
   List<Product> get filteredProducts {
-    final query = searchQuery.trim().toLowerCase();
+    final terms = foldText(
+      searchQuery,
+    ).split(' ').where((term) => term.isNotEmpty).toList();
     final result = _products.where((product) {
       final matchesCategory =
           category == 'Todos' || product.category == category;
-      final matchesQuery =
-          query.isEmpty ||
-          product.name.toLowerCase().contains(query) ||
-          product.shortName.toLowerCase().contains(query) ||
-          product.category.toLowerCase().contains(query) ||
-          product.description.toLowerCase().contains(query);
+      final haystack = foldText(
+        '${product.name} ${product.category} ${product.description}',
+      );
+      final matchesQuery = terms.every(haystack.contains);
       return product.active && matchesCategory && matchesQuery;
     }).toList();
     switch (productSort) {
@@ -179,13 +214,10 @@ class AppState extends ChangeNotifier {
         result.sort((a, b) => a.name.compareTo(b.name));
         break;
       case ProductSort.priceLowToHigh:
-        result.sort((a, b) => a.price.compareTo(b.price));
+        result.sort((a, b) => a.salePrice.compareTo(b.salePrice));
         break;
       case ProductSort.priceHighToLow:
-        result.sort((a, b) => b.price.compareTo(a.price));
-        break;
-      case ProductSort.rating:
-        result.sort((a, b) => b.rating.compareTo(a.rating));
+        result.sort((a, b) => b.salePrice.compareTo(a.salePrice));
         break;
     }
     return result;
@@ -227,9 +259,17 @@ class AppState extends ChangeNotifier {
     _changed(persist: false);
   }
 
-  int addToCart(Product product, {int quantity = 1}) {
+  String? cartOption(String productId) => _cartOptions[productId];
+
+  int addToCart(Product product, {int quantity = 1, String? option}) {
     final current = _cart[product.id] ?? 0;
     if (!product.active || product.stock <= 0 || quantity <= 0) return current;
+    if (option != null && product.voltageOptions.contains(option)) {
+      _cartOptions[product.id] = option;
+    } else if (product.voltageOptions.isNotEmpty &&
+        !_cartOptions.containsKey(product.id)) {
+      _cartOptions[product.id] = product.voltageOptions.first;
+    }
     final next = (current + quantity).clamp(0, product.stock);
     if (next == current) return current;
     _cart[product.id] = next;
@@ -240,6 +280,7 @@ class AppState extends ChangeNotifier {
   void setQuantity(String productId, int quantity) {
     final product = findProductById(productId);
     if (product == null || quantity <= 0 || product.stock <= 0) {
+      _cartOptions.remove(productId);
       if (_cart.remove(productId) != null) _changed();
       return;
     }
@@ -252,6 +293,7 @@ class AppState extends ChangeNotifier {
   void clearCart() {
     if (_cart.isEmpty && _appliedCouponCode == null) return;
     _cart.clear();
+    _cartOptions.clear();
     _appliedCouponCode = null;
     _changed();
   }
@@ -565,7 +607,7 @@ class AppState extends ChangeNotifier {
   void upsertProduct(Product product) {
     if (product.id.trim().isEmpty || product.name.trim().isEmpty) return;
     final normalized = product.copyWith(
-      id: product.id.trim().toUpperCase(),
+      id: product.id.trim(),
       name: product.name.trim(),
       shortName: product.shortName.trim(),
       category: product.category.trim(),
@@ -699,6 +741,11 @@ class AppState extends ChangeNotifier {
 
   CustomerOrder placeOrder({Address? address, String paymentMethod = 'Pix'}) {
     if (_cart.isEmpty) throw StateError('O carrinho está vazio.');
+    // Revalida o cupom: o carrinho pode ter mudado depois da aplicação.
+    if (_appliedCouponCode != null &&
+        appliedCoupon?.isAvailable(subtotal: subtotal) != true) {
+      _appliedCouponCode = null;
+    }
     final deliveryAddress = address ?? defaultAddress;
     if (deliveryAddress == null) {
       throw StateError('Cadastre um endereço de entrega.');
@@ -713,9 +760,10 @@ class AppState extends ChangeNotifier {
         OrderItem(
           productId: product.id,
           name: product.name,
-          unitPrice: product.price,
+          unitPrice: product.salePrice,
           quantity: entry.value,
-          imageQuadrant: product.imageQuadrant,
+          image: product.coverImage,
+          option: _cartOptions[product.id],
         ),
       );
     }
@@ -725,9 +773,9 @@ class AppState extends ChangeNotifier {
       createdAt: now,
       items: items,
       subtotal: subtotal,
-      discount: discount,
+      discount: discount + (paymentMethod == 'Pix' ? pixDiscount : 0),
       shipping: shipping,
-      total: total,
+      total: totalFor(paymentMethod),
       paymentMethod: paymentMethod,
       deliveryAddress: deliveryAddress,
       customerEmail: currentUser == null
@@ -757,6 +805,7 @@ class AppState extends ChangeNotifier {
     }
     _orders.insert(0, order);
     _cart.clear();
+    _cartOptions.clear();
     _appliedCouponCode = null;
     _orderPlaced = true;
     if (orderNotifications) {
@@ -939,13 +988,14 @@ class AppState extends ChangeNotifier {
 
   void _seed() {
     _cart.clear();
+    _cartOptions.clear();
     _favorites.clear();
     _products
       ..clear()
-      ..addAll(demoProducts.map((product) => product.copyWith()));
+      ..addAll(catalog.products);
     _categories
       ..clear()
-      ..addAll(['Churrasqueiras', 'Espetos', 'Grelhas', 'Kits']);
+      ..addAll(_catalogCategories());
     _users
       ..clear()
       ..addAll([
@@ -986,13 +1036,16 @@ class AppState extends ChangeNotifier {
     _orders
       ..clear()
       ..addAll(_seedOrders());
-    _quotes
-      ..clear()
-      ..add(
+    final quoteProduct = catalog.products
+        .where((product) => product.category == 'Churrasqueira')
+        .firstOrNull;
+    _quotes.clear();
+    if (quoteProduct != null) {
+      _quotes.add(
         QuoteRequest(
           id: '#ORC-2026-0084',
-          productId: 'KIT-008',
-          productName: 'Kit Churrasco Profissional',
+          productId: quoteProduct.id,
+          productName: quoteProduct.name,
           customerName: 'Carlos Silva',
           email: 'carlos@email.com',
           phone: '(11) 98888-1111',
@@ -1001,6 +1054,7 @@ class AppState extends ChangeNotifier {
           status: QuoteStatus.reviewing,
         ),
       );
+    }
     _coupons
       ..clear()
       ..add(
@@ -1029,7 +1083,8 @@ class AppState extends ChangeNotifier {
       ..addAll([
         ChatMessage(
           id: 'MSG-001',
-          text: 'Olá! Como posso ajudar com seu pedido?',
+          text:
+              'Olá! Sou o assistente da SantiGrill. Pergunte sobre pedidos, entrega, pagamento ou trocas.',
           createdAt: DateTime(2026, 9, 10, 14, 29),
           fromUser: false,
         ),
@@ -1065,6 +1120,16 @@ class AppState extends ChangeNotifier {
     lastPersistenceError = null;
   }
 
+  List<String> _catalogCategories() {
+    final names = <String>[...catalog.categories];
+    for (final product in catalog.products) {
+      if (!names.contains(product.category)) names.add(product.category);
+    }
+    return names;
+  }
+
+  /// Histórico de demonstração do cliente Carlos, montado com produtos e
+  /// preços reais do catálogo. O frete é o valor simulado do app.
   List<CustomerOrder> _seedOrders() {
     const address = Address(
       id: 'END-001',
@@ -1077,26 +1142,54 @@ class AppState extends ChangeNotifier {
       postalCode: '09520-070',
       isDefault: true,
     );
+    final products = catalog.products;
+    if (products.length < 2) return [];
+    Product pick(String category, int fallback) => products.firstWhere(
+      (product) => product.category == category,
+      orElse: () => products[fallback],
+    );
+    final grill = pick('Grill Giratório', 0);
+    final grelha = pick('Grelhas', 1);
+    CustomerOrder build({
+      required String id,
+      required DateTime createdAt,
+      required Product product,
+      required double shipping,
+      required String payment,
+      required OrderStatus status,
+      required List<OrderTimelineEntry> timeline,
+    }) => CustomerOrder(
+      id: id,
+      createdAt: createdAt,
+      items: [
+        OrderItem(
+          productId: product.id,
+          name: product.name,
+          unitPrice: product.salePrice,
+          quantity: 1,
+          image: product.coverImage,
+          option: product.voltageOptions.isEmpty
+              ? null
+              : product.voltageOptions.first,
+        ),
+      ],
+      subtotal: product.salePrice,
+      discount: 0,
+      shipping: shipping,
+      total: product.salePrice + shipping,
+      paymentMethod: payment,
+      deliveryAddress: address,
+      customerEmail: 'carlos@email.com',
+      status: status,
+      timeline: timeline,
+    );
     return [
-      CustomerOrder(
+      build(
         id: '#SG-2026-0147',
         createdAt: DateTime(2026, 9, 10, 14, 32),
-        items: const [
-          OrderItem(
-            productId: 'CHU-001',
-            name: 'Churrasqueira Premium Aço',
-            unitPrice: 899.90,
-            quantity: 1,
-            imageQuadrant: 0,
-          ),
-        ],
-        subtotal: 899.90,
-        discount: 0,
+        product: grill,
         shipping: 24.90,
-        total: 924.80,
-        paymentMethod: 'Pix',
-        deliveryAddress: address,
-        customerEmail: 'carlos@email.com',
+        payment: 'Pix',
         status: OrderStatus.shipped,
         timeline: [
           OrderTimelineEntry(
@@ -1114,30 +1207,17 @@ class AppState extends ChangeNotifier {
           OrderTimelineEntry(
             status: OrderStatus.shipped,
             title: 'Em transporte',
-            note: 'Pedido encaminhado à transportadora.',
+            note: 'Pedido postado nos Correios.',
             createdAt: DateTime(2026, 9, 11, 9, 10),
           ),
         ],
       ),
-      CustomerOrder(
+      build(
         id: '#SG-2026-0121',
         createdAt: DateTime(2026, 8, 18, 11),
-        items: const [
-          OrderItem(
-            productId: 'ESP-004',
-            name: 'Espeto Giratório 4 Hastes',
-            unitPrice: 249.90,
-            quantity: 1,
-            imageQuadrant: 1,
-          ),
-        ],
-        subtotal: 249.90,
-        discount: 0,
+        product: grelha,
         shipping: 0,
-        total: 249.90,
-        paymentMethod: 'Cartão',
-        deliveryAddress: address,
-        customerEmail: 'carlos@email.com',
+        payment: 'Cartão',
         status: OrderStatus.delivered,
         timeline: [
           OrderTimelineEntry(
@@ -1161,8 +1241,13 @@ class AppState extends ChangeNotifier {
       final decoded = jsonDecode(raw);
       if (decoded is! Map) throw const FormatException('Estado inválido.');
       final data = _asMap(decoded);
-      _replaceIfPresent(_products, data['products'], Product.fromJson);
-      _replaceStringsIfPresent(_categories, data['categories']);
+      if (data['catalogVersion'] == catalog.version) {
+        _replaceIfPresent(_products, data['products'], Product.fromJson);
+        _replaceStringsIfPresent(_categories, data['categories']);
+      }
+      // Versão diferente: mantém o catálogo oficial recém-carregado do JSON.
+      // Carrinho e favoritos de produtos que não existem mais são limpos em
+      // _sanitizeState().
       _replaceIfPresent(_users, data['users'], AppUser.fromJson);
       _replaceIfPresent(_addresses, data['addresses'], Address.fromJson);
       _replaceIfPresent(_orders, data['orders'], CustomerOrder.fromJson);
@@ -1187,6 +1272,13 @@ class AppState extends ChangeNotifier {
               ),
             ),
           );
+      }
+      final rawCartOptions = data['cartOptions'];
+      _cartOptions.clear();
+      if (rawCartOptions is Map) {
+        for (final entry in rawCartOptions.entries) {
+          _cartOptions[entry.key.toString()] = entry.value.toString();
+        }
       }
       final rawFavorites = data['favorites'];
       if (rawFavorites is List) {
@@ -1218,15 +1310,16 @@ class AppState extends ChangeNotifier {
       lastPersistenceError = null;
     } catch (_) {
       _seed();
-      lastPersistenceError =
-          'Os dados locais estavam corrompidos e foram restaurados.';
+      _startupNotice = lastPersistenceError =
+          'Os dados salvos no aparelho estavam danificados e foram '
+          'restaurados para o padrão.';
     }
     _schedulePersist();
   }
 
   void _ensureRequiredSeeds() {
     if (_products.isEmpty) {
-      _products.addAll(demoProducts.map((product) => product.copyWith()));
+      _products.addAll(catalog.products);
     }
     if (!_users.any((user) => user.email == 'leandro@email.com')) {
       _users.insert(
@@ -1256,6 +1349,7 @@ class AppState extends ChangeNotifier {
     for (final productId in _cart.keys.toList()) {
       _clampCartItem(productId);
     }
+    _cartOptions.removeWhere((id, _) => !_cart.containsKey(id));
     if (appliedCoupon?.isAvailable(subtotal: subtotal) != true) {
       _appliedCouponCode = null;
     }
@@ -1263,6 +1357,7 @@ class AppState extends ChangeNotifier {
 
   Map<String, Object?> _toJson() => {
     'version': _storageVersion,
+    'catalogVersion': catalog.version,
     'products': _products.map((item) => item.toJson()).toList(),
     'categories': _categories,
     'users': _users.map((item) => item.toJson()).toList(),
@@ -1277,6 +1372,7 @@ class AppState extends ChangeNotifier {
         .toList(),
     'notificationPreferences': _notificationPreferences.toJson(),
     'cart': _cart,
+    'cartOptions': _cartOptions,
     'favorites': _favorites.toList(),
     'rememberSession': _rememberSession,
     'currentUserId': _rememberSession ? _currentUserId : null,
@@ -1372,21 +1468,54 @@ class AppState extends ChangeNotifier {
     return '#ORC-$year-${(max + 1).toString().padLeft(4, '0')}';
   }
 
+  /// Respostas automáticas baseadas nas políticas publicadas no site.
   String _automaticReply(String message) {
-    final value = message.toLowerCase();
+    final value = foldText(message);
+    final whatsapp = company.whatsapp;
+    final hours = company.businessHours;
+    final human = whatsapp == null
+        ? 'Para falar com a equipe, use os contatos em Ajuda.'
+        : 'Para falar com a equipe, chame no WhatsApp $whatsapp'
+              '${hours == null ? '' : ' ($hours)'}.';
+    if (value.contains('troca') ||
+        value.contains('devol') ||
+        value.contains('defeito')) {
+      return 'Trocas: até 7 dias corridos após o recebimento, com o produto '
+          'lacrado e sem uso. Defeito de fabricação: até 30 dias. $human';
+    }
+    if (value.contains('garantia')) {
+      return 'A garantia varia por produto e aparece nas especificações de '
+          'cada item. $human';
+    }
     if (value.contains('pedido') || value.contains('rastre')) {
-      return 'Você pode acompanhar o status em Pedidos. Se informar o protocolo, a equipe consegue localizar mais detalhes.';
+      return 'Você acompanha o status em Pedidos. O código de rastreio dos '
+          'Correios é informado assim que o pedido é postado.';
     }
-    if (value.contains('frete') || value.contains('entrega')) {
-      return 'O frete é calculado pelo CEP na tela do produto. O prazo estimado aparece antes da finalização.';
+    if (value.contains('frete') ||
+        value.contains('entrega') ||
+        value.contains('prazo')) {
+      return 'Enviamos pelos Correios (Sedex ou encomenda) em até 2 dias '
+          'úteis após a confirmação do pagamento. O valor no app é uma '
+          'estimativa pelo CEP.';
     }
-    if (value.contains('orçamento') || value.contains('orcamento')) {
-      return 'Abra um produto e toque em Solicitar orçamento. A solicitação ficará registrada em Pedidos.';
+    if (value.contains('orcamento')) {
+      return 'Abra um produto e toque em Solicitar orçamento. A solicitação '
+          'fica registrada em Pedidos.';
     }
-    if (value.contains('pagamento') || value.contains('pix')) {
-      return 'Aceitamos Pix, cartão e boleto. A opção pode ser escolhida na finalização da compra.';
+    if (value.contains('pagamento') ||
+        value.contains('pix') ||
+        value.contains('cartao') ||
+        value.contains('parcel')) {
+      return 'Pix com desconto à vista, cartão em até 12x ou boleto. '
+          'A opção é escolhida na finalização da compra.';
     }
-    return 'Mensagem recebida! Registrei sua solicitação e a equipe poderá continuar o atendimento por aqui.';
+    if (value.contains('horario') ||
+        value.contains('telefone') ||
+        value.contains('contato') ||
+        value.contains('whatsapp')) {
+      return human;
+    }
+    return 'Mensagem registrada no app. $human';
   }
 
   static String _normalizeEmail(String value) => value.trim().toLowerCase();
@@ -1456,4 +1585,16 @@ class AppScope extends InheritedNotifier<AppState> {
     assert(scope != null, 'AppScope não encontrado na árvore de widgets.');
     return scope!.notifier!;
   }
+}
+
+/// Normaliza texto para busca: minúsculas e sem acentos.
+String foldText(String value) {
+  const from = 'áàâãäéèêëíìîïóòôõöúùûüçñ';
+  const to = 'aaaaaeeeeiiiiooooouuuucn';
+  final buffer = StringBuffer();
+  for (final char in value.toLowerCase().split('')) {
+    final index = from.indexOf(char);
+    buffer.write(index < 0 ? char : to[index]);
+  }
+  return buffer.toString().replaceAll(RegExp(r'\s+'), ' ').trim();
 }
