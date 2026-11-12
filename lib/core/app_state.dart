@@ -1,19 +1,59 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/santigrill_catalog.dart';
 import '../models/app_models.dart';
 import '../models/product.dart';
+import 'api_client.dart';
+
+part 'app_state_sync.dart';
 
 class AppState extends ChangeNotifier {
-  AppState([this._preferences, SantiGrillCatalog? catalog])
-    : catalog = catalog ?? SantiGrillCatalog.empty {
+  AppState([
+    this._preferences,
+    SantiGrillCatalog? catalog,
+    http.Client? httpClient,
+  ]) : catalog = catalog ?? SantiGrillCatalog.empty,
+       _httpClient = httpClient {
     _seed();
   }
+
+  /// Endereço padrão da API, definido na compilação:
+  /// flutter run --dart-define=API_URL=http://10.0.2.2:3000
+  static const defaultApiUrl = String.fromEnvironment('API_URL');
+  static const syncInterval = Duration(seconds: 30);
+
+  final http.Client? _httpClient;
+  ApiClient? _api;
+  String? _apiToken;
+  Timer? _syncTimer;
+  final List<Map<String, Object?>> _outbox = [];
+  final Set<String> _knownRemoteIds = {};
+  Future<void>? _syncRun;
+  bool _syncAgain = false;
+
+  /// URL da API em uso (null = modo offline, só no aparelho).
+  String? apiUrl;
+  DateTime? lastSyncAt;
+  bool syncing = false;
+  String? syncMessage;
+
+  List<ShippingOption> shippingOptions = const [];
+  String? shippingPostalCode;
+  String? shippingService;
+
+  ThemeMode themeMode = ThemeMode.system;
+
+  /// Chamado a cada notificação gerada (pedido, orçamento, oferta) para
+  /// exibi-la também como notificação do sistema.
+  void Function(String title, String body)? onSystemNotification;
 
   /// Conteúdo oficial (produtos, empresa, políticas) lido de
   /// assets/data/santigrill.json.
@@ -72,6 +112,13 @@ class AppState extends ChangeNotifier {
     final state = AppState(preferences, catalog);
     await state._hydrate();
     await state.flush();
+    final url = state.apiUrl ?? (defaultApiUrl.isEmpty ? null : defaultApiUrl);
+    if (url != null) {
+      state.apiUrl = ApiClient.normalizeUrl(url);
+      state._api = ApiClient(state.apiUrl!)..token = state._apiToken;
+      unawaited(state.syncNow());
+      state._startAutoSync();
+    }
     return state;
   }
 
@@ -329,6 +376,11 @@ class AppState extends ChangeNotifier {
     bool remember = true,
   }) async {
     final normalized = _normalizeEmail(email);
+    if (_api != null) {
+      final remote = await _remoteLogin(normalized, password, remember);
+      if (remote != null) return remote;
+      // Servidor inacessível: tenta a conta salva no aparelho.
+    }
     AppUser? user;
     for (final candidate in _users) {
       if (_normalizeEmail(candidate.email) == normalized) {
@@ -338,17 +390,19 @@ class AppState extends ChangeNotifier {
     }
     if (user == null || !_passwordMatches(user, normalized, password)) {
       lastAuthMessage = 'E-mail ou senha incorretos.';
-      notifyListeners();
+      _notify();
       return false;
     }
     if (user.blocked) {
       lastAuthMessage = 'Esta conta está bloqueada. Fale com o administrador.';
-      notifyListeners();
+      _notify();
       return false;
     }
     _currentUserId = user.id;
     _rememberSession = remember;
-    lastAuthMessage = null;
+    lastAuthMessage = _api == null
+        ? null
+        : 'Servidor indisponível: você entrou no modo offline.';
     _changed();
     await flush();
     return true;
@@ -364,24 +418,44 @@ class AppState extends ChangeNotifier {
     final normalized = _normalizeEmail(email);
     if (name.trim().split(RegExp(r'\s+')).length < 2) {
       lastAuthMessage = 'Informe nome e sobrenome.';
-      notifyListeners();
+      _notify();
       return false;
     }
     if (!_validEmail(normalized)) {
       lastAuthMessage = 'Informe um e-mail válido.';
-      notifyListeners();
+      _notify();
       return false;
     }
     if (_users.any((user) => _normalizeEmail(user.email) == normalized)) {
       lastAuthMessage = 'Já existe uma conta com este e-mail.';
-      notifyListeners();
+      _notify();
       return false;
     }
     if (!_validPassword(password)) {
       lastAuthMessage =
           'A senha deve ter 8 caracteres, uma letra maiúscula e um número.';
-      notifyListeners();
+      _notify();
       return false;
+    }
+    if (_api != null) {
+      final remote = await _remoteAuth(
+        () => _api!.post('/api/auth/register', {
+          'name': name.trim(),
+          'email': normalized,
+          'phone': phone.trim(),
+          'password': password,
+        }),
+        password,
+        remember,
+      );
+      if (remote == null) {
+        lastAuthMessage =
+            'Sem conexão com o servidor. Tente criar a conta novamente.';
+        _notify();
+        return false;
+      }
+      if (remote) await flush();
+      return remote;
     }
     final user = AppUser(
       id: _nextSimpleId('USR'),
@@ -416,13 +490,13 @@ class AppState extends ChangeNotifier {
     );
     if (index < 0) {
       lastAuthMessage = 'Nenhuma conta foi encontrada para este e-mail.';
-      notifyListeners();
+      _notify();
       return false;
     }
     if (!_validPassword(newPassword)) {
       lastAuthMessage =
           'A nova senha deve ter 8 caracteres, uma letra maiúscula e um número.';
-      notifyListeners();
+      _notify();
       return false;
     }
     _users[index] = _users[index].copyWith(
@@ -441,12 +515,24 @@ class AppState extends ChangeNotifier {
     final user = currentUser;
     if (user == null) {
       lastAuthMessage = 'Entre na conta para alterar a senha.';
-      notifyListeners();
+      _notify();
       return false;
     }
-    if (!_passwordMatches(user, user.email, currentPassword)) {
+    final api = _api;
+    if (api != null && _apiToken != null) {
+      try {
+        await api.patch('/api/auth/me', {
+          'currentPassword': currentPassword,
+          'newPassword': newPassword,
+        });
+      } on ApiException catch (error) {
+        lastAuthMessage = error.message;
+        _notify();
+        return false;
+      }
+    } else if (!_passwordMatches(user, user.email, currentPassword)) {
       lastAuthMessage = 'A senha atual está incorreta.';
-      notifyListeners();
+      _notify();
       return false;
     }
     return resetPassword(email: user.email, newPassword: newPassword);
@@ -462,29 +548,39 @@ class AppState extends ChangeNotifier {
     final normalized = _normalizeEmail(email);
     if (!_validEmail(normalized) || name.trim().isEmpty) {
       lastAuthMessage = 'Revise o nome e o e-mail informados.';
-      notifyListeners();
+      _notify();
       return;
     }
     if (_users.any(
       (item) => item.id != user.id && _normalizeEmail(item.email) == normalized,
     )) {
       lastAuthMessage = 'Este e-mail já pertence a outra conta.';
-      notifyListeners();
+      _notify();
       return;
     }
     final index = _users.indexWhere((item) => item.id == user.id);
+    if (_api != null && normalized != _normalizeEmail(user.email)) {
+      lastAuthMessage =
+          'Para trocar o e-mail da conta, fale com a equipe SantiGrill.';
+      _notify();
+      return;
+    }
     _users[index] = user.copyWith(
       name: name.trim(),
       email: normalized,
       phone: phone.trim(),
     );
     lastAuthMessage = null;
+    _enqueue('profile', {'name': name.trim(), 'phone': phone.trim()});
     _changed();
   }
 
   void logout() {
     _currentUserId = null;
     _rememberSession = false;
+    _apiToken = null;
+    _api?.token = null;
+    _knownRemoteIds.clear();
     lastAuthMessage = null;
     _changed();
   }
@@ -625,6 +721,7 @@ class AppState extends ChangeNotifier {
       _categories.sort();
     }
     _clampCartItem(normalized.id);
+    _enqueue('product', {'id': normalized.id});
     _changed();
   }
 
@@ -634,6 +731,7 @@ class AppState extends ChangeNotifier {
     _products.removeWhere((product) => product.id == id);
     if (_products.length == before) return false;
     _favorites.remove(id);
+    _enqueue('productDelete', {'id': id});
     _changed();
     return true;
   }
@@ -643,6 +741,7 @@ class AppState extends ChangeNotifier {
     if (index < 0) return;
     _products[index] = _products[index].copyWith(stock: stock.clamp(0, 999999));
     _clampCartItem(id);
+    _enqueue('product', {'id': id});
     _changed();
   }
 
@@ -723,17 +822,19 @@ class AppState extends ChangeNotifier {
     return true;
   }
 
+  /// Estimativa rápida (PAC) usada na tela do produto. A cotação completa
+  /// (PAC/SEDEX, Correios quando configurado) fica em [quoteShipping].
   DeliveryEstimate? calculateShipping(String postalCode) {
-    final digits = postalCode.replaceAll(RegExp(r'\D'), '');
-    if (digits.length != 8) return null;
-    final prefix = int.tryParse(digits.substring(0, 2)) ?? 0;
-    _shippingCost = prefix >= 10 && prefix <= 19 ? 19.90 : 24.90;
+    final options = AppStateSync.estimateShipping(postalCode);
+    if (options.isEmpty) return null;
+    final pac = options.first;
+    _shippingCost = pac.price;
     final now = DateTime.now();
     final estimate = DeliveryEstimate(
-      postalCode: digits,
-      cost: _shippingCost,
+      postalCode: postalCode.replaceAll(RegExp(r'\D'), ''),
+      cost: pac.price,
       estimatedStart: now.add(const Duration(days: 2)),
-      estimatedEnd: now.add(const Duration(days: 4)),
+      estimatedEnd: now.add(Duration(days: 2 + pac.days)),
     );
     _changed();
     return estimate;
@@ -781,6 +882,9 @@ class AppState extends ChangeNotifier {
       customerEmail: currentUser == null
           ? null
           : _normalizeEmail(currentUser!.email),
+      customerName: currentUser?.name,
+      couponCode: appliedCoupon?.code,
+      syncState: _api != null && _apiToken != null ? 'pending' : null,
       timeline: [
         OrderTimelineEntry(
           status: OrderStatus.received,
@@ -804,6 +908,10 @@ class AppState extends ChangeNotifier {
       _coupons[index] = coupon.copyWith(usedCount: coupon.usedCount + 1);
     }
     _orders.insert(0, order);
+    if (order.syncState == 'pending') {
+      _orders[0] = order.copyWith(clientId: order.id);
+      _enqueue('order', {'id': order.id});
+    }
     _cart.clear();
     _cartOptions.clear();
     _appliedCouponCode = null;
@@ -816,7 +924,7 @@ class AppState extends ChangeNotifier {
       );
     }
     _changed();
-    return order;
+    return _orders.first;
   }
 
   void updateOrderStatus(String id, OrderStatus status, {String? note}) {
@@ -845,6 +953,9 @@ class AppState extends ChangeNotifier {
         category: 'order',
       );
     }
+    if (order.syncState == null) {
+      _enqueue('orderStatus', {'id': id, 'status': status.name, 'note': note});
+    }
     _changed();
   }
 
@@ -865,8 +976,10 @@ class AppState extends ChangeNotifier {
       phone: phone.trim(),
       details: details.trim(),
       createdAt: now,
+      syncState: _api != null && _apiToken != null ? 'pending' : null,
     );
     _quotes.insert(0, quote);
+    if (quote.syncState == 'pending') _enqueue('quote', {'id': quote.id});
     if (supportNotifications) {
       _addNotification(
         title: 'Orçamento enviado',
@@ -892,6 +1005,13 @@ class AppState extends ChangeNotifier {
         message: '$id agora está com status ${status.label.toLowerCase()}.',
         category: 'support',
       );
+    }
+    if (_quotes[index].syncState == null) {
+      _enqueue('quoteStatus', {
+        'id': id,
+        'status': status.name,
+        'response': response?.trim(),
+      });
     }
     _changed();
   }
@@ -938,7 +1058,19 @@ class AppState extends ChangeNotifier {
       _currentUserId = null;
       _rememberSession = false;
     }
+    _enqueue('user', {'id': id, 'blocked': blocked});
     _changed();
+  }
+
+  /// Exclui a conta (RF14). Não permite excluir a própria conta.
+  bool deleteUser(String id) {
+    if (id == _currentUserId) return false;
+    final before = _users.length;
+    _users.removeWhere((user) => user.id == id);
+    if (_users.length == before) return false;
+    _enqueue('userDelete', {'id': id});
+    _changed();
+    return true;
   }
 
   void setUserRole(String id, String role) {
@@ -946,6 +1078,16 @@ class AppState extends ChangeNotifier {
     final index = _users.indexWhere((user) => user.id == id);
     if (index < 0) return;
     _users[index] = _users[index].copyWith(role: normalized);
+    _enqueue('user', {
+      'id': id,
+      'role': normalized == 'admin' ? 'admin' : 'client',
+    });
+    _changed();
+  }
+
+  void setThemeMode(ThemeMode mode) {
+    if (themeMode == mode) return;
+    themeMode = mode;
     _changed();
   }
 
@@ -1273,6 +1415,20 @@ class AppState extends ChangeNotifier {
             ),
           );
       }
+      apiUrl = data['apiUrl']?.toString();
+      _apiToken = data['apiToken']?.toString();
+      final rawOutbox = data['outbox'];
+      _outbox.clear();
+      if (rawOutbox is List) {
+        for (final op in rawOutbox) {
+          if (op is Map) _outbox.add(_asMap(op));
+        }
+      }
+      themeMode = _enumValue(
+        ThemeMode.values,
+        data['themeMode'],
+        ThemeMode.system,
+      );
       final rawCartOptions = data['cartOptions'];
       _cartOptions.clear();
       if (rawCartOptions is Map) {
@@ -1373,6 +1529,10 @@ class AppState extends ChangeNotifier {
     'notificationPreferences': _notificationPreferences.toJson(),
     'cart': _cart,
     'cartOptions': _cartOptions,
+    'apiUrl': apiUrl,
+    'apiToken': _rememberSession ? _apiToken : null,
+    'outbox': _outbox,
+    'themeMode': themeMode.name,
     'favorites': _favorites.toList(),
     'rememberSession': _rememberSession,
     'currentUserId': _rememberSession ? _currentUserId : null,
@@ -1382,8 +1542,22 @@ class AppState extends ChangeNotifier {
     'productSort': productSort.name,
   };
 
+  bool _disposed = false;
+
+  void _notify() {
+    if (!_disposed) notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _syncTimer?.cancel();
+    super.dispose();
+  }
+
   void _changed({bool persist = true}) {
-    notifyListeners();
+    if (_disposed) return;
+    _notify();
     if (persist) _schedulePersist();
   }
 
@@ -1417,6 +1591,7 @@ class AppState extends ChangeNotifier {
         createdAt: DateTime.now(),
       ),
     );
+    onSystemNotification?.call(title, message);
   }
 
   void _clampCartItem(String productId) {

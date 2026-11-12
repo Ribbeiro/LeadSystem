@@ -292,6 +292,11 @@ class CustomerOrder {
     required this.paymentMethod,
     required this.deliveryAddress,
     this.customerEmail,
+    this.customerName,
+    this.couponCode,
+    this.clientId,
+    this.syncState,
+    this.syncError,
     this.status = OrderStatus.received,
     this.timeline = const [],
   });
@@ -309,6 +314,16 @@ class CustomerOrder {
   /// E-mail (normalizado) do cliente dono do pedido. Nulo em pedidos antigos,
   /// criados antes de existir esse vínculo; esses só aparecem para a equipe.
   final String? customerEmail;
+  final String? customerName;
+  final String? couponCode;
+
+  /// Id gerado no aparelho antes do envio (garante que o reenvio não duplica).
+  final String? clientId;
+
+  /// Sincronização com a API: null = sincronizado (ou modo offline),
+  /// 'pending' = aguardando envio, 'failed' = recusado pelo servidor.
+  final String? syncState;
+  final String? syncError;
   final OrderStatus status;
   final List<OrderTimelineEntry> timeline;
 
@@ -325,6 +340,12 @@ class CustomerOrder {
     String? paymentMethod,
     Address? deliveryAddress,
     String? customerEmail,
+    String? customerName,
+    String? couponCode,
+    String? clientId,
+    String? syncState,
+    String? syncError,
+    bool clearSync = false,
     OrderStatus? status,
     List<OrderTimelineEntry>? timeline,
   }) {
@@ -339,6 +360,11 @@ class CustomerOrder {
       paymentMethod: paymentMethod ?? this.paymentMethod,
       deliveryAddress: deliveryAddress ?? this.deliveryAddress,
       customerEmail: customerEmail ?? this.customerEmail,
+      customerName: customerName ?? this.customerName,
+      couponCode: couponCode ?? this.couponCode,
+      clientId: clientId ?? this.clientId,
+      syncState: clearSync ? null : syncState ?? this.syncState,
+      syncError: clearSync ? null : syncError ?? this.syncError,
       status: status ?? this.status,
       timeline: timeline ?? this.timeline,
     );
@@ -355,6 +381,11 @@ class CustomerOrder {
     'paymentMethod': paymentMethod,
     'deliveryAddress': deliveryAddress.toJson(),
     'customerEmail': customerEmail,
+    'customerName': customerName,
+    'couponCode': couponCode,
+    'clientId': clientId,
+    'syncState': syncState,
+    'syncError': syncError,
     'status': status.name,
     'timeline': timeline.map((item) => item.toJson()).toList(),
   };
@@ -370,6 +401,11 @@ class CustomerOrder {
     paymentMethod: json['paymentMethod']?.toString() ?? '',
     deliveryAddress: Address.fromJson(_map(json['deliveryAddress'])),
     customerEmail: json['customerEmail']?.toString(),
+    customerName: json['customerName']?.toString(),
+    couponCode: json['couponCode']?.toString(),
+    clientId: json['clientId']?.toString(),
+    syncState: json['syncState']?.toString(),
+    syncError: json['syncError']?.toString(),
     status: _enumByName(
       OrderStatus.values,
       json['status'],
@@ -392,6 +428,8 @@ class QuoteRequest {
     this.status = QuoteStatus.pending,
     this.response,
     this.updatedAt,
+    this.syncState,
+    this.syncError,
   });
 
   final String id;
@@ -406,6 +444,10 @@ class QuoteRequest {
   final String? response;
   final DateTime? updatedAt;
 
+  /// Igual a [CustomerOrder.syncState].
+  final String? syncState;
+  final String? syncError;
+
   QuoteRequest copyWith({
     String? id,
     String? productId,
@@ -418,6 +460,9 @@ class QuoteRequest {
     QuoteStatus? status,
     String? response,
     DateTime? updatedAt,
+    String? syncState,
+    String? syncError,
+    bool clearSync = false,
   }) {
     return QuoteRequest(
       id: id ?? this.id,
@@ -431,6 +476,8 @@ class QuoteRequest {
       status: status ?? this.status,
       response: response ?? this.response,
       updatedAt: updatedAt ?? this.updatedAt,
+      syncState: clearSync ? null : syncState ?? this.syncState,
+      syncError: clearSync ? null : syncError ?? this.syncError,
     );
   }
 
@@ -446,6 +493,8 @@ class QuoteRequest {
     'status': status.name,
     'response': response,
     'updatedAt': updatedAt?.toIso8601String(),
+    'syncState': syncState,
+    'syncError': syncError,
   };
 
   factory QuoteRequest.fromJson(Map<String, Object?> json) => QuoteRequest(
@@ -464,6 +513,8 @@ class QuoteRequest {
     ),
     response: json['response']?.toString(),
     updatedAt: json['updatedAt'] == null ? null : _date(json['updatedAt']),
+    syncState: json['syncState']?.toString(),
+    syncError: json['syncError']?.toString(),
   );
 }
 
