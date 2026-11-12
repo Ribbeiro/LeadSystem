@@ -73,14 +73,39 @@ flutter test tool/screenshots_test.dart --update-goldens
 | RF14 Excluir usuário | Parcial: bloquear/alterar perfil existe; excluir não |
 | RF18 E-mails automáticos | Não atendido (depende de servidor de e-mail) |
 
-## 5. Pendências e decisões suas
+## 5. Segunda etapa: funcionalidades novas (12/11/2026)
 
-1. **Frete**: o site só calcula o frete no checkout dos Correios. O app mostra uma *estimativa* (R$ 19,90 ou R$ 24,90 pelo CEP), marcada como "estimado". Decidir se mantemos, se removemos ou se integramos a API dos Correios.
+| # | Funcionalidade | Situação | Como foi verificado |
+|---|---|---|---|
+| 1 | Notificações de status do pedido | ✅ Notificação do sistema ao sincronizar (status, resposta de orçamento, novo pedido para o admin). Com o app fechado, falta push remoto (Firebase) | `sync_test`, `e2e_api_test` |
+| 2 | Pedido e orçamento pelo WhatsApp | ✅ Botão com resumo pronto (itens, voltagem, total, endereço) | `features_test` |
+| 3 | Modo escuro | ✅ Sistema, claro ou escuro, em Perfil › Aparência | Todas as telas testadas no escuro; capturas 09 e 10 |
+| 4 | Frete real pelos Correios | ✅ Integração com a API oficial pronta, mas **exige contrato** (credenciais no `.env`). Sem contrato: estimativa PAC/SEDEX por região, sinalizada. Endereço preenchido pelo CEP (ViaCEP) | `api.test.js`, `sync_test` |
+| 5 | API Node/MongoDB e sincronização | ✅ JWT, pedidos com preço e estoque validados no servidor, fila offline com reenvio sem duplicar | 17 testes da API e teste de ponta a ponta app + API |
+| 6 | Foto de produto (câmera/galeria) | ✅ Upload para a API; offline, a foto fica no aparelho | `api.test.js` (upload); seleção não testada em aparelho |
+| 7 | Senha por código no e-mail | ✅ Código de 6 dígitos, 15 min, 5 tentativas (completa o RF03). Envio real exige SMTP no `.env` | `api.test.js`, `sync_test` |
+
+Também entraram: excluir conta de usuário (RF14), selo de pedido pendente/recusado com reenvio e "puxar para atualizar".
+
+Bugs encontrados nesta etapa: o checkout offline notificava o estado durante a construção da tela; sincronizações simultâneas descartavam a segunda chamada; o merge de orçamentos apagava orçamentos ainda não enviados; o estado podia ser notificado após o descarte; e o APK de release não tinha a permissão de INTERNET. Todos corrigidos e cobertos por teste.
+
+## 6. Pendências e decisões suas
+
+- **Push com o app fechado**: exige um projeto Firebase (FCM) da SantiGrill.
+- **Correios**: exige contrato e credenciais. Sem eles, o frete é estimado.
+- **SMTP**: exige uma conta de e-mail de envio (ex.: vendas@santigrill.com.br) para o código de senha.
+- **Hospedagem da API** com HTTPS (Render, Railway ou VPS) e MongoDB Atlas, para uso fora da rede local.
+- Cupons e campanhas continuam sendo gerenciados só no aparelho.
+- O token de sessão fica no armazenamento do app; para produção, recomenda-se `flutter_secure_storage`.
+
+## 7. Pendências da primeira etapa (atualizadas)
+
+1. ~~**Frete**~~: resolvido na segunda etapa. API dos Correios integrada (depende de contrato); sem contrato, estimativa PAC/SEDEX sinalizada.
 2. **Estoque**: o site não publica estoque. O app começa com 10 unidades por produto, ajustáveis no painel.
 3. **Cupom `PRIMEIRACOMPRA`** e o banner "10% na primeira compra" são da demonstração: o site informa "nenhum cupom disponível". Confirmar com a SantiGrill ou trocar.
 4. **Horário de atendimento** diverge no site: 7:30–17:30 no rodapé e 8:00–16:30 na página de trocas. Usei o do rodapé.
 5. **Endereço** sem número no site (Rua Caiapós, Santo André). A página "Sobre a empresa" está vazia no site.
 6. **Logo** só existe em JPG com fundo vermelho. Uma versão com fundo transparente melhoraria telas claras.
 7. **Endereços e chat** ainda são compartilhados entre contas do mesmo aparelho (pedidos já foram isolados).
-8. **Sincronização entre aparelhos** (pedido do cliente chegando ao celular do admin) exige ligar o app à API Node/MongoDB de `server/`.
-9. **Fotos de produtos novos** cadastrados no painel: hoje dá para escolher uma das fotos existentes. Upload de foto nova depende de câmera/galeria e de servidor.
+8. ~~**Sincronização entre aparelhos**~~: resolvido na segunda etapa (API Node/MongoDB).
+9. ~~**Fotos de produtos novos**~~: resolvido na segunda etapa (câmera/galeria com upload).

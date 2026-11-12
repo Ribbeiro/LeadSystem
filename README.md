@@ -20,9 +20,10 @@ Documentos: `docs/RELATORIO_QA.md` (bugs, testes e pendências), `docs/ROTEIRO_A
 - central de ajuda pesquisável, abertura de chamado e respostas automáticas locais;
 - perfil com endereços, notificações, dados pessoais e alteração de senha;
 - painel administrativo com CRUD de produtos, estoque, categorias, cupons e campanhas, além da gestão de pedidos, usuários e orçamentos;
-- API Node.js inicial, preparada para conexão com MongoDB.
+- API Node.js + MongoDB com autenticação JWT, pedidos, orçamentos, fotos, recuperação de senha por e-mail e frete;
+- sincronização offline first, notificações, envio ao WhatsApp e modo escuro.
 
-Os dados do aplicativo são persistidos localmente no aparelho com `shared_preferences`. Login, carrinho, favoritos, pedidos, orçamentos, endereços e alterações administrativas continuam disponíveis depois de fechar e abrir o app. A aplicação funciona offline para a apresentação; a API Node.js permanece como a próxima camada de sincronização com MongoDB.
+Os dados ficam salvos no aparelho com `shared_preferences` (o app funciona offline). Com a API configurada, as alterações entram numa fila e são sincronizadas com o MongoDB quando há conexão.
 
 ## Estrutura
 
@@ -73,16 +74,42 @@ C:\Users\leand\Documents\Codex\tools\flutter\bin\flutter.bat build apk --debug
 
 A pasta `ios` já faz parte do mesmo projeto. O código Dart e as funcionalidades são compartilhados. A compilação e a assinatura de uma versão iOS exigem um computador macOS com Xcode.
 
-## API e MongoDB
+## API e MongoDB (sincronização entre aparelhos)
 
-Entre em `server`, copie `.env.example` para `.env`, ajuste `MONGODB_URI` e execute:
+O app funciona sozinho no aparelho (modo offline). Conectado à API da pasta `server/`, os pedidos do cliente chegam ao painel do admin, as mudanças de status viram notificação, a senha é recuperada por código enviado por e-mail e as fotos de produtos ficam no servidor.
 
-```powershell
-npm install
-npm run dev
-```
+1. Suba o MongoDB (Docker Desktop aberto):
 
-Sem `MONGODB_URI`, a API pode operar com as respostas demonstrativas definidas em `server/src/server.js`.
+   ```powershell
+   cd server
+   docker compose up -d
+   ```
+
+   Sem Docker, use um MongoDB Atlas gratuito e coloque a URL em `MONGODB_URI`.
+
+2. Configure e inicie a API:
+
+   ```powershell
+   copy .env.example .env
+   npm install
+   npm run dev
+   ```
+
+   Na primeira execução, o banco recebe os 24 produtos de `assets/data/santigrill.json`, o cupom de demonstração e as contas `leandro@email.com` (admin) e `carlos@email.com` (cliente).
+
+3. Conecte o app: **Perfil › Servidor e sincronização**, informe `http://10.0.2.2:3000` no emulador Android ou `http://IP-DO-COMPUTADOR:3000` no celular (mesma rede Wi-Fi). Também é possível compilar já apontando para a API:
+
+   ```powershell
+   flutter run --dart-define=API_URL=http://10.0.2.2:3000
+   ```
+
+Configurações opcionais no `.env`:
+
+- **E-mail (SMTP_*)**: envia o código de recuperação de senha e os avisos de pedido. Sem SMTP, as mensagens aparecem no console da API.
+- **Correios (CORREIOS_*)**: cotação oficial de frete. Exige contrato com os Correios; sem ele, o app mostra a estimativa por região, sinalizada como "estimativa".
+
+Testes da API (MongoDB em memória, não precisa de Docker): `npm test`.
+Teste de ponta a ponta app + API: `node scripts/e2e-server.js 3999` e, em outro terminal, `E2E_API_URL=http://127.0.0.1:3999 flutter test test/e2e_api_test.dart`.
 
 ## Vídeo da primeira entrega
 

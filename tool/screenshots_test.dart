@@ -14,6 +14,7 @@ import 'package:leadsystem/core/app_theme.dart';
 import 'package:leadsystem/screens/app_shell.dart';
 import 'package:leadsystem/screens/company_screen.dart';
 import 'package:leadsystem/screens/detail_flows.dart';
+import 'package:leadsystem/screens/settings_screens.dart';
 
 import '../test/test_helpers.dart';
 
@@ -54,7 +55,10 @@ void main() {
     String name,
     Widget Function(AppState state) builder, {
     Future<void> Function(AppState state)? prepare,
+    bool dark = false,
   }) async {
+    AppColors.usePalette(dark ? AppPalette.dark : AppPalette.light);
+    addTearDown(() => AppColors.usePalette(AppPalette.light));
     tester.view.physicalSize = const Size(390 * 2.5, 844 * 2.5);
     tester.view.devicePixelRatio = 2.5;
     addTearDown(tester.view.reset);
@@ -66,7 +70,7 @@ void main() {
         notifier: state,
         child: MaterialApp(
           debugShowCheckedModeBanner: false,
-          theme: AppTheme.light,
+          theme: dark ? AppTheme.dark : AppTheme.light,
           home: RepaintBoundary(child: Builder(builder: (_) => builder(state))),
         ),
       ),
@@ -153,5 +157,30 @@ void main() {
   testWidgets(
     'contato',
     (t) => shoot(t, '08_contato', (_) => const CompanyScreen()),
+  );
+  testWidgets(
+    'inicio escuro',
+    (t) => shoot(t, '09_inicio_escuro', (_) => const AppShell(), dark: true),
+  );
+  testWidgets(
+    'produto escuro',
+    (t) => shoot(
+      t,
+      '10_produto_escuro',
+      (s) => ProductDetailScreen(product: s.products[4]),
+      dark: true,
+    ),
+  );
+  testWidgets(
+    'servidor',
+    (t) => shoot(t, '11_servidor', (_) => const ServerSettingsScreen()),
+  );
+  testWidgets(
+    'pedido confirmado',
+    (t) => shoot(
+      t,
+      '12_pedido_confirmado',
+      (s) => OrderSuccessScreen(order: s.orders.first),
+    ),
   );
 }
