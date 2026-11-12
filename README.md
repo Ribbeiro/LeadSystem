@@ -2,6 +2,12 @@
 
 Aplicativo acadêmico multiplataforma para catálogo, vendas, orçamentos e atendimento da SantiGrill. O mesmo projeto Flutter gera as versões Android e iOS.
 
+## Conteúdo oficial
+
+Produtos, preços, fotos, contatos e políticas foram extraídos de https://www.santigrill.com.br/ e ficam em `assets/data/santigrill.json` (resumo em `docs/MAPEAMENTO_SITE.md`). O app lê esse arquivo na inicialização; para atualizar o catálogo, basta substituir o JSON e as imagens em `assets/images/products/`.
+
+Documentos: `docs/RELATORIO_QA.md` (bugs, testes e pendências), `docs/ROTEIRO_APRESENTACAO.md` (roteiro de 3 minutos) e `docs/screenshots/`.
+
 ## O que já funciona
 
 - início com promoções, categorias e busca;
