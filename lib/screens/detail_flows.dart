@@ -594,10 +594,12 @@ class _CartScreenState extends State<CartScreen> {
                           final valid = state.applyCoupon(
                             _couponController.text,
                           );
+                          final coupon = state.appliedCoupon;
                           showAppSnackBar(
                             context,
-                            valid
-                                ? 'Cupom aplicado: 10% de desconto.'
+                            valid && coupon != null
+                                ? 'Cupom ${coupon.code} aplicado: '
+                                      '${_percent(coupon.discountPercent)} de desconto.'
                                 : 'Cupom inválido ou expirado.',
                           );
                         },
@@ -616,11 +618,14 @@ class _CartScreenState extends State<CartScreen> {
                         size: 18,
                       ),
                       const SizedBox(width: 6),
-                      Text(
-                        'PRIMEIRACOMPRA aplicado',
-                        style: TextStyle(
-                          color: AppColors.success,
-                          fontWeight: FontWeight.w700,
+                      Flexible(
+                        child: Text(
+                          '${state.appliedCoupon!.code} aplicado · '
+                          '${_percent(state.appliedCoupon!.discountPercent)} de desconto',
+                          style: TextStyle(
+                            color: AppColors.success,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     ],
@@ -1996,3 +2001,6 @@ String deliveryWindow(DateTime createdAt) {
   return '${start.day} de ${_monthNames[start.month - 1]} a '
       '${end.day} de ${_monthNames[end.month - 1]}';
 }
+
+String _percent(double value) =>
+    '${value == value.roundToDouble() ? value.toInt() : value.toString().replaceAll('.', ',')}%';
