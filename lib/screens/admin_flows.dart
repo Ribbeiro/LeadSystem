@@ -1718,7 +1718,7 @@ class AdminReportsScreen extends StatelessWidget {
                   _ReportMetric(
                     width: width,
                     icon: Icons.payments_outlined,
-                    value: money(state.totalRevenue),
+                    value: money(state.deliveredRevenue),
                     label: 'receita entregue',
                     color: AppColors.success,
                   ),

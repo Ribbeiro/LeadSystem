@@ -211,6 +211,11 @@ class AppState extends ChangeNotifier {
       .where((order) => order.status != OrderStatus.cancelled)
       .fold(0, (sum, order) => sum + order.total);
 
+  /// Valor dos pedidos já entregues (não inclui pedidos em andamento).
+  double get deliveredRevenue => _orders
+      .where((order) => order.status == OrderStatus.delivered)
+      .fold(0, (sum, order) => sum + order.total);
+
   int get cartCount => _cart.values.fold(0, (sum, value) => sum + value);
   double get subtotal => _cart.entries.fold(0, (sum, entry) {
     final product = findProductById(entry.key);
