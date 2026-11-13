@@ -312,7 +312,6 @@ class ProductCard extends StatelessWidget {
                       color: Colors.white.withValues(alpha: .92),
                       shape: const CircleBorder(),
                       child: IconButton(
-                        visualDensity: VisualDensity.compact,
                         tooltip: favorite
                             ? 'Remover dos favoritos'
                             : 'Favoritar',
@@ -354,7 +353,6 @@ class ProductCard extends StatelessWidget {
                         tooltip: inStock
                             ? 'Adicionar ao carrinho'
                             : 'Produto esgotado',
-                        visualDensity: VisualDensity.compact,
                         onPressed: inStock ? onAdd : null,
                         icon: const Icon(Icons.add, size: 18),
                       ),

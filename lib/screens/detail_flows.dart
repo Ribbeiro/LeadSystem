@@ -749,7 +749,7 @@ class _CartItem extends StatelessWidget {
               child: Row(
                 children: [
                   IconButton(
-                    visualDensity: VisualDensity.compact,
+                    tooltip: 'Diminuir quantidade',
                     onPressed: onDecrease,
                     icon: const Icon(Icons.remove, size: 17),
                   ),
@@ -758,7 +758,7 @@ class _CartItem extends StatelessWidget {
                     style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                   IconButton(
-                    visualDensity: VisualDensity.compact,
+                    tooltip: 'Aumentar quantidade',
                     onPressed: quantity < product.stock ? onIncrease : null,
                     icon: const Icon(Icons.add, size: 17),
                   ),

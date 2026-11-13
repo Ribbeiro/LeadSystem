@@ -552,18 +552,22 @@ class _CatalogScreenState extends State<CatalogScreen> {
                                 ),
                               )
                               .toList(),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.swap_vert, size: 18),
-                              const SizedBox(width: 4),
-                              Text(
-                                state.productSort.label,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
+                          // Altura mínima de 48 dp: área de toque acessível.
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(minHeight: 48),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.swap_vert, size: 18),
+                                const SizedBox(width: 4),
+                                Text(
+                                  state.productSort.label,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ],

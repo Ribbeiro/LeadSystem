@@ -127,6 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Checkbox(
+                                      semanticLabel: 'Lembrar de mim',
                                       value: remember,
                                       onChanged: (value) => setState(
                                         () => remember = value ?? false,
