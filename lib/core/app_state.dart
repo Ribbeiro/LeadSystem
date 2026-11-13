@@ -1,17 +1,69 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../data/santigrill_catalog.dart';
 import '../models/app_models.dart';
 import '../models/product.dart';
+import 'api_client.dart';
+import 'background_sync.dart';
+
+part 'app_state_sync.dart';
 
 class AppState extends ChangeNotifier {
-  AppState([this._preferences]) {
+  AppState([
+    this._preferences,
+    SantiGrillCatalog? catalog,
+    http.Client? httpClient,
+  ]) : catalog = catalog ?? SantiGrillCatalog.empty,
+       _httpClient = httpClient {
     _seed();
   }
+
+  /// Endereço padrão da API, definido na compilação:
+  /// flutter run --dart-define=API_URL=http://10.0.2.2:3000
+  static const defaultApiUrl = String.fromEnvironment('API_URL');
+  static const syncInterval = Duration(seconds: 30);
+
+  final http.Client? _httpClient;
+  ApiClient? _api;
+  String? _apiToken;
+  Timer? _syncTimer;
+  final List<Map<String, Object?>> _outbox = [];
+  final Set<String> _knownRemoteIds = {};
+  Future<void>? _syncRun;
+  bool _syncAgain = false;
+
+  /// Modo demonstração da API: link da caixa de teste (Ethereal) com o
+  /// e-mail do código de senha.
+  String? passwordEmailPreviewUrl;
+
+  /// URL da API em uso (null = modo offline, só no aparelho).
+  String? apiUrl;
+  DateTime? lastSyncAt;
+  bool syncing = false;
+  String? syncMessage;
+
+  List<ShippingOption> shippingOptions = const [];
+  String? shippingPostalCode;
+  String? shippingService;
+
+  ThemeMode themeMode = ThemeMode.system;
+
+  /// Chamado a cada notificação gerada (pedido, orçamento, oferta) para
+  /// exibi-la também como notificação do sistema.
+  void Function(String title, String body)? onSystemNotification;
+
+  /// Conteúdo oficial (produtos, empresa, políticas) lido de
+  /// assets/data/santigrill.json.
+  final SantiGrillCatalog catalog;
+  CompanyInfo get company => catalog.company;
 
   static const _storageKey = 'leadsystem_state_v2';
   static const _storageVersion = 2;
@@ -21,6 +73,9 @@ class AppState extends ChangeNotifier {
   int _serial = 0;
 
   final Map<String, int> _cart = {};
+
+  /// Variação escolhida por produto no carrinho (ex.: voltagem).
+  final Map<String, String> _cartOptions = {};
   final Set<String> _favorites = {};
   final List<Product> _products = [];
   final List<String> _categories = [];
@@ -47,11 +102,28 @@ class AppState extends ChangeNotifier {
   String? lastAuthMessage;
   String? lastPersistenceError;
 
+  /// Aviso exibido uma única vez na abertura (ex.: dados locais restaurados).
+  String? _startupNotice;
+
+  String? consumeStartupNotice() {
+    final notice = _startupNotice;
+    _startupNotice = null;
+    return notice;
+  }
+
   static Future<AppState> initialize() async {
     final preferences = await SharedPreferences.getInstance();
-    final state = AppState(preferences);
+    final catalog = await SantiGrillCatalog.load();
+    final state = AppState(preferences, catalog);
     await state._hydrate();
     await state.flush();
+    final url = state.apiUrl ?? (defaultApiUrl.isEmpty ? null : defaultApiUrl);
+    if (url != null) {
+      state.apiUrl = ApiClient.normalizeUrl(url);
+      state._api = ApiClient(state.apiUrl!)..token = state._apiToken;
+      unawaited(state.syncNow());
+      state._startAutoSync();
+    }
     return state;
   }
 
@@ -61,8 +133,30 @@ class AppState extends ChangeNotifier {
   List<String> get categories => List.unmodifiable(_categories);
   List<AppUser> get users => List.unmodifiable(_users);
   List<Address> get addresses => List.unmodifiable(_addresses);
+
+  /// Todos os pedidos/orçamentos (uso administrativo).
   List<CustomerOrder> get orders => List.unmodifiable(_orders);
   List<QuoteRequest> get quotes => List.unmodifiable(_quotes);
+
+  /// Pedidos e orçamentos do usuário conectado (área do cliente).
+  List<CustomerOrder> get myOrders {
+    final email = currentUser?.email;
+    if (email == null) return const [];
+    final normalized = _normalizeEmail(email);
+    return List.unmodifiable(
+      _orders.where((order) => order.customerEmail == normalized),
+    );
+  }
+
+  List<QuoteRequest> get myQuotes {
+    final email = currentUser?.email;
+    if (email == null) return const [];
+    final normalized = _normalizeEmail(email);
+    return List.unmodifiable(
+      _quotes.where((quote) => _normalizeEmail(quote.email) == normalized),
+    );
+  }
+
   List<Coupon> get coupons => List.unmodifiable(_coupons);
   List<Campaign> get campaigns => List.unmodifiable(_campaigns);
   List<ChatMessage> get messages => List.unmodifiable(_messages);
@@ -117,10 +211,15 @@ class AppState extends ChangeNotifier {
       .where((order) => order.status != OrderStatus.cancelled)
       .fold(0, (sum, order) => sum + order.total);
 
+  /// Valor dos pedidos já entregues (não inclui pedidos em andamento).
+  double get deliveredRevenue => _orders
+      .where((order) => order.status == OrderStatus.delivered)
+      .fold(0, (sum, order) => sum + order.total);
+
   int get cartCount => _cart.values.fold(0, (sum, value) => sum + value);
   double get subtotal => _cart.entries.fold(0, (sum, entry) {
     final product = findProductById(entry.key);
-    return sum + (product?.price ?? 0) * entry.value;
+    return sum + (product?.salePrice ?? 0) * entry.value;
   });
   Coupon? get appliedCoupon {
     final code = _appliedCouponCode;
@@ -137,17 +236,32 @@ class AppState extends ChangeNotifier {
   double get shipping => _cart.isEmpty ? 0 : _shippingCost;
   double get total => subtotal - discount + shipping;
 
+  /// Desconto do pagamento à vista no Pix, conforme o preço Pix publicado no
+  /// site para cada produto (não se aplica a itens em promoção).
+  double get pixDiscount => _cart.entries.fold(0, (sum, entry) {
+    final product = findProductById(entry.key);
+    final pix = product?.pixPrice;
+    if (product == null || pix == null || pix >= product.salePrice) {
+      return sum;
+    }
+    final couponFactor = 1 - (appliedCoupon?.discountPercent ?? 0) / 100;
+    return sum + (product.salePrice - pix) * entry.value * couponFactor;
+  });
+
+  double totalFor(String paymentMethod) =>
+      total - (paymentMethod == 'Pix' ? pixDiscount : 0);
+
   List<Product> get filteredProducts {
-    final query = searchQuery.trim().toLowerCase();
+    final terms = foldText(
+      searchQuery,
+    ).split(' ').where((term) => term.isNotEmpty).toList();
     final result = _products.where((product) {
       final matchesCategory =
           category == 'Todos' || product.category == category;
-      final matchesQuery =
-          query.isEmpty ||
-          product.name.toLowerCase().contains(query) ||
-          product.shortName.toLowerCase().contains(query) ||
-          product.category.toLowerCase().contains(query) ||
-          product.description.toLowerCase().contains(query);
+      final haystack = foldText(
+        '${product.name} ${product.category} ${product.description}',
+      );
+      final matchesQuery = terms.every(haystack.contains);
       return product.active && matchesCategory && matchesQuery;
     }).toList();
     switch (productSort) {
@@ -157,13 +271,10 @@ class AppState extends ChangeNotifier {
         result.sort((a, b) => a.name.compareTo(b.name));
         break;
       case ProductSort.priceLowToHigh:
-        result.sort((a, b) => a.price.compareTo(b.price));
+        result.sort((a, b) => a.salePrice.compareTo(b.salePrice));
         break;
       case ProductSort.priceHighToLow:
-        result.sort((a, b) => b.price.compareTo(a.price));
-        break;
-      case ProductSort.rating:
-        result.sort((a, b) => b.rating.compareTo(a.rating));
+        result.sort((a, b) => b.salePrice.compareTo(a.salePrice));
         break;
     }
     return result;
@@ -205,9 +316,17 @@ class AppState extends ChangeNotifier {
     _changed(persist: false);
   }
 
-  int addToCart(Product product, {int quantity = 1}) {
+  String? cartOption(String productId) => _cartOptions[productId];
+
+  int addToCart(Product product, {int quantity = 1, String? option}) {
     final current = _cart[product.id] ?? 0;
     if (!product.active || product.stock <= 0 || quantity <= 0) return current;
+    if (option != null && product.voltageOptions.contains(option)) {
+      _cartOptions[product.id] = option;
+    } else if (product.voltageOptions.isNotEmpty &&
+        !_cartOptions.containsKey(product.id)) {
+      _cartOptions[product.id] = product.voltageOptions.first;
+    }
     final next = (current + quantity).clamp(0, product.stock);
     if (next == current) return current;
     _cart[product.id] = next;
@@ -218,6 +337,7 @@ class AppState extends ChangeNotifier {
   void setQuantity(String productId, int quantity) {
     final product = findProductById(productId);
     if (product == null || quantity <= 0 || product.stock <= 0) {
+      _cartOptions.remove(productId);
       if (_cart.remove(productId) != null) _changed();
       return;
     }
@@ -230,6 +350,7 @@ class AppState extends ChangeNotifier {
   void clearCart() {
     if (_cart.isEmpty && _appliedCouponCode == null) return;
     _cart.clear();
+    _cartOptions.clear();
     _appliedCouponCode = null;
     _changed();
   }
@@ -265,6 +386,11 @@ class AppState extends ChangeNotifier {
     bool remember = true,
   }) async {
     final normalized = _normalizeEmail(email);
+    if (_api != null) {
+      final remote = await _remoteLogin(normalized, password, remember);
+      if (remote != null) return remote;
+      // Servidor inacessível: tenta a conta salva no aparelho.
+    }
     AppUser? user;
     for (final candidate in _users) {
       if (_normalizeEmail(candidate.email) == normalized) {
@@ -272,20 +398,21 @@ class AppState extends ChangeNotifier {
         break;
       }
     }
-    if (user == null ||
-        user.passwordHash != _hashPassword(normalized, password)) {
+    if (user == null || !_passwordMatches(user, normalized, password)) {
       lastAuthMessage = 'E-mail ou senha incorretos.';
-      notifyListeners();
+      _notify();
       return false;
     }
     if (user.blocked) {
       lastAuthMessage = 'Esta conta está bloqueada. Fale com o administrador.';
-      notifyListeners();
+      _notify();
       return false;
     }
     _currentUserId = user.id;
     _rememberSession = remember;
-    lastAuthMessage = null;
+    lastAuthMessage = _api == null
+        ? null
+        : 'Servidor indisponível: você entrou no modo offline.';
     _changed();
     await flush();
     return true;
@@ -301,24 +428,44 @@ class AppState extends ChangeNotifier {
     final normalized = _normalizeEmail(email);
     if (name.trim().split(RegExp(r'\s+')).length < 2) {
       lastAuthMessage = 'Informe nome e sobrenome.';
-      notifyListeners();
+      _notify();
       return false;
     }
     if (!_validEmail(normalized)) {
       lastAuthMessage = 'Informe um e-mail válido.';
-      notifyListeners();
+      _notify();
       return false;
     }
     if (_users.any((user) => _normalizeEmail(user.email) == normalized)) {
       lastAuthMessage = 'Já existe uma conta com este e-mail.';
-      notifyListeners();
+      _notify();
       return false;
     }
     if (!_validPassword(password)) {
       lastAuthMessage =
           'A senha deve ter 8 caracteres, uma letra maiúscula e um número.';
-      notifyListeners();
+      _notify();
       return false;
+    }
+    if (_api != null) {
+      final remote = await _remoteAuth(
+        () => _api!.post('/api/auth/register', {
+          'name': name.trim(),
+          'email': normalized,
+          'phone': phone.trim(),
+          'password': password,
+        }),
+        password,
+        remember,
+      );
+      if (remote == null) {
+        lastAuthMessage =
+            'Sem conexão com o servidor. Tente criar a conta novamente.';
+        _notify();
+        return false;
+      }
+      if (remote) await flush();
+      return remote;
     }
     final user = AppUser(
       id: _nextSimpleId('USR'),
@@ -353,12 +500,13 @@ class AppState extends ChangeNotifier {
     );
     if (index < 0) {
       lastAuthMessage = 'Nenhuma conta foi encontrada para este e-mail.';
-      notifyListeners();
+      _notify();
       return false;
     }
     if (!_validPassword(newPassword)) {
-      lastAuthMessage = 'A nova senha deve ter 8 caracteres, uma letra maiúscula e um número.';
-      notifyListeners();
+      lastAuthMessage =
+          'A nova senha deve ter 8 caracteres, uma letra maiúscula e um número.';
+      _notify();
       return false;
     }
     _users[index] = _users[index].copyWith(
@@ -377,12 +525,24 @@ class AppState extends ChangeNotifier {
     final user = currentUser;
     if (user == null) {
       lastAuthMessage = 'Entre na conta para alterar a senha.';
-      notifyListeners();
+      _notify();
       return false;
     }
-    if (user.passwordHash != _hashPassword(user.email, currentPassword)) {
+    final api = _api;
+    if (api != null && _apiToken != null) {
+      try {
+        await api.patch('/api/auth/me', {
+          'currentPassword': currentPassword,
+          'newPassword': newPassword,
+        });
+      } on ApiException catch (error) {
+        lastAuthMessage = error.message;
+        _notify();
+        return false;
+      }
+    } else if (!_passwordMatches(user, user.email, currentPassword)) {
       lastAuthMessage = 'A senha atual está incorreta.';
-      notifyListeners();
+      _notify();
       return false;
     }
     return resetPassword(email: user.email, newPassword: newPassword);
@@ -398,29 +558,39 @@ class AppState extends ChangeNotifier {
     final normalized = _normalizeEmail(email);
     if (!_validEmail(normalized) || name.trim().isEmpty) {
       lastAuthMessage = 'Revise o nome e o e-mail informados.';
-      notifyListeners();
+      _notify();
       return;
     }
     if (_users.any(
       (item) => item.id != user.id && _normalizeEmail(item.email) == normalized,
     )) {
       lastAuthMessage = 'Este e-mail já pertence a outra conta.';
-      notifyListeners();
+      _notify();
       return;
     }
     final index = _users.indexWhere((item) => item.id == user.id);
+    if (_api != null && normalized != _normalizeEmail(user.email)) {
+      lastAuthMessage =
+          'Para trocar o e-mail da conta, fale com a equipe SantiGrill.';
+      _notify();
+      return;
+    }
     _users[index] = user.copyWith(
       name: name.trim(),
       email: normalized,
       phone: phone.trim(),
     );
     lastAuthMessage = null;
+    _enqueue('profile', {'name': name.trim(), 'phone': phone.trim()});
     _changed();
   }
 
   void logout() {
     _currentUserId = null;
     _rememberSession = false;
+    _apiToken = null;
+    _api?.token = null;
+    _knownRemoteIds.clear();
     lastAuthMessage = null;
     _changed();
   }
@@ -543,7 +713,7 @@ class AppState extends ChangeNotifier {
   void upsertProduct(Product product) {
     if (product.id.trim().isEmpty || product.name.trim().isEmpty) return;
     final normalized = product.copyWith(
-      id: product.id.trim().toUpperCase(),
+      id: product.id.trim(),
       name: product.name.trim(),
       shortName: product.shortName.trim(),
       category: product.category.trim(),
@@ -561,6 +731,7 @@ class AppState extends ChangeNotifier {
       _categories.sort();
     }
     _clampCartItem(normalized.id);
+    _enqueue('product', {'id': normalized.id});
     _changed();
   }
 
@@ -570,6 +741,7 @@ class AppState extends ChangeNotifier {
     _products.removeWhere((product) => product.id == id);
     if (_products.length == before) return false;
     _favorites.remove(id);
+    _enqueue('productDelete', {'id': id});
     _changed();
     return true;
   }
@@ -579,6 +751,7 @@ class AppState extends ChangeNotifier {
     if (index < 0) return;
     _products[index] = _products[index].copyWith(stock: stock.clamp(0, 999999));
     _clampCartItem(id);
+    _enqueue('product', {'id': id});
     _changed();
   }
 
@@ -659,17 +832,19 @@ class AppState extends ChangeNotifier {
     return true;
   }
 
+  /// Estimativa rápida (PAC) usada na tela do produto. A cotação completa
+  /// (PAC/SEDEX, Correios quando configurado) fica em [quoteShipping].
   DeliveryEstimate? calculateShipping(String postalCode) {
-    final digits = postalCode.replaceAll(RegExp(r'\D'), '');
-    if (digits.length != 8) return null;
-    final prefix = int.tryParse(digits.substring(0, 2)) ?? 0;
-    _shippingCost = prefix >= 10 && prefix <= 19 ? 19.90 : 24.90;
+    final options = AppStateSync.estimateShipping(postalCode);
+    if (options.isEmpty) return null;
+    final pac = options.first;
+    _shippingCost = pac.price;
     final now = DateTime.now();
     final estimate = DeliveryEstimate(
-      postalCode: digits,
-      cost: _shippingCost,
+      postalCode: postalCode.replaceAll(RegExp(r'\D'), ''),
+      cost: pac.price,
       estimatedStart: now.add(const Duration(days: 2)),
-      estimatedEnd: now.add(const Duration(days: 4)),
+      estimatedEnd: now.add(Duration(days: 2 + pac.days)),
     );
     _changed();
     return estimate;
@@ -677,6 +852,11 @@ class AppState extends ChangeNotifier {
 
   CustomerOrder placeOrder({Address? address, String paymentMethod = 'Pix'}) {
     if (_cart.isEmpty) throw StateError('O carrinho está vazio.');
+    // Revalida o cupom: o carrinho pode ter mudado depois da aplicação.
+    if (_appliedCouponCode != null &&
+        appliedCoupon?.isAvailable(subtotal: subtotal) != true) {
+      _appliedCouponCode = null;
+    }
     final deliveryAddress = address ?? defaultAddress;
     if (deliveryAddress == null) {
       throw StateError('Cadastre um endereço de entrega.');
@@ -691,9 +871,10 @@ class AppState extends ChangeNotifier {
         OrderItem(
           productId: product.id,
           name: product.name,
-          unitPrice: product.price,
+          unitPrice: product.salePrice,
           quantity: entry.value,
-          imageQuadrant: product.imageQuadrant,
+          image: product.coverImage,
+          option: _cartOptions[product.id],
         ),
       );
     }
@@ -703,11 +884,17 @@ class AppState extends ChangeNotifier {
       createdAt: now,
       items: items,
       subtotal: subtotal,
-      discount: discount,
+      discount: discount + (paymentMethod == 'Pix' ? pixDiscount : 0),
       shipping: shipping,
-      total: total,
+      total: totalFor(paymentMethod),
       paymentMethod: paymentMethod,
       deliveryAddress: deliveryAddress,
+      customerEmail: currentUser == null
+          ? null
+          : _normalizeEmail(currentUser!.email),
+      customerName: currentUser?.name,
+      couponCode: appliedCoupon?.code,
+      syncState: _api != null && _apiToken != null ? 'pending' : null,
       timeline: [
         OrderTimelineEntry(
           status: OrderStatus.received,
@@ -731,7 +918,12 @@ class AppState extends ChangeNotifier {
       _coupons[index] = coupon.copyWith(usedCount: coupon.usedCount + 1);
     }
     _orders.insert(0, order);
+    if (order.syncState == 'pending') {
+      _orders[0] = order.copyWith(clientId: order.id);
+      _enqueue('order', {'id': order.id});
+    }
     _cart.clear();
+    _cartOptions.clear();
     _appliedCouponCode = null;
     _orderPlaced = true;
     if (orderNotifications) {
@@ -742,7 +934,7 @@ class AppState extends ChangeNotifier {
       );
     }
     _changed();
-    return order;
+    return _orders.first;
   }
 
   void updateOrderStatus(String id, OrderStatus status, {String? note}) {
@@ -771,6 +963,9 @@ class AppState extends ChangeNotifier {
         category: 'order',
       );
     }
+    if (order.syncState == null) {
+      _enqueue('orderStatus', {'id': id, 'status': status.name, 'note': note});
+    }
     _changed();
   }
 
@@ -791,8 +986,10 @@ class AppState extends ChangeNotifier {
       phone: phone.trim(),
       details: details.trim(),
       createdAt: now,
+      syncState: _api != null && _apiToken != null ? 'pending' : null,
     );
     _quotes.insert(0, quote);
+    if (quote.syncState == 'pending') _enqueue('quote', {'id': quote.id});
     if (supportNotifications) {
       _addNotification(
         title: 'Orçamento enviado',
@@ -818,6 +1015,13 @@ class AppState extends ChangeNotifier {
         message: '$id agora está com status ${status.label.toLowerCase()}.',
         category: 'support',
       );
+    }
+    if (_quotes[index].syncState == null) {
+      _enqueue('quoteStatus', {
+        'id': id,
+        'status': status.name,
+        'response': response?.trim(),
+      });
     }
     _changed();
   }
@@ -864,7 +1068,19 @@ class AppState extends ChangeNotifier {
       _currentUserId = null;
       _rememberSession = false;
     }
+    _enqueue('user', {'id': id, 'blocked': blocked});
     _changed();
+  }
+
+  /// Exclui a conta (RF14). Não permite excluir a própria conta.
+  bool deleteUser(String id) {
+    if (id == _currentUserId) return false;
+    final before = _users.length;
+    _users.removeWhere((user) => user.id == id);
+    if (_users.length == before) return false;
+    _enqueue('userDelete', {'id': id});
+    _changed();
+    return true;
   }
 
   void setUserRole(String id, String role) {
@@ -872,6 +1088,16 @@ class AppState extends ChangeNotifier {
     final index = _users.indexWhere((user) => user.id == id);
     if (index < 0) return;
     _users[index] = _users[index].copyWith(role: normalized);
+    _enqueue('user', {
+      'id': id,
+      'role': normalized == 'admin' ? 'admin' : 'client',
+    });
+    _changed();
+  }
+
+  void setThemeMode(ThemeMode mode) {
+    if (themeMode == mode) return;
+    themeMode = mode;
     _changed();
   }
 
@@ -914,13 +1140,14 @@ class AppState extends ChangeNotifier {
 
   void _seed() {
     _cart.clear();
+    _cartOptions.clear();
     _favorites.clear();
     _products
       ..clear()
-      ..addAll(demoProducts.map((product) => product.copyWith()));
+      ..addAll(catalog.products);
     _categories
       ..clear()
-      ..addAll(['Churrasqueiras', 'Espetos', 'Grelhas', 'Kits']);
+      ..addAll(_catalogCategories());
     _users
       ..clear()
       ..addAll([
@@ -961,13 +1188,16 @@ class AppState extends ChangeNotifier {
     _orders
       ..clear()
       ..addAll(_seedOrders());
-    _quotes
-      ..clear()
-      ..add(
+    final quoteProduct = catalog.products
+        .where((product) => product.category == 'Churrasqueira')
+        .firstOrNull;
+    _quotes.clear();
+    if (quoteProduct != null) {
+      _quotes.add(
         QuoteRequest(
           id: '#ORC-2026-0084',
-          productId: 'KIT-008',
-          productName: 'Kit Churrasco Profissional',
+          productId: quoteProduct.id,
+          productName: quoteProduct.name,
           customerName: 'Carlos Silva',
           email: 'carlos@email.com',
           phone: '(11) 98888-1111',
@@ -976,6 +1206,7 @@ class AppState extends ChangeNotifier {
           status: QuoteStatus.reviewing,
         ),
       );
+    }
     _coupons
       ..clear()
       ..add(
@@ -1004,7 +1235,8 @@ class AppState extends ChangeNotifier {
       ..addAll([
         ChatMessage(
           id: 'MSG-001',
-          text: 'Olá! Como posso ajudar com seu pedido?',
+          text:
+              'Olá! Sou o assistente da SantiGrill. Pergunte sobre pedidos, entrega, pagamento ou trocas.',
           createdAt: DateTime(2026, 9, 10, 14, 29),
           fromUser: false,
         ),
@@ -1040,6 +1272,16 @@ class AppState extends ChangeNotifier {
     lastPersistenceError = null;
   }
 
+  List<String> _catalogCategories() {
+    final names = <String>[...catalog.categories];
+    for (final product in catalog.products) {
+      if (!names.contains(product.category)) names.add(product.category);
+    }
+    return names;
+  }
+
+  /// Histórico de demonstração do cliente Carlos, montado com produtos e
+  /// preços reais do catálogo. O frete é o valor simulado do app.
   List<CustomerOrder> _seedOrders() {
     const address = Address(
       id: 'END-001',
@@ -1052,25 +1294,54 @@ class AppState extends ChangeNotifier {
       postalCode: '09520-070',
       isDefault: true,
     );
+    final products = catalog.products;
+    if (products.length < 2) return [];
+    Product pick(String category, int fallback) => products.firstWhere(
+      (product) => product.category == category,
+      orElse: () => products[fallback],
+    );
+    final grill = pick('Grill Giratório', 0);
+    final grelha = pick('Grelhas', 1);
+    CustomerOrder build({
+      required String id,
+      required DateTime createdAt,
+      required Product product,
+      required double shipping,
+      required String payment,
+      required OrderStatus status,
+      required List<OrderTimelineEntry> timeline,
+    }) => CustomerOrder(
+      id: id,
+      createdAt: createdAt,
+      items: [
+        OrderItem(
+          productId: product.id,
+          name: product.name,
+          unitPrice: product.salePrice,
+          quantity: 1,
+          image: product.coverImage,
+          option: product.voltageOptions.isEmpty
+              ? null
+              : product.voltageOptions.first,
+        ),
+      ],
+      subtotal: product.salePrice,
+      discount: 0,
+      shipping: shipping,
+      total: product.salePrice + shipping,
+      paymentMethod: payment,
+      deliveryAddress: address,
+      customerEmail: 'carlos@email.com',
+      status: status,
+      timeline: timeline,
+    );
     return [
-      CustomerOrder(
+      build(
         id: '#SG-2026-0147',
         createdAt: DateTime(2026, 9, 10, 14, 32),
-        items: const [
-          OrderItem(
-            productId: 'CHU-001',
-            name: 'Churrasqueira Premium Aço',
-            unitPrice: 899.90,
-            quantity: 1,
-            imageQuadrant: 0,
-          ),
-        ],
-        subtotal: 899.90,
-        discount: 0,
+        product: grill,
         shipping: 24.90,
-        total: 924.80,
-        paymentMethod: 'Pix',
-        deliveryAddress: address,
+        payment: 'Pix',
         status: OrderStatus.shipped,
         timeline: [
           OrderTimelineEntry(
@@ -1088,29 +1359,17 @@ class AppState extends ChangeNotifier {
           OrderTimelineEntry(
             status: OrderStatus.shipped,
             title: 'Em transporte',
-            note: 'Pedido encaminhado à transportadora.',
+            note: 'Pedido postado nos Correios.',
             createdAt: DateTime(2026, 9, 11, 9, 10),
           ),
         ],
       ),
-      CustomerOrder(
+      build(
         id: '#SG-2026-0121',
         createdAt: DateTime(2026, 8, 18, 11),
-        items: const [
-          OrderItem(
-            productId: 'ESP-004',
-            name: 'Espeto Giratório 4 Hastes',
-            unitPrice: 249.90,
-            quantity: 1,
-            imageQuadrant: 1,
-          ),
-        ],
-        subtotal: 249.90,
-        discount: 0,
+        product: grelha,
         shipping: 0,
-        total: 249.90,
-        paymentMethod: 'Cartão',
-        deliveryAddress: address,
+        payment: 'Cartão',
         status: OrderStatus.delivered,
         timeline: [
           OrderTimelineEntry(
@@ -1134,8 +1393,13 @@ class AppState extends ChangeNotifier {
       final decoded = jsonDecode(raw);
       if (decoded is! Map) throw const FormatException('Estado inválido.');
       final data = _asMap(decoded);
-      _replaceIfPresent(_products, data['products'], Product.fromJson);
-      _replaceStringsIfPresent(_categories, data['categories']);
+      if (data['catalogVersion'] == catalog.version) {
+        _replaceIfPresent(_products, data['products'], Product.fromJson);
+        _replaceStringsIfPresent(_categories, data['categories']);
+      }
+      // Versão diferente: mantém o catálogo oficial recém-carregado do JSON.
+      // Carrinho e favoritos de produtos que não existem mais são limpos em
+      // _sanitizeState().
       _replaceIfPresent(_users, data['users'], AppUser.fromJson);
       _replaceIfPresent(_addresses, data['addresses'], Address.fromJson);
       _replaceIfPresent(_orders, data['orders'], CustomerOrder.fromJson);
@@ -1160,6 +1424,27 @@ class AppState extends ChangeNotifier {
               ),
             ),
           );
+      }
+      apiUrl = data['apiUrl']?.toString();
+      _apiToken = data['apiToken']?.toString();
+      final rawOutbox = data['outbox'];
+      _outbox.clear();
+      if (rawOutbox is List) {
+        for (final op in rawOutbox) {
+          if (op is Map) _outbox.add(_asMap(op));
+        }
+      }
+      themeMode = _enumValue(
+        ThemeMode.values,
+        data['themeMode'],
+        ThemeMode.system,
+      );
+      final rawCartOptions = data['cartOptions'];
+      _cartOptions.clear();
+      if (rawCartOptions is Map) {
+        for (final entry in rawCartOptions.entries) {
+          _cartOptions[entry.key.toString()] = entry.value.toString();
+        }
       }
       final rawFavorites = data['favorites'];
       if (rawFavorites is List) {
@@ -1191,15 +1476,16 @@ class AppState extends ChangeNotifier {
       lastPersistenceError = null;
     } catch (_) {
       _seed();
-      lastPersistenceError =
-          'Os dados locais estavam corrompidos e foram restaurados.';
+      _startupNotice = lastPersistenceError =
+          'Os dados salvos no aparelho estavam danificados e foram '
+          'restaurados para o padrão.';
     }
     _schedulePersist();
   }
 
   void _ensureRequiredSeeds() {
     if (_products.isEmpty) {
-      _products.addAll(demoProducts.map((product) => product.copyWith()));
+      _products.addAll(catalog.products);
     }
     if (!_users.any((user) => user.email == 'leandro@email.com')) {
       _users.insert(
@@ -1229,6 +1515,7 @@ class AppState extends ChangeNotifier {
     for (final productId in _cart.keys.toList()) {
       _clampCartItem(productId);
     }
+    _cartOptions.removeWhere((id, _) => !_cart.containsKey(id));
     if (appliedCoupon?.isAvailable(subtotal: subtotal) != true) {
       _appliedCouponCode = null;
     }
@@ -1236,6 +1523,7 @@ class AppState extends ChangeNotifier {
 
   Map<String, Object?> _toJson() => {
     'version': _storageVersion,
+    'catalogVersion': catalog.version,
     'products': _products.map((item) => item.toJson()).toList(),
     'categories': _categories,
     'users': _users.map((item) => item.toJson()).toList(),
@@ -1250,6 +1538,11 @@ class AppState extends ChangeNotifier {
         .toList(),
     'notificationPreferences': _notificationPreferences.toJson(),
     'cart': _cart,
+    'cartOptions': _cartOptions,
+    'apiUrl': apiUrl,
+    'apiToken': _rememberSession ? _apiToken : null,
+    'outbox': _outbox,
+    'themeMode': themeMode.name,
     'favorites': _favorites.toList(),
     'rememberSession': _rememberSession,
     'currentUserId': _rememberSession ? _currentUserId : null,
@@ -1259,8 +1552,22 @@ class AppState extends ChangeNotifier {
     'productSort': productSort.name,
   };
 
+  bool _disposed = false;
+
+  void _notify() {
+    if (!_disposed) notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _syncTimer?.cancel();
+    super.dispose();
+  }
+
   void _changed({bool persist = true}) {
-    notifyListeners();
+    if (_disposed) return;
+    _notify();
     if (persist) _schedulePersist();
   }
 
@@ -1294,6 +1601,7 @@ class AppState extends ChangeNotifier {
         createdAt: DateTime.now(),
       ),
     );
+    onSystemNotification?.call(title, message);
   }
 
   void _clampCartItem(String productId) {
@@ -1345,21 +1653,54 @@ class AppState extends ChangeNotifier {
     return '#ORC-$year-${(max + 1).toString().padLeft(4, '0')}';
   }
 
+  /// Respostas automáticas baseadas nas políticas publicadas no site.
   String _automaticReply(String message) {
-    final value = message.toLowerCase();
+    final value = foldText(message);
+    final whatsapp = company.whatsapp;
+    final hours = company.businessHours;
+    final human = whatsapp == null
+        ? 'Para falar com a equipe, use os contatos em Ajuda.'
+        : 'Para falar com a equipe, chame no WhatsApp $whatsapp'
+              '${hours == null ? '' : ' ($hours)'}.';
+    if (value.contains('troca') ||
+        value.contains('devol') ||
+        value.contains('defeito')) {
+      return 'Trocas: até 7 dias corridos após o recebimento, com o produto '
+          'lacrado e sem uso. Defeito de fabricação: até 30 dias. $human';
+    }
+    if (value.contains('garantia')) {
+      return 'A garantia varia por produto e aparece nas especificações de '
+          'cada item. $human';
+    }
     if (value.contains('pedido') || value.contains('rastre')) {
-      return 'Você pode acompanhar o status em Pedidos. Se informar o protocolo, a equipe consegue localizar mais detalhes.';
+      return 'Você acompanha o status em Pedidos. O código de rastreio dos '
+          'Correios é informado assim que o pedido é postado.';
     }
-    if (value.contains('frete') || value.contains('entrega')) {
-      return 'O frete é calculado pelo CEP na tela do produto. O prazo estimado aparece antes da finalização.';
+    if (value.contains('frete') ||
+        value.contains('entrega') ||
+        value.contains('prazo')) {
+      return 'Enviamos pelos Correios (Sedex ou encomenda) em até 2 dias '
+          'úteis após a confirmação do pagamento. O valor no app é uma '
+          'estimativa pelo CEP.';
     }
-    if (value.contains('orçamento') || value.contains('orcamento')) {
-      return 'Abra um produto e toque em Solicitar orçamento. A solicitação ficará registrada em Pedidos.';
+    if (value.contains('orcamento')) {
+      return 'Abra um produto e toque em Solicitar orçamento. A solicitação '
+          'fica registrada em Pedidos.';
     }
-    if (value.contains('pagamento') || value.contains('pix')) {
-      return 'Aceitamos Pix, cartão e boleto. A opção pode ser escolhida na finalização da compra.';
+    if (value.contains('pagamento') ||
+        value.contains('pix') ||
+        value.contains('cartao') ||
+        value.contains('parcel')) {
+      return 'Pix com desconto à vista, cartão em até 12x ou boleto. '
+          'A opção é escolhida na finalização da compra.';
     }
-    return 'Mensagem recebida! Registrei sua solicitação e a equipe poderá continuar o atendimento por aqui.';
+    if (value.contains('horario') ||
+        value.contains('telefone') ||
+        value.contains('contato') ||
+        value.contains('whatsapp')) {
+      return human;
+    }
+    return 'Mensagem registrada no app. $human';
   }
 
   static String _normalizeEmail(String value) => value.trim().toLowerCase();
@@ -1371,7 +1712,19 @@ class AppState extends ChangeNotifier {
       RegExp(r'\d').hasMatch(value);
 
   static String _hashPassword(String email, String password) {
-    return sha256.convert(utf8.encode('leadsystem-v1|$password')).toString();
+    final salt = _normalizeEmail(email);
+    return sha256
+        .convert(utf8.encode('leadsystem-v2|$salt|$password'))
+        .toString();
+  }
+
+  /// Aceita também o hash legado (v1, sem sal) de dados já salvos no aparelho.
+  static bool _passwordMatches(AppUser user, String email, String password) {
+    final legacy = sha256
+        .convert(utf8.encode('leadsystem-v1|$password'))
+        .toString();
+    return user.passwordHash == _hashPassword(email, password) ||
+        user.passwordHash == legacy;
   }
 
   static Map<String, Object?> _asMap(Object? value) {
@@ -1417,4 +1770,16 @@ class AppScope extends InheritedNotifier<AppState> {
     assert(scope != null, 'AppScope não encontrado na árvore de widgets.');
     return scope!.notifier!;
   }
+}
+
+/// Normaliza texto para busca: minúsculas e sem acentos.
+String foldText(String value) {
+  const from = 'áàâãäéèêëíìîïóòôõöúùûüçñ';
+  const to = 'aaaaaeeeeiiiiooooouuuucn';
+  final buffer = StringBuffer();
+  for (final char in value.toLowerCase().split('')) {
+    final index = from.indexOf(char);
+    buffer.write(index < 0 ? char : to[index]);
+  }
+  return buffer.toString().replaceAll(RegExp(r'\s+'), ' ').trim();
 }

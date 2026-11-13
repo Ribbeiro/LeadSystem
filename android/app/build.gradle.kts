@@ -6,10 +6,13 @@ plugins {
 
 android {
     namespace = "br.com.santigrill.leadsystem"
-    compileSdk = flutter.compileSdkVersion
+    // 37: exigido por flutter_local_notifications e androidx.core 1.19.
+    compileSdk = maxOf(flutter.compileSdkVersion, 37)
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        // Exigido por flutter_local_notifications (APIs java.time em Android antigos).
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -46,4 +49,8 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }

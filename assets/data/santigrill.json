@@ -1,0 +1,1493 @@
+{
+  "fonte": "https://www.santigrill.com.br/",
+  "coletadoEm": "2026-11-11",
+  "metodoColeta": "sitemap.xml + páginas HTML + API pública Tray (/web_api/products, /web_api/products/{id}, /web_api/products/variants)",
+  "empresa": {
+    "nome": "SantiGrill",
+    "razaoSocial": "INDUSTRIA MECANICA SANTI LTDA",
+    "cnpj": "44.048.395/0001-78",
+    "slogan": "Churrasqueiras Práticas",
+    "sloganOrigem": "texto da imagem da logo",
+    "sobre": null,
+    "destaquesHome": [
+      "Os melhores produtos - diversas opções",
+      "em até 12x no cartão - parcelamento nos cartões",
+      "Compre na Loja - e receba em casa",
+      "Somos Especialistas - confiança e segurança"
+    ],
+    "endereco": {
+      "logradouro": "Rua Caiapós",
+      "numero": null,
+      "complemento": null,
+      "bairro": null,
+      "cidade": "Santo André",
+      "uf": "SP",
+      "cep": "09195-510"
+    },
+    "telefones": [
+      "(11) 4453-6755",
+      "(11) 98827-7030",
+      "(11) 4451-3033"
+    ],
+    "whatsapp": "(11) 98827-7030",
+    "whatsappUrl": null,
+    "emails": [
+      "assistencia@santigrill.com.br",
+      "vendas@santigrill.com.br"
+    ],
+    "redesSociais": {
+      "facebook": "https://www.facebook.com/churrasqueirassantigrill",
+      "instagram": null,
+      "youtube": null,
+      "tiktok": null
+    },
+    "videosYoutube": [
+      "https://www.youtube.com/embed/27gp23CrBY0",
+      "https://www.youtube.com/embed/DE5hmtaDTLs",
+      "https://www.youtube.com/embed/FGmajJmU9F4",
+      "https://www.youtube.com/embed/LTH1MnAqkPc",
+      "https://www.youtube.com/embed/R-S4zaJp5N0"
+    ],
+    "horarioAtendimento": "Segunda a sexta - 7:30 às 17:30",
+    "horarioAtendimentoAlternativo": "Segunda à Sexta feira das 8:00 às 16:30 (informado na página de Trocas e Devoluções)",
+    "site": "https://www.santigrill.com.br",
+    "plataforma": "Tray (loja 720158)",
+    "paginas": {
+      "empresa": "https://www.santigrill.com.br/empresa",
+      "contato": "https://www.santigrill.com.br/contato",
+      "como-comprar": "https://www.santigrill.com.br/como-comprar",
+      "seguranca": "https://www.santigrill.com.br/seguranca",
+      "envio": "https://www.santigrill.com.br/envio",
+      "pagamento": "https://www.santigrill.com.br/pagamento",
+      "tempo-de-garantia": "https://www.santigrill.com.br/tempo-de-garantia",
+      "representantes": "https://www.santigrill.com.br/representantes",
+      "trocas-devolucoes": "https://www.santigrill.com.br/trocas-devolucoes",
+      "cupons-de-desconto": "https://www.santigrill.com.br/cupons-de-desconto"
+    }
+  },
+  "marca": {
+    "cores": {
+      "primaria": "#d10d0d",
+      "primariaHover": "#d10d0d",
+      "topo": "#d81919",
+      "secundaria": "#000000",
+      "terciaria": "#3ed527",
+      "terciariaHover": "#38c223",
+      "destaque": "#d18a0d",
+      "titulo": "#585663",
+      "texto": "#575663",
+      "rodape": "#ededef",
+      "cinza": "#aaaaad",
+      "gradiente": "#605f6d",
+      "menu": "#ffffff",
+      "textoClaro": "#f0f0f4",
+      "fundoLogo": "#d91819",
+      "_origem": "variáveis CSS (--color-*) definidas no HTML da home, tema Tray 7; fundoLogo amostrado da imagem da logo"
+    },
+    "fontes": [
+      "Open Sans",
+      "Open Sans Condensed",
+      "Arial",
+      "Helvetica",
+      "sans-serif"
+    ],
+    "fontesOrigem": "main.min.css: body{font-family:'Open Sans',Arial,Helvetica,sans-serif}; HTML referencia 'Open Sans Condensed'; ícones usam a fonte 'theme-tray'",
+    "logo": "assets/images/brand/logo.png",
+    "logoOrigem": "https://images.tcdn.com.br/img/img_prod/720158/1565721571_santi_grill_novo.jpg"
+  },
+  "categorias": [
+    {
+      "id": "grill-giratorio",
+      "idLoja": 1,
+      "nome": "Grill Giratório",
+      "slug": "grill-giratorio",
+      "url": "https://www.santigrill.com.br/grill-giratorio",
+      "categoriaPai": null,
+      "descricao": "Encontre o Grill Giratório Santigrill ideal para você!  Tenha maior agilidade, maior produtividade e asse a carne de maneira uniforme deixando-a mais saborosa."
+    },
+    {
+      "id": "grelhas",
+      "idLoja": 3,
+      "nome": "Grelhas",
+      "slug": "grelhas",
+      "url": "https://www.santigrill.com.br/grelhas",
+      "categoriaPai": null,
+      "descricao": "Grelha Modelo Moeda e Grelha Parrilleira diversas medidas 100% inox. Entrega para todo o Brasil. Parcele em até 12x no cartão de crédito. Considerada de grande contribuição para o status de melhor churrasco do mundo."
+    },
+    {
+      "id": "grelhas-parrilheira",
+      "idLoja": 7,
+      "nome": "Parrilheira",
+      "slug": "parrilheira",
+      "url": "https://www.santigrill.com.br/grelhas/parrilheira",
+      "categoriaPai": "grelhas",
+      "descricao": "Grelha Parrilleira Santigrill diversas medidas 100% inox. Considerada de grande contribuição para o status de melhor churrasco do mundo."
+    },
+    {
+      "id": "grelhas-moeda",
+      "idLoja": 9,
+      "nome": "Moeda",
+      "slug": "moeda",
+      "url": "https://www.santigrill.com.br/grelhas/moeda",
+      "categoriaPai": "grelhas",
+      "descricao": "Grelha Moeda Santigrill diversas medidas 100% inox. Entregamos para todo o Brasil! Parcele em até 12x no cartão de crédito."
+    },
+    {
+      "id": "churrasqueira",
+      "idLoja": 5,
+      "nome": "Churrasqueira",
+      "slug": "churrasqueira",
+      "url": "https://www.santigrill.com.br/churrasqueira",
+      "categoriaPai": null,
+      "descricao": "Churrasqueira Santigrill. Tendo um excelente desempenho com pouco consumo de carvão, projetada para o uso em sacada de apartamento, casa de praia e campo, clubes, pescarias e reuniões entre amigos."
+    },
+    {
+      "id": "espetos",
+      "idLoja": 11,
+      "nome": "Espetos",
+      "slug": "espetos",
+      "url": "https://www.santigrill.com.br/espetos",
+      "categoriaPai": null,
+      "descricao": null
+    }
+  ],
+  "produtos": [
+    {
+      "id": "churrasqueira-giratoria-e-rotatoria-eletrica-3-espetos",
+      "idLoja": "1",
+      "nome": "Grill giratório e rotatório elétrico 3 espetos",
+      "categoria": "grill-giratorio",
+      "categoriasRelacionadas": [],
+      "descricao": "A SantiGrill lançou o Grill com Espetos Giratórios, ideal para adicionar um ‘’toque especial’’ ao churrasco, tenha maior agilidade, maior produtividade, asse a carne de maneira uniforme, deixando-a mais saborosa, pois o suco da carne gira em torno dela, evitando que a carne seque, sirva os convidados sem aquela constante preocupação em queimar seu churrasco.\nO Grill com Espetos Giratórios SantiGrill, vai com uma GRELHA PARRILHEIRA, tem um motor bivolt, todo produzido em aço inox, pratico e fácil de limpar. É o mais silencioso e com melhor acabamento do mercado, com ‘’ajuste de profundidade’’, vai ficar perfeito na sua churrasqueira ou na sua bancada de alvenaria.\nDetalhes:\n*O produto vai pré-montado;\n* Sem ponto de soldas;\n*Itens incluídos:\nTrês espetos Tridentes (madeira revestida com alumínio, conforto para não esquentar as mãos);\nUma Grelha Parrilheira.\n*Medidas do Grill montado:\n*L 44,3 cm dianteira com motor, parte traseira 38,5 cm\n*P 43 a 50m (ajustável)\n*A 30 cm\n100% Aço Inox;\nMotor 110 / 220 chave seletora na tampa do motor.",
+      "preco": 467.0,
+      "precoPromocional": null,
+      "pagamento": {
+        "pixAVista": {
+          "valor": 452.99,
+          "meio": "Pix - Vindi"
+        },
+        "cartao": {
+          "parcelas": 12,
+          "valorParcela": 48.21,
+          "jurosMensalPct": 1.99,
+          "meio": "Aura - MoIP"
+        }
+      },
+      "variacoes": [
+        {
+          "tipo": "Voltagem",
+          "origem": "informacao-adicional",
+          "opcoes": [
+            "Bivolt"
+          ],
+          "precoPorOpcao": null
+        }
+      ],
+      "especificacoes": {
+        "voltagem": "Bivolt",
+        "marca": "SantiGrill",
+        "garantia": null,
+        "peso": null,
+        "dimensoes": null,
+        "medidasDescricao": [
+          "*Medidas do Grill montado:",
+          "*L 44,3 cm dianteira com motor, parte traseira 38,5 cm",
+          "*P 43 a 50m (ajustável)",
+          "*A 30 cm"
+        ],
+        "video": "https://www.youtube.com/embed/LTH1MnAqkPc"
+      },
+      "disponivel": true,
+      "url": "https://www.santigrill.com.br/grill-giratorio/churrasqueira-giratoria-e-rotatoria-eletrica-3-espetos",
+      "imagens": [
+        "assets/images/products/churrasqueira-giratoria-e-rotatoria-eletrica-3-espetos-1.jpg",
+        "assets/images/products/churrasqueira-giratoria-e-rotatoria-eletrica-3-espetos-2.jpg",
+        "assets/images/products/churrasqueira-giratoria-e-rotatoria-eletrica-3-espetos-3.jpg"
+      ],
+      "imagensOrigem": [
+        "https://images.tcdn.com.br/img/img_prod/720158/churrasqueira_giratoria_e_rotatoria_eletrica_3_espetos_1_1_20190825120951.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/churrasqueira_giratoria_e_rotatoria_eletrica_3_espetos_1_2_20190825121157.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/grill_giratoria_e_rotatoria_eletrica_3_espetos_1_4_d2c2680c620b9bc91d816fd147d31bd0.jpg"
+      ]
+    },
+    {
+      "id": "churrasqueira-giratoria-e-rotatoria-eletrica-4-espetos",
+      "idLoja": "3",
+      "nome": "Grill giratório e rotatório elétrico 4 espetos",
+      "categoria": "grill-giratorio",
+      "categoriasRelacionadas": [],
+      "descricao": "A SantiGrill lançou o Grill com Espetos Giratórios, ideal para adicionar um ‘’toque especial’’ ao\nchurrasco, tenha maior agilidade, maior produtividade, asse a carne de maneira uniforme,\ndeixando-a mais saborosa, pois o suco da carne gira em torno dela, evitando que a carne\nseque, sirva os convidados sem aquela constante preocupação em queimar seu churrasco.\nO Grill com Espetos Giratórios SantiGrill, vai com uma GRELHA PARRILHEIRA, tem um motor\nbivolt, todo produzido em aço inox, pratico e fácil de limpar. É o mais silencioso e com melhor\nacabamento do mercado, com ‘’ajuste de profundidade’’, vai ficar perfeito na sua\nchurrasqueira ou na sua bancada de alvenaria.\nDetalhes:\n*O produto vai pré-montado;\n* Sem ponto de soldas;\n*Itens incluídos:\nQuatro espetos Tridentes (madeira revestida com alumínio, conforto para não esquentar as\nmãos);\nUma Grelha Parrilheira.\n*Medidas do Grill montado:\n*L 56,3 cm dianteira com motor, parte traseira 50,5 cm\n*P 43 a 50m (ajustável)\n*A 30 cm\n100% Aço Inox;\nMotor 110 / 220 chave seletora na tampa do motor.\n–",
+      "preco": 537.0,
+      "precoPromocional": null,
+      "pagamento": {
+        "pixAVista": {
+          "valor": 520.89,
+          "meio": "Pix - Vindi"
+        },
+        "cartao": {
+          "parcelas": 12,
+          "valorParcela": 55.44,
+          "jurosMensalPct": 1.99,
+          "meio": "Aura - MoIP"
+        }
+      },
+      "variacoes": [
+        {
+          "tipo": "Voltagem",
+          "origem": "informacao-adicional",
+          "opcoes": [
+            "Bivolt"
+          ],
+          "precoPorOpcao": null
+        }
+      ],
+      "especificacoes": {
+        "marca": "SantiGrill",
+        "garantia": null,
+        "peso": null,
+        "dimensoes": null,
+        "medidasDescricao": [
+          "*Medidas do Grill montado:",
+          "*L 56,3 cm dianteira com motor, parte traseira 50,5 cm",
+          "*P 43 a 50m (ajustável)",
+          "*A 30 cm"
+        ],
+        "video": "https://www.youtube.com/embed/LTH1MnAqkPc"
+      },
+      "disponivel": true,
+      "url": "https://www.santigrill.com.br/grill-giratorio/churrasqueira-giratoria-e-rotatoria-eletrica-4-espetos",
+      "imagens": [
+        "assets/images/products/churrasqueira-giratoria-e-rotatoria-eletrica-4-espetos-1.jpg",
+        "assets/images/products/churrasqueira-giratoria-e-rotatoria-eletrica-4-espetos-2.jpg",
+        "assets/images/products/churrasqueira-giratoria-e-rotatoria-eletrica-4-espetos-3.jpg"
+      ],
+      "imagensOrigem": [
+        "https://images.tcdn.com.br/img/img_prod/720158/churrasqueira_giratoria_e_rotatoria_eletrica_4_espetos_3_1_20190825122957.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/churrasqueira_giratoria_e_rotatoria_eletrica_4_espetos_3_2_20190825122957.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/churrasqueira_giratoria_e_rotatoria_eletrica_4_espetos_3_3_20190825122958.jpg"
+      ]
+    },
+    {
+      "id": "churrasqueira-giratoria-e-rotatoria-eletrica-5-espetos",
+      "idLoja": "5",
+      "nome": "Grill giratório e rotatório elétrico 5 espetos",
+      "categoria": "grill-giratorio",
+      "categoriasRelacionadas": [],
+      "descricao": "A SantiGrill lançou o Grill com Espetos Giratórios, ideal para adicionar um ‘’toque especial’’ ao\nchurrasco, tenha maior agilidade, maior produtividade, asse a carne de maneira uniforme,\ndeixando-a mais saborosa, pois o suco da carne gira em torno dela, evitando que a carne\nseque, sirva os convidados sem aquela constante preocupação em queimar seu churrasco.\nO Grill com Espetos Giratórios SantiGrill, vai com uma GRELHA PARRILHEIRA, tem um motor\nbivolt, todo produzido em aço inox, pratico e fácil de limpar. É o mais silencioso e com melhor\nacabamento do mercado, com ‘’ajuste de profundidade’’, vai ficar perfeito na sua\nchurrasqueira ou na sua bancada de alvenaria.\nDetalhes:\n*O produto vai pré-montado;\n* Sem ponto de soldas;\n*Itens incluídos:\nCinco espetos Tridentes (madeira revestida com alumínio, conforto para não esquentar as\nmãos);\nUma Grelha Parrilheira.\n*Medidas do Grill montado:\n*L 68,3 cm dianteira com motor, parte traseira 62,5 cm\n*P 43 a 50m (ajustável)\n*A 30 cm\n100% Aço Inox;\nMotor 110 / 220 chave seletora na tampa do motor.",
+      "preco": 582.0,
+      "precoPromocional": null,
+      "pagamento": {
+        "pixAVista": {
+          "valor": 564.54,
+          "meio": "Pix - Vindi"
+        },
+        "cartao": {
+          "parcelas": 12,
+          "valorParcela": 60.08,
+          "jurosMensalPct": 1.99,
+          "meio": "Aura - MoIP"
+        }
+      },
+      "variacoes": [
+        {
+          "tipo": "Voltagem",
+          "origem": "informacao-adicional",
+          "opcoes": [
+            "Bivolt"
+          ],
+          "precoPorOpcao": null
+        }
+      ],
+      "especificacoes": {
+        "marca": "SantiGrill",
+        "garantia": null,
+        "peso": null,
+        "dimensoes": null,
+        "medidasDescricao": [
+          "*Medidas do Grill montado:",
+          "*L 68,3 cm dianteira com motor, parte traseira 62,5 cm",
+          "*P 43 a 50m (ajustável)",
+          "*A 30 cm"
+        ],
+        "video": "https://www.youtube.com/embed/LTH1MnAqkPc"
+      },
+      "disponivel": true,
+      "url": "https://www.santigrill.com.br/grill-giratorio/churrasqueira-giratoria-e-rotatoria-eletrica-5-espetos",
+      "imagens": [
+        "assets/images/products/churrasqueira-giratoria-e-rotatoria-eletrica-5-espetos-1.jpg",
+        "assets/images/products/churrasqueira-giratoria-e-rotatoria-eletrica-5-espetos-2.jpg",
+        "assets/images/products/churrasqueira-giratoria-e-rotatoria-eletrica-5-espetos-3.jpg"
+      ],
+      "imagensOrigem": [
+        "https://images.tcdn.com.br/img/img_prod/720158/churrasqueira_giratoria_e_rotatoria_eletrica_5_espetos_5_1_20190825123711.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/churrasqueira_giratoria_e_rotatoria_eletrica_5_espetos_5_2_20190825123712.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/churrasqueira_giratoria_e_rotatoria_eletrica_5_espetos_5_3_20190825123712.jpg"
+      ]
+    },
+    {
+      "id": "churrasqueira-giratoria-e-rotatoria-eletrica-6-espetos",
+      "idLoja": "7",
+      "nome": "Grill giratório e rotatório elétrico 6 espetos",
+      "categoria": "grill-giratorio",
+      "categoriasRelacionadas": [],
+      "descricao": "A SantiGrill lançou o Grill com Espetos Giratórios, ideal para adicionar um ‘’toque especial’’ ao\nchurrasco, tenha maior agilidade, maior produtividade, asse a carne de maneira uniforme,\ndeixando-a mais saborosa, pois o suco da carne gira em torno dela, evitando que a carne\nseque, sirva os convidados sem aquela constante preocupação em queimar seu churrasco.\nO Grill com Espetos Giratórios SantiGrill, vai com uma GRELHA PARRILHEIRA, tem um motor\nbivolt, todo produzido em aço inox, pratico e fácil de limpar. É o mais silencioso e com melhor\nacabamento do mercado, com ‘’ajuste de profundidade’’, vai ficar perfeito na sua\nchurrasqueira ou na sua bancada de alvenaria.\nDetalhes:\n*O produto vai pré-montado;\n* Sem ponto de soldas;\n*Itens incluídos:\nSeis espetos Tridentes (madeira revestida com alumínio, conforto para não esquentar as\nmãos);\nUma Grelha Parrilheira.\n*Medidas do Grill montado:\n*L 80,3 cm dianteira com motor, parte traseira 74,5 cm\n*P 43 a 50m (ajustável)\n*A 30 cm\n100% Aço Inox;\nMotor 110 / 220 chave seletora na tampa do motor.",
+      "preco": 611.0,
+      "precoPromocional": null,
+      "pagamento": {
+        "pixAVista": {
+          "valor": 592.67,
+          "meio": "Pix - Vindi"
+        },
+        "cartao": {
+          "parcelas": 12,
+          "valorParcela": 63.08,
+          "jurosMensalPct": 1.99,
+          "meio": "Aura - MoIP"
+        }
+      },
+      "variacoes": [
+        {
+          "tipo": "Voltagem",
+          "origem": "informacao-adicional",
+          "opcoes": [
+            "Bivolt"
+          ],
+          "precoPorOpcao": null
+        }
+      ],
+      "especificacoes": {
+        "marca": "SantiGrill",
+        "garantia": null,
+        "peso": null,
+        "dimensoes": null,
+        "medidasDescricao": [
+          "*Medidas do Grill montado:",
+          "*L 80,3 cm dianteira com motor, parte traseira 74,5 cm",
+          "*P 43 a 50m (ajustável)",
+          "*A 30 cm"
+        ],
+        "video": "https://www.youtube.com/embed/LTH1MnAqkPc"
+      },
+      "disponivel": true,
+      "url": "https://www.santigrill.com.br/grill-giratorio/churrasqueira-giratoria-e-rotatoria-eletrica-6-espetos",
+      "imagens": [
+        "assets/images/products/churrasqueira-giratoria-e-rotatoria-eletrica-6-espetos-1.jpg",
+        "assets/images/products/churrasqueira-giratoria-e-rotatoria-eletrica-6-espetos-2.jpg",
+        "assets/images/products/churrasqueira-giratoria-e-rotatoria-eletrica-6-espetos-3.jpg"
+      ],
+      "imagensOrigem": [
+        "https://images.tcdn.com.br/img/img_prod/720158/churrasqueira_giratoria_e_rotatoria_eletrica_6_espetos_7_1_20190825124233.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/churrasqueira_giratoria_e_rotatoria_eletrica_6_espetos_7_2_20190825124234.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/churrasqueira_giratoria_e_rotatoria_eletrica_6_espetos_7_3_20190825124234.jpg"
+      ]
+    },
+    {
+      "id": "churrasqueira-santigrill-modelo-hobby",
+      "idLoja": "9",
+      "nome": "Churrasqueira Santigrill Modelo Hobby",
+      "categoria": "churrasqueira",
+      "categoriasRelacionadas": [],
+      "descricao": "Tendo um excelente desempenho com pouco consumo de carvão.\nProjetada para o uso em Sacada de Apartamento, Casa de Praia e Campo, Clubes, Pescarias e Reuniões entre Amigos, etc .\nFabricada totalmente em Aço Inox 0.6 m/m\nMaior resistência e durabilidade\nLargura Útil - 30 x 28 cm\nAltura - 25 cm\nPeso - 2,10 kg\n–",
+      "preco": 159.0,
+      "precoPromocional": null,
+      "pagamento": {
+        "pixAVista": {
+          "valor": 154.23,
+          "meio": "Pix - Vindi"
+        },
+        "cartao": {
+          "parcelas": 12,
+          "valorParcela": 16.41,
+          "jurosMensalPct": 1.99,
+          "meio": "Aura - MoIP"
+        }
+      },
+      "variacoes": [],
+      "especificacoes": {
+        "marca": "SantiGrill",
+        "garantia": null,
+        "peso": null,
+        "dimensoes": null,
+        "medidasDescricao": [
+          "Fabricada totalmente em Aço Inox 0.6 m/m",
+          "Largura Útil - 30 x 28 cm",
+          "Altura - 25 cm",
+          "Peso - 2,10 kg"
+        ],
+        "video": null
+      },
+      "disponivel": true,
+      "url": "https://www.santigrill.com.br/grill-giratorio/churrasqueira-santigrill-modelo-hobby",
+      "imagens": [
+        "assets/images/products/churrasqueira-santigrill-modelo-hobby-1.jpg",
+        "assets/images/products/churrasqueira-santigrill-modelo-hobby-2.jpg",
+        "assets/images/products/churrasqueira-santigrill-modelo-hobby-3.jpg"
+      ],
+      "imagensOrigem": [
+        "https://images.tcdn.com.br/img/img_prod/720158/churrasqueira_santigrill_modelo_hobby_9_1_20190825125846.png",
+        "https://images.tcdn.com.br/img/img_prod/720158/churrasqueira_santigrill_modelo_hobby_9_2_20190825125846.png",
+        "https://images.tcdn.com.br/img/img_prod/720158/churrasqueira_santigrill_modelo_hobby_9_3_20190825125846.png"
+      ]
+    },
+    {
+      "id": "churrasqueira-santigrill-modelo-ventura-tipo-maleta",
+      "idLoja": "11",
+      "nome": "Churrasqueira Santigrill Modelo Ventura Tipo Maleta",
+      "categoria": "churrasqueira",
+      "categoriasRelacionadas": [],
+      "descricao": "Muito fácil de Transportar, limpar e armazenar.\nProduto com excelente acabamento.\nFabricada totalmente em Aço Inox 0.6 m/m\nMaior resistência e durabilidade.\nLargura Útil: 39x32cm\nAltura: 37cm\nPeso: 2,50kg\n–",
+      "preco": 170.0,
+      "precoPromocional": null,
+      "pagamento": {
+        "pixAVista": {
+          "valor": 164.9,
+          "meio": "Pix - Vindi"
+        },
+        "cartao": {
+          "parcelas": 12,
+          "valorParcela": 17.55,
+          "jurosMensalPct": 1.99,
+          "meio": "Aura - MoIP"
+        }
+      },
+      "variacoes": [],
+      "especificacoes": {
+        "modelo": "Ventura",
+        "marca": "SantiGrill",
+        "garantia": null,
+        "peso": null,
+        "dimensoes": null,
+        "medidasDescricao": [
+          "Fabricada totalmente em Aço Inox 0.6 m/m",
+          "Largura Útil: 39x32cm",
+          "Altura: 37cm",
+          "Peso: 2,50kg"
+        ],
+        "video": "https://www.youtube.com/embed/FGmajJmU9F4"
+      },
+      "disponivel": true,
+      "url": "https://www.santigrill.com.br/churrasqueira/churrasqueira-santigrill-modelo-ventura-tipo-maleta",
+      "imagens": [
+        "assets/images/products/churrasqueira-santigrill-modelo-ventura-tipo-maleta-1.jpg",
+        "assets/images/products/churrasqueira-santigrill-modelo-ventura-tipo-maleta-2.jpg",
+        "assets/images/products/churrasqueira-santigrill-modelo-ventura-tipo-maleta-3.jpg"
+      ],
+      "imagensOrigem": [
+        "https://images.tcdn.com.br/img/img_prod/720158/churrasqueira_santigrill_modelo_ventura_tipo_maleta_11_1_20190825130602.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/churrasqueira_santigrill_modelo_ventura_tipo_maleta_11_2_20190825130602.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/churrasqueira_santigrill_modelo_ventura_tipo_maleta_11_3_20190825130603.jpg"
+      ]
+    },
+    {
+      "id": "grelha-modelo-moeda-100-inox-medida-30x50-cm",
+      "idLoja": "13",
+      "nome": "Grelha Modelo Moeda 100% Inox Medida 30x50 cm",
+      "categoria": "grelhas",
+      "categoriasRelacionadas": [
+        "grelhas",
+        "grelhas-moeda"
+      ],
+      "descricao": "Grelha Moeda medida 30x50.\nGrelha 100% em inox, tela Moeda com Cabo de Alumínio para uso profissional e domestico, Ideal para ser usada em churrasqueira de alvenaria.\n¯",
+      "preco": 128.0,
+      "precoPromocional": null,
+      "pagamento": {
+        "pixAVista": {
+          "valor": 124.16,
+          "meio": "Pix - Vindi"
+        },
+        "cartao": {
+          "parcelas": 12,
+          "valorParcela": 13.21,
+          "jurosMensalPct": 1.99,
+          "meio": "Aura - MoIP"
+        }
+      },
+      "variacoes": [],
+      "especificacoes": {
+        "marca": "SantiGrill",
+        "garantia": null,
+        "peso": null,
+        "dimensoes": null,
+        "medidasDescricao": [
+          "Grelha Moeda medida 30x50."
+        ],
+        "video": null
+      },
+      "disponivel": true,
+      "url": "https://www.santigrill.com.br/grelhas/grelha-modelo-moeda-100-inox-medida-30x50-cm",
+      "imagens": [
+        "assets/images/products/grelha-modelo-moeda-100-inox-medida-30x50-cm-1.jpg",
+        "assets/images/products/grelha-modelo-moeda-100-inox-medida-30x50-cm-2.jpg"
+      ],
+      "imagensOrigem": [
+        "https://images.tcdn.com.br/img/img_prod/720158/grelha_modelo_moeda_100_inox_medida_30x50_cm_13_1_20190827082556.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/grelha_modelo_moeda_100_inox_medida_30x50_cm_13_2_20190827082556.jpg"
+      ]
+    },
+    {
+      "id": "grelha-modelo-moeda-100-inox-medida-40x50-cm",
+      "idLoja": "15",
+      "nome": "Grelha Modelo Moeda 100% INOX Medida 40x50 cm",
+      "categoria": "grelhas",
+      "categoriasRelacionadas": [
+        "grelhas",
+        "grelhas-moeda"
+      ],
+      "descricao": "Grelha Moeda medida 40x50 cm\nGrelha 100% em inox, tela Moeda com Cabo de Alumínio para uso profissional e domestico, Ideal para ser usada em churrasqueira de alvenaria.\n–",
+      "preco": 120.0,
+      "precoPromocional": null,
+      "pagamento": {
+        "pixAVista": {
+          "valor": 116.4,
+          "meio": "Pix - Vindi"
+        },
+        "cartao": {
+          "parcelas": 12,
+          "valorParcela": 12.39,
+          "jurosMensalPct": 1.99,
+          "meio": "Aura - MoIP"
+        }
+      },
+      "variacoes": [],
+      "especificacoes": {
+        "marca": "SantiGrill",
+        "garantia": null,
+        "peso": null,
+        "dimensoes": null,
+        "medidasDescricao": [
+          "Grelha Moeda medida 40x50 cm"
+        ],
+        "video": null
+      },
+      "disponivel": true,
+      "url": "https://www.santigrill.com.br/grelhas/grelha-modelo-moeda-100-inox-medida-40x50-cm",
+      "imagens": [
+        "assets/images/products/grelha-modelo-moeda-100-inox-medida-40x50-cm-1.jpg",
+        "assets/images/products/grelha-modelo-moeda-100-inox-medida-40x50-cm-2.jpg"
+      ],
+      "imagensOrigem": [
+        "https://images.tcdn.com.br/img/img_prod/720158/grelha_modelo_moeda_100_inox_medida_40x50_cm_15_1_20190827082957.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/grelha_modelo_moeda_100_inox_medida_40x50_cm_15_2_20190827082957.jpg"
+      ]
+    },
+    {
+      "id": "grelha-modelo-moeda-100-inox-medida-50x50-cm",
+      "idLoja": "17",
+      "nome": "Grelha Modelo Moeda 100% INOX Medida 50x50 cm",
+      "categoria": "grelhas",
+      "categoriasRelacionadas": [
+        "grelhas",
+        "grelhas-moeda"
+      ],
+      "descricao": "Grelha Moeda medida 50x50 cm\nGrelha 100% em inox, tela Moeda com Cabo de Alumínio para uso profissional e domestico, Ideal para ser usada em churrasqueira de alvenaria.\n–",
+      "preco": 145.0,
+      "precoPromocional": null,
+      "pagamento": {
+        "pixAVista": {
+          "valor": 140.65,
+          "meio": "Pix - Vindi"
+        },
+        "cartao": {
+          "parcelas": 12,
+          "valorParcela": 14.97,
+          "jurosMensalPct": 1.99,
+          "meio": "Aura - MoIP"
+        }
+      },
+      "variacoes": [],
+      "especificacoes": {
+        "marca": "SantiGrill",
+        "garantia": null,
+        "peso": null,
+        "dimensoes": null,
+        "medidasDescricao": [
+          "Grelha Moeda medida 50x50 cm"
+        ],
+        "video": null
+      },
+      "disponivel": true,
+      "url": "https://www.santigrill.com.br/grelhas/grelha-modelo-moeda-100-inox-medida-50x50-cm",
+      "imagens": [
+        "assets/images/products/grelha-modelo-moeda-100-inox-medida-50x50-cm-1.jpg",
+        "assets/images/products/grelha-modelo-moeda-100-inox-medida-50x50-cm-2.jpg"
+      ],
+      "imagensOrigem": [
+        "https://images.tcdn.com.br/img/img_prod/720158/grelha_modelo_moeda_100_inox_medida_50x50_cm_17_1_20190827083411.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/grelha_modelo_moeda_100_inox_medida_50x50_cm_17_2_20190827083411.jpg"
+      ]
+    },
+    {
+      "id": "grelha-modelo-parrilheira-100-inox-medida-30x50-cm",
+      "idLoja": "19",
+      "nome": "Grelha Modelo Parrilheira 100% INOX Medida 30x50 cm",
+      "categoria": "grelhas",
+      "categoriasRelacionadas": [
+        "grelhas",
+        "grelhas-parrilheira"
+      ],
+      "descricao": "Grelha Parrilheira medida 30x50 cm\nGrelha Parrillera 100% inox, considerada de grande contribuição para o status de melhor churrasco do mundo. Possui canaletas em “u”, com inclinação para escoar o sumo da carne e gorduras, evitando assim que caiam direto na brasa, formando labaredas. Segundo os mestres parrilleros, a carne deve ser preparada sempre em brasa, pois as labaredas alteram o sabor e a maciez.",
+      "preco": 188.0,
+      "precoPromocional": null,
+      "pagamento": {
+        "pixAVista": {
+          "valor": 182.36,
+          "meio": "Pix - Vindi"
+        },
+        "cartao": {
+          "parcelas": 12,
+          "valorParcela": 19.41,
+          "jurosMensalPct": 1.99,
+          "meio": "Aura - MoIP"
+        }
+      },
+      "variacoes": [],
+      "especificacoes": {
+        "marca": "SantiGrill",
+        "garantia": null,
+        "peso": null,
+        "dimensoes": null,
+        "medidasDescricao": [
+          "Grelha Parrilheira medida 30x50 cm"
+        ],
+        "video": "https://www.youtube.com/embed/DE5hmtaDTLs"
+      },
+      "disponivel": true,
+      "url": "https://www.santigrill.com.br/grelhas/grelha-modelo-parrilheira-100-inox-medida-30x50-cm",
+      "imagens": [
+        "assets/images/products/grelha-modelo-parrilheira-100-inox-medida-30x50-cm-1.jpg",
+        "assets/images/products/grelha-modelo-parrilheira-100-inox-medida-30x50-cm-2.jpg",
+        "assets/images/products/grelha-modelo-parrilheira-100-inox-medida-30x50-cm-3.jpg"
+      ],
+      "imagensOrigem": [
+        "https://images.tcdn.com.br/img/img_prod/720158/grelha_modelo_parrilheira_100_inox_medida_30x50_cm_19_1_4049fc869b0ac69215c469d3774b8c8a.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/grelha_modelo_parrilheira_100_inox_medida_30x50_cm_19_1_20190827084010.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/grelha_modelo_parrilheira_100_inox_medida_30x50_cm_19_2_20190827084010.jpg"
+      ]
+    },
+    {
+      "id": "grelha-modelo-parrilheira-100-inox-medida-40x50-cm",
+      "idLoja": "21",
+      "nome": "Grelha Modelo Parrilheira 100% INOX Medida 40x50 cm",
+      "categoria": "grelhas",
+      "categoriasRelacionadas": [
+        "grelhas",
+        "grelhas-parrilheira"
+      ],
+      "descricao": "Grelha Parrilheira medidas 40x50 cm\nGrelha Parrilleira 100% inox, considerada de grande contribuição para o status de melhor churrasco do mundo. Possui canaletas em “u”, com inclinação para escoar o sumo da carne e gorduras, evitando assim que caiam direto na brasa, formando labaredas. Segundo os mestres parrilleros, a carne deve ser preparada sempre em brasa, pois as labaredas alteram o sabor e a maciez.",
+      "preco": 210.0,
+      "precoPromocional": null,
+      "pagamento": {
+        "pixAVista": {
+          "valor": 203.7,
+          "meio": "Pix - Vindi"
+        },
+        "cartao": {
+          "parcelas": 12,
+          "valorParcela": 21.68,
+          "jurosMensalPct": 1.99,
+          "meio": "Aura - MoIP"
+        }
+      },
+      "variacoes": [],
+      "especificacoes": {
+        "marca": "SantiGrill",
+        "garantia": null,
+        "peso": null,
+        "dimensoes": null,
+        "medidasDescricao": [
+          "Grelha Parrilheira medidas 40x50 cm"
+        ],
+        "video": "https://www.youtube.com/embed/DE5hmtaDTLs"
+      },
+      "disponivel": true,
+      "url": "https://www.santigrill.com.br/grelhas/grelha-modelo-parrilheira-100-inox-medida-40x50-cm",
+      "imagens": [
+        "assets/images/products/grelha-modelo-parrilheira-100-inox-medida-40x50-cm-1.jpg",
+        "assets/images/products/grelha-modelo-parrilheira-100-inox-medida-40x50-cm-2.jpg",
+        "assets/images/products/grelha-modelo-parrilheira-100-inox-medida-40x50-cm-3.jpg"
+      ],
+      "imagensOrigem": [
+        "https://images.tcdn.com.br/img/img_prod/720158/grelha_modelo_parrilheira_100_inox_medida_40x50_cm_21_1_20190827084558.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/grelha_modelo_parrilheira_100_inox_medida_40x50_cm_21_2_20190827084558.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/grelha_modelo_parrilheira_100_inox_medida_40x50_cm_21_3_1b0ea058ce298bc1e3f7461dd687934d.jpg"
+      ]
+    },
+    {
+      "id": "grelha-parrilheira-inox-adaptavel-para-qualquer-churrasqueira-30x42-cm",
+      "idLoja": "23",
+      "nome": "Grelha Parrilheira Inox Adaptável Para Qualquer Churrasqueira 30x42 cm",
+      "categoria": "grelhas",
+      "categoriasRelacionadas": [
+        "grelhas",
+        "grelhas-parrilheira"
+      ],
+      "descricao": "Com a Grelha Parrilheira adaptável, basta que você tenha uma grelha de qualquer modelo ou formato com medidas mínimas de (30x40cm). Assim somente vai precisar coloca-la por cima, os pinos de apoio darão firmeza para seu delicioso churrasco.\nA Grelha Parrillera considerada de grande contribuição para o status de melhor churrasco do mundo. Possui canaletas em “u”, com inclinação para escoar o sumo da carne e gorduras, evitando assim que caiam direto na brasa, formando labaredas. Segundo os mestres parrilleros, a carne deve ser preparada sempre em brasa, pois as labaredas alteram o sabor e a maciez.\n¯",
+      "preco": 145.0,
+      "precoPromocional": null,
+      "pagamento": {
+        "pixAVista": {
+          "valor": 140.65,
+          "meio": "Pix - Vindi"
+        },
+        "cartao": {
+          "parcelas": 12,
+          "valorParcela": 14.97,
+          "jurosMensalPct": 1.99,
+          "meio": "Aura - MoIP"
+        }
+      },
+      "variacoes": [],
+      "especificacoes": {
+        "marca": "SantiGrill",
+        "garantia": null,
+        "peso": null,
+        "dimensoes": null,
+        "medidasDescricao": null,
+        "video": "https://www.youtube.com/embed/DE5hmtaDTLs"
+      },
+      "disponivel": true,
+      "url": "https://www.santigrill.com.br/grelhas/grelha-parrilheira-inox-adaptavel-para-qualquer-churrasqueira-30x42-cm",
+      "imagens": [
+        "assets/images/products/grelha-parrilheira-inox-adaptavel-para-qualquer-churrasqueira-30x42-cm-1.jpg",
+        "assets/images/products/grelha-parrilheira-inox-adaptavel-para-qualquer-churrasqueira-30x42-cm-2.jpg",
+        "assets/images/products/grelha-parrilheira-inox-adaptavel-para-qualquer-churrasqueira-30x42-cm-3.jpg"
+      ],
+      "imagensOrigem": [
+        "https://images.tcdn.com.br/img/img_prod/720158/grelha_parrilheira_inox_adaptavel_para_qualquer_churrasqueira_30x42_cm_23_3_20190827090029.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/grelha_parrilheira_inox_adaptavel_para_qualquer_churrasqueira_30x42_cm_23_1_20190827090028.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/grelha_parrilheira_inox_adaptavel_para_qualquer_churrasqueira_30x42_cm_23_2_20190827090028.jpg"
+      ]
+    },
+    {
+      "id": "espeto-grelha-inox-giratorio-peixes-frangos-legumes",
+      "idLoja": "87",
+      "nome": "Espeto Grelha Inox Giratório Peixes Frangos Legumes",
+      "categoria": "espetos",
+      "categoriasRelacionadas": [
+        "grelhas"
+      ],
+      "descricao": "Grelha dupla, indispensável para seu churrasco sair perfeito.\nPrepare deliciosos assados com uniformidade, o que dará aquele sabor especial ao seu churrasco.\nExcelente para assar peixes, frangos, linguiças, carnes, legumes além de outros...\nMaterial:\nAço Cromado, cabos de madeira revestidos de alumínio para maior conforto no manuseio.\nMedidas:\nLargura 13 cm\nComprimento total 68 cm\nÁrea para utilização 35x13 cm\nEnviamos em até 24h após a efetivação da compra!",
+      "preco": 116.0,
+      "precoPromocional": null,
+      "pagamento": {
+        "pixAVista": {
+          "valor": 112.52,
+          "meio": "Pix - Vindi"
+        },
+        "cartao": {
+          "parcelas": 12,
+          "valorParcela": 11.98,
+          "jurosMensalPct": 1.99,
+          "meio": "Aura - MoIP"
+        }
+      },
+      "variacoes": [],
+      "especificacoes": {
+        "modelo": "ESPETO GIRATORIO GRELHA",
+        "marca": "SantiGrill",
+        "garantia": null,
+        "peso": null,
+        "dimensoes": null,
+        "medidasDescricao": [
+          "Medidas:",
+          "Largura 13 cm",
+          "Comprimento total 68 cm",
+          "Área para utilização 35x13 cm"
+        ],
+        "video": null
+      },
+      "disponivel": true,
+      "url": "https://www.santigrill.com.br/espetos/espeto-grelha-inox-giratorio-peixes-frangos-legumes",
+      "imagens": [
+        "assets/images/products/espeto-grelha-inox-giratorio-peixes-frangos-legumes-1.jpg",
+        "assets/images/products/espeto-grelha-inox-giratorio-peixes-frangos-legumes-2.jpg",
+        "assets/images/products/espeto-grelha-inox-giratorio-peixes-frangos-legumes-3.jpg"
+      ],
+      "imagensOrigem": [
+        "https://images.tcdn.com.br/img/img_prod/720158/espeto_grelha_inox_giratorio_peixes_frangos_legumes_87_1_20191220123004.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/espeto_grelha_inox_giratorio_peixes_frangos_legumes_87_2_20191220123005.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/espeto_grelha_inox_giratorio_peixes_frangos_legumes_87_4_20191220123006.jpg"
+      ]
+    },
+    {
+      "id": "espeto-espada-tridente-para-grill-giratorio",
+      "idLoja": "89",
+      "nome": "ESPETO ESPADA TRIDENTE PARA GRILL GIRATÓRIO",
+      "categoria": "espetos",
+      "categoriasRelacionadas": [
+        "espetos"
+      ],
+      "descricao": "ESPETO ESPADA TRIDENTE PARA GRILL GIRATÓRIO\nMuito resistente, excelente para medalhões de picanha , peças de maminha, alcatra, lombo, linguiças de qualquer tamanho e até coração de frango!\nDimensões :\nComprimento Total (Da ponta do cabo até a Ponta do Espeto): 7 cm\nComprimento Funcional ( Da engrenagem até a Ponta do Espeto): 43 cm\nMaterial: Feito em Aço",
+      "preco": 55.0,
+      "precoPromocional": null,
+      "pagamento": {
+        "pixAVista": {
+          "valor": 53.35,
+          "meio": "Pix - Vindi"
+        },
+        "cartao": {
+          "parcelas": 12,
+          "valorParcela": 5.68,
+          "jurosMensalPct": 1.99,
+          "meio": "Aura - MoIP"
+        }
+      },
+      "variacoes": [],
+      "especificacoes": {
+        "modelo": "ESPETO ESPADA TRIDENTE PARA GRILL GIRATÓRIO",
+        "marca": "SantiGrill",
+        "garantia": null,
+        "peso": null,
+        "dimensoes": null,
+        "medidasDescricao": [
+          "Dimensões :",
+          "Comprimento Total (Da ponta do cabo até a Ponta do Espeto): 7 cm",
+          "Comprimento Funcional ( Da engrenagem até a Ponta do Espeto): 43 cm"
+        ],
+        "video": null
+      },
+      "disponivel": true,
+      "url": "https://www.santigrill.com.br/espetos/espeto-espada-tridente-para-grill-giratorio",
+      "imagens": [
+        "assets/images/products/espeto-espada-tridente-para-grill-giratorio-1.jpg",
+        "assets/images/products/espeto-espada-tridente-para-grill-giratorio-2.jpg",
+        "assets/images/products/espeto-espada-tridente-para-grill-giratorio-3.jpg"
+      ],
+      "imagensOrigem": [
+        "https://images.tcdn.com.br/img/img_prod/720158/espeto_espada_tridente_para_grill_giratorio_89_1_20191220123825.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/espeto_espada_tridente_para_grill_giratorio_89_2_20191220123825.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/espeto_espada_tridente_para_grill_giratorio_89_3_20191220123826.jpg"
+      ]
+    },
+    {
+      "id": "grill-giratoriorotatorio-3-espetos-baixo",
+      "idLoja": "101",
+      "nome": "Grill Giratório/rotatório 3 Espetos Baixo",
+      "categoria": "grill-giratorio",
+      "categoriasRelacionadas": [],
+      "descricao": "Grill Giratório/Rotatório 3 espetos baixo SantiGrill\nQuer transformar seu ambiente de churrasco, deixa-lo mais elegante e diferenciado? Gastando pouco, e servindo um delicioso churrasco idêntico ao das churrascarias?\nA SantiGrill lançou o Grill com Espetos Giratórios, ideal para adicionar um ‘’toque especial’’ ao churrasco, tenha maior agilidade, maior produtividade, asse a carne de maneira uniforme, deixando-a mais saborosa, pois o suco da carne gira em torno dela, evitando que a carne seque, sirva os convidados sem aquela constante preocupação em queimar seu churrasco.\nO Grill com Espetos Giratórios SantiGrill, vai com uma GRELHA PARRILHEIRA, tem um motor bivolt, todo produzido em aço inox, pratico e fácil de limpar. É o mais silencioso e com melhor acabamento do mercado, com ‘’ajuste de profundidade’’, vai ficar perfeito na sua churrasqueira ou na sua bancada de alvenaria.\nDetalhes:\n*O produto vai pré-montado;\n* Sem ponto de soldas;\n*Itens incluídos:\nTres espetos Tridentes ( cabos de madeira revestida com alumínio, conforto para não esquentar as mãos);\nUma Grelha Parrilheira.\n*Medidas do Grill montado:\n*L 44,3 cm dianteira com motor, parte traseira 38,5 cm\n*P 43 a 50m (ajustável)\n*A 13,5 cm\n100% Aço Inox;\nMotor 110 / 220 chave seletora na tampa do motor.",
+      "preco": 458.0,
+      "precoPromocional": null,
+      "pagamento": {
+        "pixAVista": {
+          "valor": 444.26,
+          "meio": "Pix - Vindi"
+        },
+        "cartao": {
+          "parcelas": 12,
+          "valorParcela": 47.28,
+          "jurosMensalPct": 1.99,
+          "meio": "Aura - MoIP"
+        }
+      },
+      "variacoes": [],
+      "especificacoes": {
+        "voltagem": "Bivolt",
+        "modelo": "Grill baixo 3 espetos",
+        "marca": "SantiGrill",
+        "garantia": "180 dias após o recebimento do produto",
+        "peso": null,
+        "dimensoes": null,
+        "medidasDescricao": [
+          "*Medidas do Grill montado:",
+          "*L 44,3 cm dianteira com motor, parte traseira 38,5 cm",
+          "*P 43 a 50m (ajustável)",
+          "*A 13,5 cm"
+        ],
+        "video": "https://www.youtube.com/embed/LTH1MnAqkPc"
+      },
+      "disponivel": true,
+      "url": "https://www.santigrill.com.br/grill-giratorio/grill-giratoriorotatorio-3-espetos-baixo",
+      "imagens": [
+        "assets/images/products/grill-giratoriorotatorio-3-espetos-baixo-1.jpg",
+        "assets/images/products/grill-giratoriorotatorio-3-espetos-baixo-2.jpg",
+        "assets/images/products/grill-giratoriorotatorio-3-espetos-baixo-3.jpg"
+      ],
+      "imagensOrigem": [
+        "https://images.tcdn.com.br/img/img_prod/720158/grill_giratorio_rotatorio_3_espetos_baixo_101_1_a0c5b17aad69d00e242fb161b37fef2a.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/grill_giratorio_rotatorio_3_espetos_baixo_101_2_07109d299ab5c3a28e3e7862f6a91244.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/grill_giratorio_rotatorio_3_espetos_baixo_101_4_482e64464c1027544b90a7f1161a152b.jpg"
+      ]
+    },
+    {
+      "id": "grill-giratoriorotatorio-4-espetos-baixo",
+      "idLoja": "103",
+      "nome": "Grill Giratório/rotatório 4 Espetos Baixo",
+      "categoria": "grill-giratorio",
+      "categoriasRelacionadas": [],
+      "descricao": "Grill Giratório/Rotatório 4 espetos baixo SantiGrill\nQuer transformar seu ambiente de churrasco, deixa-lo mais elegante e diferenciado? Gastando pouco, e servindo um delicioso churrasco idêntico ao das churrascarias?\nA SantiGrill lançou o Grill com Espetos Giratórios, ideal para adicionar um ‘’toque especial’’ ao churrasco, tenha maior agilidade, maior produtividade, asse a carne de maneira uniforme, deixando-a mais saborosa, pois o suco da carne gira em torno dela, evitando que a carne seque, sirva os convidados sem aquela constante preocupação em queimar seu churrasco.\nO Grill com Espetos Giratórios SantiGrill, vai com uma GRELHA PARRILHEIRA, tem um motor bivolt, todo produzido em aço inox, pratico e fácil de limpar. É o mais silencioso e com melhor acabamento do mercado, com ‘’ajuste de profundidade’’, vai ficar perfeito na sua churrasqueira ou na sua bancada de alvenaria.\nDetalhes:\n*O produto vai pré-montado;\n* Sem ponto de soldas;\n*Itens incluídos:\nQuatro Tridentes ( cabos de madeira revestida com alumínio, conforto para não esquentar as mãos);\nUma Grelha Parrilheira.\n*Medidas do Grill montado:\n*L 56,3 cm dianteira com motor, parte traseira 50,5 cm\n*P 43 a 50m (ajustável)\n*A 13,5 cm\n100% Aço Inox;\nMotor 110 / 220 chave seletora na tampa do motor.",
+      "preco": 515.0,
+      "precoPromocional": null,
+      "pagamento": {
+        "pixAVista": {
+          "valor": 499.55,
+          "meio": "Pix - Vindi"
+        },
+        "cartao": {
+          "parcelas": 12,
+          "valorParcela": 53.17,
+          "jurosMensalPct": 1.99,
+          "meio": "Aura - MoIP"
+        }
+      },
+      "variacoes": [],
+      "especificacoes": {
+        "modelo": "Grill 4 espetos baixo",
+        "marca": "SantiGrill",
+        "garantia": null,
+        "peso": null,
+        "dimensoes": null,
+        "medidasDescricao": [
+          "*Medidas do Grill montado:",
+          "*L 56,3 cm dianteira com motor, parte traseira 50,5 cm",
+          "*P 43 a 50m (ajustável)",
+          "*A 13,5 cm"
+        ],
+        "video": "https://www.youtube.com/embed/LTH1MnAqkPc"
+      },
+      "disponivel": true,
+      "url": "https://www.santigrill.com.br/grill-giratorio/grill-giratoriorotatorio-4-espetos-baixo",
+      "imagens": [
+        "assets/images/products/grill-giratoriorotatorio-4-espetos-baixo-1.jpg",
+        "assets/images/products/grill-giratoriorotatorio-4-espetos-baixo-2.jpg",
+        "assets/images/products/grill-giratoriorotatorio-4-espetos-baixo-3.jpg"
+      ],
+      "imagensOrigem": [
+        "https://images.tcdn.com.br/img/img_prod/720158/grill_giratorio_rotatorio_4_espetos_baixo_103_1_84f7660da8976fdab98af3dae117e435.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/grill_giratorio_rotatorio_4_espetos_baixo_103_2_b980b412dcda02d822b0ce08cc6aed17.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/grill_giratorio_rotatorio_4_espetos_baixo_103_3_482e64464c1027544b90a7f1161a152b.jpg"
+      ]
+    },
+    {
+      "id": "grill-giratoriorotatorio-5-espetos-baixo",
+      "idLoja": "105",
+      "nome": "Grill Giratório/rotatório 5 Espetos Baixo",
+      "categoria": "grill-giratorio",
+      "categoriasRelacionadas": [],
+      "descricao": "Grill Giratório/Rotatório 5 espetos baixo SantiGrill\nQuer transformar seu ambiente de churrasco, deixa-lo mais elegante e diferenciado? Gastando pouco, e servindo um delicioso churrasco idêntico ao das churrascarias?\nA SantiGrill lançou o Grill com Espetos Giratórios, ideal para adicionar um ‘’toque especial’’ ao churrasco, tenha maior agilidade, maior produtividade, asse a carne de maneira uniforme, deixando-a mais saborosa, pois o suco da carne gira em torno dela, evitando que a carne seque, sirva os convidados sem aquela constante preocupação em queimar seu churrasco.\nO Grill com Espetos Giratórios SantiGrill, vai com uma GRELHA PARRILHEIRA, tem um motor bivolt, todo produzido em aço inox, pratico e fácil de limpar. É o mais silencioso e com melhor acabamento do mercado, com ‘’ajuste de profundidade’’, vai ficar perfeito na sua churrasqueira ou na sua bancada de alvenaria.\nDetalhes:\n*O produto vai pré-montado;\n* Sem ponto de soldas;\n*Itens incluídos:\nCinco Tridentes ( cabos de madeira revestida com alumínio, conforto para não esquentar as mãos);\nUma Grelha Parrilheira.\n*Medidas do Grill montado:\n*L 68,3 cm dianteira com motor, parte traseira 62,5 cm\n*P 43 a 50m (ajustável)\n*A 13,5 cm\n100% Aço Inox;\nMotor 110 / 220 chave seletora na tampa do motor.",
+      "preco": 553.0,
+      "precoPromocional": null,
+      "pagamento": {
+        "pixAVista": {
+          "valor": 536.41,
+          "meio": "Pix - Vindi"
+        },
+        "cartao": {
+          "parcelas": 12,
+          "valorParcela": 57.09,
+          "jurosMensalPct": 1.99,
+          "meio": "Aura - MoIP"
+        }
+      },
+      "variacoes": [],
+      "especificacoes": {
+        "voltagem": "Bivolt",
+        "modelo": "Grill 5 espetos baixo",
+        "marca": "SantiGrill",
+        "garantia": null,
+        "peso": null,
+        "dimensoes": null,
+        "medidasDescricao": [
+          "*Medidas do Grill montado:",
+          "*L 68,3 cm dianteira com motor, parte traseira 62,5 cm",
+          "*P 43 a 50m (ajustável)",
+          "*A 13,5 cm"
+        ],
+        "video": "https://www.youtube.com/embed/LTH1MnAqkPc"
+      },
+      "disponivel": true,
+      "url": "https://www.santigrill.com.br/grill-giratorio/grill-giratoriorotatorio-5-espetos-baixo",
+      "imagens": [
+        "assets/images/products/grill-giratoriorotatorio-5-espetos-baixo-1.jpg",
+        "assets/images/products/grill-giratoriorotatorio-5-espetos-baixo-2.jpg",
+        "assets/images/products/grill-giratoriorotatorio-5-espetos-baixo-3.jpg"
+      ],
+      "imagensOrigem": [
+        "https://images.tcdn.com.br/img/img_prod/720158/grill_giratorio_rotatorio_5_espetos_baixo_105_1_2288afd7f6f7ba8ac5d15a1c8638361e.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/grill_giratorio_rotatorio_5_espetos_baixo_105_2_1c74c4073bb35b7af453fdfef0149193.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/grill_giratorio_rotatorio_5_espetos_baixo_105_3_aa7b765bc30dd60ba274341dbe8789ea.jpg"
+      ]
+    },
+    {
+      "id": "churrasqueira-para-barco-com-grelha-parrilheira",
+      "idLoja": "113",
+      "nome": "Churrasqueira Para Barco Com Grelha Parrilheira",
+      "categoria": "churrasqueira",
+      "categoriasRelacionadas": [],
+      "descricao": "Tendo um excelente desempenho com pouco consumo de carvão, fácil de transportar, limpar e armazenar!\nAlém do excelente acabamento, ainda vai com uma GRELHA PARRILHEIRA considerada de grande contribuição para o status de melhor churrasco do mundo. Possui canaletas em “u”, evitando assim que caiam direto na brasa, formando labaredas.\nFabricada totalmente em Aço Inox\nMaior resistência e durabilidade.\nLargura Útil - 34 x 24 cm\nAltura - 27 cm\nPeso - 2,10 kg",
+      "preco": 225.0,
+      "precoPromocional": null,
+      "pagamento": {
+        "pixAVista": {
+          "valor": 218.25,
+          "meio": "Pix - Vindi"
+        },
+        "cartao": {
+          "parcelas": 12,
+          "valorParcela": 23.23,
+          "jurosMensalPct": 1.99,
+          "meio": "Aura - MoIP"
+        }
+      },
+      "variacoes": [],
+      "especificacoes": {
+        "modelo": "HOBBY PARA BARCO",
+        "marca": "SantiGrill",
+        "garantia": "60 dias após o recebimento do produto",
+        "peso": null,
+        "dimensoes": null,
+        "medidasDescricao": [
+          "Largura Útil - 34 x 24 cm",
+          "Altura - 27 cm",
+          "Peso - 2,10 kg"
+        ],
+        "video": "https://www.youtube.com/embed/R-S4zaJp5N0"
+      },
+      "disponivel": true,
+      "url": "https://www.santigrill.com.br/churrasqueira/churrasqueira-para-barco-com-grelha-parrilheira-",
+      "imagens": [
+        "assets/images/products/churrasqueira-para-barco-com-grelha-parrilheira-1.jpg",
+        "assets/images/products/churrasqueira-para-barco-com-grelha-parrilheira-2.jpg",
+        "assets/images/products/churrasqueira-para-barco-com-grelha-parrilheira-3.jpg"
+      ],
+      "imagensOrigem": [
+        "https://images.tcdn.com.br/img/img_prod/720158/churrasqueira_para_barco_com_grelha_parrilheira_113_1_20201215161813.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/churrasqueira_para_barco_com_grelha_parrilheira_113_2_20201215161814.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/churrasqueira_para_barco_com_grelha_parrilheira_113_3_20201215161815.jpg"
+      ]
+    },
+    {
+      "id": "churrasqueira-santigrill-modelo-hobby-grelha-parrilheira",
+      "idLoja": "117",
+      "nome": "Churrasqueira Santigrill Modelo Hobby Grelha Parrilheira",
+      "categoria": "churrasqueira",
+      "categoriasRelacionadas": [],
+      "descricao": "Tendo um excelente desempenho com pouco consumo de carvão, fácil de transportar, limpar e armazenar!\nAlém do excelente acabamento, ainda vai com uma GRELHA PARRILHEIRA considerada de grande contribuição para o status de melhor churrasco do mundo. Possui canaletas em “u”, evitando assim que caiam direto na brasa, formando labaredas.\nFabricada totalmente em Aço Inox\nMaior resistência e durabilidade.\nLargura Útil - 34 x 24 cm\nAltura - 27 cm\nPeso - 2,10 kg",
+      "preco": 161.0,
+      "precoPromocional": null,
+      "pagamento": {
+        "pixAVista": {
+          "valor": 156.17,
+          "meio": "Pix - Vindi"
+        },
+        "cartao": {
+          "parcelas": 12,
+          "valorParcela": 16.62,
+          "jurosMensalPct": 1.99,
+          "meio": "Aura - MoIP"
+        }
+      },
+      "variacoes": [],
+      "especificacoes": {
+        "modelo": "Churrasqueira Santigrill Modelo Hobby Grelha Parrilheira",
+        "marca": "SantiGrill",
+        "garantia": "90 dias após o recebimento do produto",
+        "peso": null,
+        "dimensoes": null,
+        "medidasDescricao": [
+          "Largura Útil - 34 x 24 cm",
+          "Altura - 27 cm",
+          "Peso - 2,10 kg"
+        ],
+        "video": null
+      },
+      "disponivel": true,
+      "url": "https://www.santigrill.com.br/churrasqueira/churrasqueira-santigrill-modelo-hobby-grelha-parrilheira",
+      "imagens": [
+        "assets/images/products/churrasqueira-santigrill-modelo-hobby-grelha-parrilheira-1.jpg",
+        "assets/images/products/churrasqueira-santigrill-modelo-hobby-grelha-parrilheira-2.jpg",
+        "assets/images/products/churrasqueira-santigrill-modelo-hobby-grelha-parrilheira-3.jpg"
+      ],
+      "imagensOrigem": [
+        "https://images.tcdn.com.br/img/img_prod/720158/churrasqueira_santigrill_modelo_hobby_grelha_parrilheira_117_1_20201215161754.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/churrasqueira_santigrill_modelo_hobby_grelha_parrilheira_117_2_20201215161755.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/churrasqueira_santigrill_modelo_hobby_grelha_parrilheira_117_3_20201215161755.jpg"
+      ]
+    },
+    {
+      "id": "grill-giratoriorotatorio-6-espetos-baixo",
+      "idLoja": "119",
+      "nome": "Grill Giratório/rotatório 6 Espetos Baixo",
+      "categoria": "grill-giratorio",
+      "categoriasRelacionadas": [],
+      "descricao": "Grill Giratório/Rotatório 6 espetos baixo SantiGrill\nQuer transformar seu ambiente de churrasco, deixa-lo mais elegante e diferenciado? Gastando pouco, e servindo um delicioso churrasco idêntico ao das churrascarias?\nA SantiGrill lançou o Grill com Espetos Giratórios, ideal para adicionar um ‘’toque especial’’ ao churrasco, tenha maior agilidade, maior produtividade, asse a carne de maneira uniforme, deixando-a mais saborosa, pois o suco da carne gira em torno dela, evitando que a carne seque, sirva os convidados sem aquela constante preocupação em queimar seu churrasco.\nO Grill com Espetos Giratórios SantiGrill, vai com uma GRELHA PARRILHEIRA, tem um motor bivolt, todo produzido em aço inox, pratico e fácil de limpar. É o mais silencioso e com melhor acabamento do mercado, com ‘’ajuste de profundidade’’, vai ficar perfeito na sua churrasqueira ou na sua bancada de alvenaria.\nDetalhes:\n*O produto vai pré-montado;\n* Sem ponto de soldas;\n*Itens incluídos:\nCinco Tridentes ( cabos de madeira revestida com alumínio, conforto para não esquentar as mãos);\nUma Grelha Parrilheira.\n*Medidas do Grill montado:\n*L 80,3 cm dianteira com motor, parte traseira 74,5 cm\n*P 43 a 50m (ajustável)\n*A 13,5 cm\n100% Aço Inox;\nMotor 110 / 220 chave seletora na tampa do motor.",
+      "preco": 570.0,
+      "precoPromocional": null,
+      "pagamento": {
+        "pixAVista": {
+          "valor": 552.9,
+          "meio": "Pix - Vindi"
+        },
+        "cartao": {
+          "parcelas": 12,
+          "valorParcela": 58.84,
+          "jurosMensalPct": 1.99,
+          "meio": "Aura - MoIP"
+        }
+      },
+      "variacoes": [],
+      "especificacoes": {
+        "modelo": "Grill Giratório/rotatório 6 Espetos Baixo",
+        "marca": "SantiGrill",
+        "garantia": "60 dias após o recebimento do produto",
+        "peso": null,
+        "dimensoes": null,
+        "medidasDescricao": [
+          "*Medidas do Grill montado:",
+          "*L 80,3 cm dianteira com motor, parte traseira 74,5 cm",
+          "*P 43 a 50m (ajustável)",
+          "*A 13,5 cm"
+        ],
+        "video": "https://www.youtube.com/embed/LTH1MnAqkPc"
+      },
+      "disponivel": true,
+      "url": "https://www.santigrill.com.br/grill-giratorio/grill-giratoriorotatorio-6-espetos-baixo",
+      "imagens": [
+        "assets/images/products/grill-giratoriorotatorio-6-espetos-baixo-1.jpg",
+        "assets/images/products/grill-giratoriorotatorio-6-espetos-baixo-2.jpg",
+        "assets/images/products/grill-giratoriorotatorio-6-espetos-baixo-3.jpg"
+      ],
+      "imagensOrigem": [
+        "https://images.tcdn.com.br/img/img_prod/720158/grill_giratorio_rotatorio_6_espetos_baixo_119_1_fef3b9f3e421f938a6e8c8fd3d30a3bb.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/grill_giratorio_rotatorio_6_espetos_baixo_119_2_93acacdbfd54947552d88b56532bb8a1.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/grill_giratorio_rotatorio_6_espetos_baixo_119_3_dedce6e03e88c9669b294d2d132b9ae5.jpg"
+      ]
+    },
+    {
+      "id": "churrasqueira-versatile",
+      "idLoja": "123",
+      "nome": "Churrasqueira Versatile",
+      "categoria": "churrasqueira",
+      "categoriasRelacionadas": [],
+      "descricao": "Churrasqueira Dobrável Portátil ótima para levar em viagens, pratica e rápida!\nA Versatile original Santigrill, e o item ideal para churrascos entre amigos, na praia, no Camping, na pescaria, em clubes e diversas atividades ao ar livre, e muito mais.\nReúna a família e amigos para um saborear um delicioso grelhado a qualquer hora com baixo consumo de carvão.\nCaracterísticas:\n- Agilidade na montagem e preparação dos grelhados\n- Fácil de transportar e guardar\n- Fácil de limpar\n- Econômica\n- Compacta\n-100% aço Inox\n-Feita de material de alta qualidade, durável e seguro de usar.\nTamanho: 35L x 21C x 30A cm.",
+      "preco": 148.0,
+      "precoPromocional": null,
+      "pagamento": {
+        "pixAVista": {
+          "valor": 143.56,
+          "meio": "Pix - Vindi"
+        },
+        "cartao": {
+          "parcelas": 12,
+          "valorParcela": 15.28,
+          "jurosMensalPct": 1.99,
+          "meio": "Aura - MoIP"
+        }
+      },
+      "variacoes": [],
+      "especificacoes": {
+        "modelo": "Versalite",
+        "ean": "7898966766015",
+        "marca": "SantiGrill",
+        "garantia": "90 dias após o recebimento do produto",
+        "peso": null,
+        "dimensoes": null,
+        "medidasDescricao": null,
+        "video": null
+      },
+      "disponivel": true,
+      "url": "https://www.santigrill.com.br/churrasqueira/churrasqueira-versatile",
+      "imagens": [
+        "assets/images/products/churrasqueira-versatile-1.jpg",
+        "assets/images/products/churrasqueira-versatile-2.jpg",
+        "assets/images/products/churrasqueira-versatile-3.jpg"
+      ],
+      "imagensOrigem": [
+        "https://images.tcdn.com.br/img/img_prod/720158/churrasqueira_versatile_123_1_738ff48dbb6aba7e5b8ae85f439b15fe.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/churrasqueira_versatile_123_2_fdc5d1bf8093ff56ec53443ecbb6fa34.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/churrasqueira_versatile_123_3_3660176b42b030368b40ad34e68e20ec.jpg"
+      ]
+    },
+    {
+      "id": "espeto-churrasco-giratorio-eletrico-santigrill",
+      "idLoja": "129",
+      "nome": "Espeto Churrasco Giratório Elétrico Premium prata Santigrill",
+      "categoria": "espetos",
+      "categoriasRelacionadas": [],
+      "descricao": "Espeto Elétrico SANTIGRILL, asse seu grelhado por igual, impressione os amigos, faça um churrasco idêntico das churrascarias.\nEspecificação:\nMarca: SantiGrill\nModelo: Premium\nNome do produto: Espeto Giratório Premium SantiGrill\nMaterial: Espeto Aço Inox, cabo de Madeira maciça.\nCor: Prateado\nTamanho:\n-Comprimento mínimo 46 cm. com cabo 65 cm\n-Comprimento máximo 61 cm com cabo 80 cm\n*IMPORTANTE*\n**** Energia: Escolha na hora da compra: 127 w ou 220 w *****\nTipo: Motor rotatório\nVelocidade de 5 (cinco) RPM\nGiro: horário e anti-horário\nRolamento de carga: Suporta até 5 KG\nCaracterísticas:\n- Cabo de energia REMOVÍVEL 1,5 mts.\n- O motor é robusto.\n- Espeto Tridente em Inox\n- Bom isolamento, o uso do sistema de velocidade e de 5 RPM.\n- Resistência ao desgaste, resistência ao calor, longa vida, baixo ruído, estrutura sólida.\n- Baixo consumo de energia, forte capacidade de carga.\n- Assa os alimentos por igual.\n- Universal para a maioria das tomadas de força.\n- Espeto com regulagem para qualquer churrasqueira.\n- Prático e fácil de limpar\n**Excelente para medalhões de picanha, peças de maminha, alcatra, lombo, linguiças de qualquer tamanho legumes entre outros, indicado para uso doméstico.\nProdutos Originais SantiGrill.\nSKU: SANT-ESPTO-ELET-01-INOX\nEAN: 7898966766190\nConteúdo da embalagem:\n- (um) Cabo de Madeira maciça com motor.\n- (um) espeto tridente\n- Cabo de energia REMOVÍVEL 1,5 mts.\n- Peso total do Produto: 710 gramas\n-Medidas da Embalagem: 61 cm x 10xcm 10 cm.\nConfira também nossa linha completa de CHURRASQUEIRAS e GRELHAS, e GRILLS GIRATÓRIOS, sempre com preços promocionais:\nNotas:\n- As fotos claras e reais do produto!",
+      "preco": 137.0,
+      "precoPromocional": null,
+      "pagamento": {
+        "pixAVista": {
+          "valor": 132.89,
+          "meio": "Pix - Vindi"
+        },
+        "cartao": {
+          "parcelas": 12,
+          "valorParcela": 14.14,
+          "jurosMensalPct": 1.99,
+          "meio": "Aura - MoIP"
+        }
+      },
+      "variacoes": [
+        {
+          "tipo": "Voltagem",
+          "origem": "variacao",
+          "idVariacao": "5",
+          "opcoes": [
+            "127V",
+            "220V"
+          ],
+          "preco": 137.0,
+          "precoPromocional": null,
+          "disponivel": true
+        }
+      ],
+      "especificacoes": {
+        "modelo": "Espeto Premium prata",
+        "ean": "7898966766190",
+        "marca": "SantiGrill",
+        "garantia": "1 ano após o recebimento do produto",
+        "peso": null,
+        "dimensoes": null,
+        "medidasDescricao": [
+          "-Comprimento mínimo 46 cm. com cabo 65 cm",
+          "-Comprimento máximo 61 cm com cabo 80 cm",
+          "**** Energia: Escolha na hora da compra: 127 w ou 220 w *****",
+          "Rolamento de carga: Suporta até 5 KG",
+          "- Peso total do Produto: 710 gramas",
+          "-Medidas da Embalagem: 61 cm x 10xcm 10 cm."
+        ],
+        "video": "https://www.youtube.com/embed/27gp23CrBY0"
+      },
+      "disponivel": true,
+      "url": "https://www.santigrill.com.br/espetos/espeto-churrasco-giratorio-eletrico-santigrill",
+      "imagens": [
+        "assets/images/products/espeto-churrasco-giratorio-eletrico-santigrill-1.jpg",
+        "assets/images/products/espeto-churrasco-giratorio-eletrico-santigrill-2.jpg",
+        "assets/images/products/espeto-churrasco-giratorio-eletrico-santigrill-3.jpg"
+      ],
+      "imagensOrigem": [
+        "https://images.tcdn.com.br/img/img_prod/720158/espeto_churrasco_giratorio_eletrico_santigrill_129_1_64d5e7359fcbfa23f843b24026a25ef9.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/espeto_churrasco_giratorio_eletrico_santigrill_129_2_a0ef7296e8ff6c57a9eb9d43d7dea941.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/espeto_churrasco_giratorio_eletrico_santigrill_129_3_307ccf553d3b9dd49b735a1ad80c2ede.jpg"
+      ]
+    },
+    {
+      "id": "espeto-giratorio-churrasco-flex-premium-preto-eletrico-santi-grill",
+      "idLoja": "131",
+      "nome": "Espeto Giratório Churrasco Flex Premium Preto Elétrico Santi Grill",
+      "categoria": "espetos",
+      "categoriasRelacionadas": [],
+      "descricao": "Espeto Elétrico SANTIGRILL, asse seu grelhado por igual, impressione os amigos, faça um churrasco idêntico das churrascarias.\nEspecificação:\nMarca: SantiGrill\nModelo: Premium Preto 10042009\nNome do produto: Espeto Giratório Premium SantiGrill\nMaterial: Espeto Aço Inox, cabo de Madeira maciça.\nCor: Prateado\nTamanho:\n-Comprimento mínimo 46 cm. com cabo 65 cm\n-Comprimento máximo 61 cm com cabo 80 cm\n*IMPORTANTE*\n**** Energia: Escolha na hora da compra: 127 w ou 220 w *****\nTipo: Motor rotatório\nVelocidade de 5 (cinco) RPM\nGiro: horário e anti-horário\nRolamento de carga: Suporta até 5 KG\nCaracterísticas:\n- Cabo de energia REMOVÍVEL 1,5 mts.\n- O motor é robusto.\n- Espeto Tridente em Inox\n- Bom isolamento, o uso do sistema de velocidade e de 5 RPM.\n- Resistência ao desgaste, resistência ao calor, longa vida, baixo ruído, estrutura sólida.\n- Baixo consumo de energia, forte capacidade de carga.\n- Assa os alimentos por igual.\n- Universal para a maioria das tomadas de força.\n- Espeto com regulagem para qualquer churrasqueira.\n- Prático e fácil de limpar\n**Excelente para medalhões de picanha, peças de maminha, alcatra, lombo, linguiças de qualquer tamanho legumes entre outros, indicado para uso doméstico.\nProdutos Originais SantiGrill.\nSKU: SANT-ESPTO-ELET-05-INOX\nEAN: 7898966766442\nConteúdo da embalagem:\n- (um) Cabo de Madeira maciça com motor.\n- (um) espeto tridente\n- Cabo de energia REMOVIVEL 1,5 mts.\n- Peso total do Produto: 710 gramas\n-Medidas da Embalagem: 61 cm x 10xcm 10 cm.\nConfira também nossa linha completa de CHURRASQUEIRAS e GRELHAS, e GRILLS GIRATÓRIOS, sempre com preços promocionais:\nNotas:\n- As fotos claras e reais do produto!",
+      "preco": 137.0,
+      "precoPromocional": null,
+      "pagamento": {
+        "pixAVista": {
+          "valor": 132.89,
+          "meio": "Pix - Vindi"
+        },
+        "cartao": {
+          "parcelas": 12,
+          "valorParcela": 14.14,
+          "jurosMensalPct": 1.99,
+          "meio": "Aura - MoIP"
+        }
+      },
+      "variacoes": [],
+      "especificacoes": {
+        "modelo": "Espeto giratório -Espeto Eletrico 1 PRETO SEM FIO Modelo 10042009 Premium",
+        "ean": "7898966766442",
+        "marca": "SantiGrill",
+        "garantia": "1 ano após o recebimento do produto",
+        "peso": null,
+        "dimensoes": null,
+        "medidasDescricao": [
+          "-Comprimento mínimo 46 cm. com cabo 65 cm",
+          "-Comprimento máximo 61 cm com cabo 80 cm",
+          "**** Energia: Escolha na hora da compra: 127 w ou 220 w *****",
+          "Rolamento de carga: Suporta até 5 KG",
+          "- Peso total do Produto: 710 gramas",
+          "-Medidas da Embalagem: 61 cm x 10xcm 10 cm."
+        ],
+        "video": "https://www.youtube.com/embed/27gp23CrBY0"
+      },
+      "disponivel": true,
+      "url": "https://www.santigrill.com.br/espetos/espeto-giratorio-churrasco-flex-premium-preto-eletrico-santi-grill",
+      "imagens": [
+        "assets/images/products/espeto-giratorio-churrasco-flex-premium-preto-eletrico-santi-grill-1.jpg",
+        "assets/images/products/espeto-giratorio-churrasco-flex-premium-preto-eletrico-santi-grill-2.jpg",
+        "assets/images/products/espeto-giratorio-churrasco-flex-premium-preto-eletrico-santi-grill-3.jpg"
+      ],
+      "imagensOrigem": [
+        "https://images.tcdn.com.br/img/img_prod/720158/espeto_giratorio_churrasco_flex_premium_preto_eletrico_santi_grill_131_1_06f1daa666817f1f526937ee5fdf2a71.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/espeto_giratorio_churrasco_flex_premium_preto_eletrico_santi_grill_131_2_6b53aeaeb3db3d3cc5bd1a0fcc6c10bb.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/espeto_giratorio_churrasco_flex_premium_preto_eletrico_santi_grill_131_3_35c831278347f98db939aca77c9bef4e.jpg"
+      ]
+    },
+    {
+      "id": "espeto-giratorio-eletrico-std-prata-santigrill",
+      "idLoja": "133",
+      "nome": "Espeto Giratório Elétrico Std prata Santigrill",
+      "categoria": "espetos",
+      "categoriasRelacionadas": [],
+      "descricao": "Espeto Elétrico SANTIGRILL, asse seu grelhado por igual, impressione os amigos, faça um churrasco idêntico das churrascarias.\nEspecificação:\nMarca: SantiGrill\nModelo: STD 10009009\nNome do produto: Espeto Giratório std SantiGrill\nMaterial: Espeto Aço Inox, cabo de Madeira maciça.\nCor: Prateado\nTamanho:\n-Comprimento mínimo 46 cm. com cabo 65 cm\n-Comprimento máximo 61 cm com cabo 80 cm\n*IMPORTANTE*\n**** Energia: Escolha na hora da compra: 127 w ou 220 w *****\nTipo: Motor rotatório\nVelocidade de 5 (cinco) RPM\nGiro: horário e anti-horário\nRolamento de carga: Suporta até 5 KG\nCaracterísticas:\n- Cabo de energia REMOVÍVEL 1,5 mts.\n- O motor é robusto.\n- Espeto Tridente em Inox\n- Bom isolamento, o uso do sistema de velocidade e de 5 RPM.\n- Resistência ao desgaste, resistência ao calor, longa vida, baixo ruído, estrutura sólida.\n- Baixo consumo de energia, forte capacidade de carga.\n- Assa os alimentos por igual.\n- Universal para a maioria das tomadas de força.\n- Espeto com regulagem para qualquer churrasqueira.\n- Prático e fácil de limpar\n**Excelente para medalhões de picanha, peças de maminha, alcatra, lombo, linguiças de qualquer tamanho legumes entre outros, indicado para uso doméstico.\nProdutos Originais SantiGrill.\nSKU: SANT-ESPTO-ELET-10-INOX\nEAN: 7898966766480\nConteúdo da embalagem:\n- (um) Cabo de Madeira maciça com motor.\n- (um) espeto tridente\n- Cabo de energia 1,5 mts.\n- Peso total do Produto: 710 gramas\n-Medidas da Embalagem: 61 cm x 10xcm 10 cm.\nConfira também nossa linha completa de CHURRASQUEIRAS e GRELHAS, e GRILLS GIRATÓRIOS, sempre com preços promocionais:\nNotas:\n- As fotos claras e reais do produto!",
+      "preco": 129.0,
+      "precoPromocional": null,
+      "pagamento": {
+        "pixAVista": {
+          "valor": 125.13,
+          "meio": "Pix - Vindi"
+        },
+        "cartao": {
+          "parcelas": 12,
+          "valorParcela": 13.32,
+          "jurosMensalPct": 1.99,
+          "meio": "Aura - MoIP"
+        }
+      },
+      "variacoes": [
+        {
+          "tipo": "Voltagem",
+          "origem": "variacao",
+          "idVariacao": "11",
+          "opcoes": [
+            "127V",
+            "220V"
+          ],
+          "preco": 129.0,
+          "precoPromocional": null,
+          "disponivel": true
+        }
+      ],
+      "especificacoes": {
+        "modelo": "Modelo: STD 10009009",
+        "ean": "7898966766480",
+        "marca": "SantiGrill",
+        "garantia": null,
+        "peso": null,
+        "dimensoes": null,
+        "medidasDescricao": [
+          "-Comprimento mínimo 46 cm. com cabo 65 cm",
+          "-Comprimento máximo 61 cm com cabo 80 cm",
+          "**** Energia: Escolha na hora da compra: 127 w ou 220 w *****",
+          "Rolamento de carga: Suporta até 5 KG",
+          "- Peso total do Produto: 710 gramas",
+          "-Medidas da Embalagem: 61 cm x 10xcm 10 cm."
+        ],
+        "video": "https://www.youtube.com/embed/27gp23CrBY0"
+      },
+      "disponivel": true,
+      "url": "https://www.santigrill.com.br/espetos/espeto-giratorio-eletrico-std-prata-santigrill",
+      "imagens": [
+        "assets/images/products/espeto-giratorio-eletrico-std-prata-santigrill-1.jpg",
+        "assets/images/products/espeto-giratorio-eletrico-std-prata-santigrill-2.jpg",
+        "assets/images/products/espeto-giratorio-eletrico-std-prata-santigrill-3.jpg"
+      ],
+      "imagensOrigem": [
+        "https://images.tcdn.com.br/img/img_prod/720158/espeto_giratorio_eletrico_std_prata_santigrill_133_1_1726200db6cf7a79e10f91c5b984d4e3.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/espeto_giratorio_eletrico_std_prata_santigrill_133_2_f8aaf1f420081d35dcf58cef6d47bde9.jpg",
+        "https://images.tcdn.com.br/img/img_prod/720158/espeto_giratorio_eletrico_std_prata_santigrill_133_3_b9f51fc7b36cc31737c225890fc7e9f1.jpg"
+      ]
+    }
+  ],
+  "produtosExcluidos": [
+    {
+      "idLoja": "125",
+      "nome": "PRODUTO DE TESTE",
+      "url": "https://www.santigrill.com.br/grill-giratorio/produto-de-teste",
+      "motivo": "produto de teste da loja (R$ 1,00, sem imagens)"
+    }
+  ],
+  "informacoes": {
+    "pagamento": {
+      "texto": "Trabalhamos com diversas formas de pagamento.\nAssim que finalizar sua compra, você poderá escolher qual a forma que mais lhe agrada. Demais instruções serão passadas após a escolha da forma de pagamento.",
+      "meiosExibidosNoRodape": [
+        "Aura - MoIP",
+        "Boleto - Vindi",
+        "Cartão Amex - Vindi",
+        "Cartão Diners - Vindi",
+        "Cartão Elo - Vindi",
+        "Cartão MasterCard - Vindi",
+        "Cartão Visa - Vindi",
+        "Diners - MoIP",
+        "MasterCard - MoIP",
+        "Mercado Pago",
+        "MoIP",
+        "PayPal",
+        "Pix - Vindi",
+        "Transf. Banco do Brasil",
+        "Transf. Bradesco",
+        "Transferência Online BB - MoIP",
+        "Transferência Online Bradesco - MoIP",
+        "Transferência Online Itaú - MoIP",
+        "Visa - MoIP"
+      ],
+      "parcelamento": "Até 12x no cartão de crédito com juros (1,99% a.m. via Aura - MoIP, conforme a opção de pagamento de cada produto); home: \"em até 12x no cartão\".",
+      "descontoPix": "Valor à vista com desconto no Pix (Pix - Vindi); ex.: R$ 467,00 -> R$ 452,99 (cerca de 3%).",
+      "url": "https://www.santigrill.com.br/pagamento"
+    },
+    "entrega": {
+      "texto": "Todos os produtos serão enviados de acordo com a forma escolhida pelo cliente, em até 2 dias úteis da confirmação do pagamento. O prazo para a entrega varia de acordo com a forma de envio escolhida e não é de nossa responsabilidade, ,já que a entrega fica a cargo dos Correios.\nVocê será informado do código para rastrear sua encomenda através do site dos correios assim que ela for postada.",
+      "url": "https://www.santigrill.com.br/envio",
+      "comoComprar": "Para comprar em nossa loja é muito fácil:\n1) Basta navegar entre as diversas páginas de produtos ( categorias, novidades, ofertas,  destaques) e clicar sobre o icone\nComprar\n. Ou clique em\nVer Detalhes\npara maiores informações sobre o produto. Após isso o produto será inserido em seu\ncarrinho de compras\n2) Continue navegando em nosso site até escolher todos os produtos que você deseja adquirir. Agora basta clicar no link a direita\nFinalizar\nque você estará concluindo sua compra.\n3) Agora entre com o seu email e senha. Caso não for cadastrado, cadastre-se rapidamente clicando no link de\nCadastro\n.\n4) Feito isso, escolha a forma de envio do produto. Trabalhamos com envio via Correio. Você pode optar por sedex ou encomenda simples, sendo que o sedex é mais caro só que muito mais ágil logo, recomendamos escolher\nSedex\n.\n5) Agora basta escolher a forma de pagamento.\n6) Demais instruções serão enviadas via email para você após a finalização de sua venda."
+    },
+    "garantia": {
+      "texto": "Todas as garantias são dadas pelos fabricantes, e variam de produto para produto. Elas serão informadas nas páginas de cada produto. Caso tenha alguma dúvida, entre em contato conosco.\nPara devoluções, os produtos deverão ser remetidos em suas embalagens originais e caso for constatado mal uso, o custo será por parte do comprador.",
+      "url": "https://www.santigrill.com.br/tempo-de-garantia",
+      "observacao": "Garantia por produto vem do campo \"garantia\" de cada produto (quando preenchido)."
+    },
+    "trocas": {
+      "texto": "Como trocar um produto?\nNa SantiGrill você pode efetuar a troca de qualquer produto, lacrado e não utilizado, em até 7 dias corridos após a data de recebimento.\nA saber, a troca será por um cupom no mesmo valor do produto comprado, para ser usado no site SantiGrill em uma nova compra. A SantiGrill não troca o produto por outro.\nImportante: Qualquer compra devolvida sem a prévia comunicação, fora do prazo ou com ausência de itens e/ou acessórios que acompanhem os produtos, não será aceita, e reenviaremos sem consulta prévia.\nPara sua comodidade, acesse sua conta e envie um e-mail para a SantiGrill  informando o número do pedido, qual produto deseja trocar e o motivo da troca. Responderemos o seu e-mail em até 1 dia útil.\nQuais os prazos para troca ou devolução?\nVocê pode solicitar a troca ou devolução do seu produto em até 7 dias corridos, do recebimento do pedido. Para produtos com defeito de fabricação e desde que o produto não apresente sinais de mau uso, o prazo é de até 30 dias corridos, a contar do recebimento do pedido.\nComo devolver o produto que quero trocar SantiGrill?\nVocê deverá devolver o produto em sua embalagem original, sem indícios de uso.\nJunto ao produto, inclua o manual do fabricante.\nProteja a embalagem original com papel ou caixa para evitar que seja danificada.\nVocê pode reutilizar a própria embalagem da SantiGrill para o envio do produto, ocultando as informações de remetente/destinatário.\nNão serão aceitos produtos nas seguintes condições:\n- Em embalagens abertas ou avariadas.\n- Embalado apenas em plástico bolha.\n- Sem embalagem.\n- Sem identificação do pedido.\nNão realizamos a troca de produtos utilizados.\nNão realizamos trocas de brindes, somente em caso de defeito e se estiver disponível em estoque.\nNo caso de cancelamento da compra ou devolução de produtos, os brindes correspondentes aos produtos que serão devolvidos devem ser enviados à SantiGrill.\nBrindes concedidos em compras acima de determinado valor devem ser devolvidos caso o cancelamento de itens interfira no valor final da compra.\nSe o valor final do carrinho permanecer igual ou acima do valor que dá direito ao brinde, não é preciso devolvê-lo.\nApós solicitada a troca ou devolução, em quanto tempo receberei o meu pedido ou devolução do valor pago?\nNossos prazos para troca podem variar de acordo com o item adquirido e a localidade de entrega do produto. Em geral o prazo para que essa devolução chegue na SantiGrill  é o mesmo prazo de entrega que levou para ser enviado à você,  nesse caso os Correios te informará o prazo quando fizer a sua postagem.\nAssim que o produto chegar em nosso centro de distribuição, o prazo para análise e liberação do novo produto nos casos de defeito são de até 10 (dez) dias úteis. Após esta data, o produto será enviado e o prazo de entrega será o mesmo do pedido inicial.\nEm caso de troca por outro produto, enviaremos um cupom no valor pago pelo produto para que use em outra compra. O valor pago pelo frete no pedido original não será computado no valor do cupom. O cupom será disponibilizado por e-mail em até 5(cinco) dias úteis após o recebimento do produto em nosso Centro de distribuição, desde que o produto esteja intacto e lacrado.\nEm caso de devolução de valores, após recebermos o produto, estando em perfeito estado, em até 5(cinco) dias úteis solicitaremos a devolução dos valores pagos por você, se o pagamento original foi em cartão de credito, e o estorno aparecerá em até suas próximas 2 faturas, se for boleto bancário faremos deposito em sua própria conta em até 10(dez) dias úteis. O valor pago pelo frete no pedido original não será devolvido. O valor pago pelo frete no pedido original não será computado no valor do estorno, descontaremos esse valor.\nRecebi um produto diferente do comprado, o que devo fazer?\nCaso receba algum produto diferente do seu pedido, recuse a entrega e entre em contato imediatamente por e-mail: vendas@santigrill.com.br\nSe identificar o erro após o recebimento, não viole a embalagem do produto e notifique imediatamente nossa Central de atendimento com uma foto do produto recebido.\nCaso o produto esteja indisponível em nosso estoque, este poderá ser substituído por outra mercadoria que seja do mesmo valor ou cupom para uma nova compra com validade para até 90(noventa) dias, ou o cliente poderá aguardar até 15(quinze) dias nova remessa de recebimento (essa opção é mediante a confirmação da SantiGrill), após os 15(quinze) dias, chegando novo produto em estoque, em até 5(cinco) dias úteis faremos o reenvio de um novo pedido.\nEm caso de dúvidas entre em contato com a SantiGrill:\nE-mail: vendas@santigrill.com.br\nTelefone: 11-  4453-6755\nHorário de Atendimento: Segunda à Sexta feira das 8:00 às 16:30",
+      "url": "https://www.santigrill.com.br/trocas-devolucoes"
+    },
+    "seguranca": {
+      "texto": "Com relação aos seus dados pessoais de endereçamento, pagamento e conteúdo do pedido, você pode estar certo de que não serão utilizados para outros fins que não o de processamento dos pedidos realizados, não sendo portanto divulgados em hipótese alguma.\nCom relação à segurança no tráfego de dados, toda transação que envolver pagamento, seja por cartão de crédito ou não, estará encriptada com a tecnologia SSL (Secure Socket Layer). Isso significa que só nossa empresa terá acesso a estes dados.",
+      "url": "https://www.santigrill.com.br/seguranca"
+    },
+    "cupons": {
+      "texto": "Lista de cupons SantiGrill\nEconomize ainda mais com nossos cupons! Encontre aqui os maiores descontos em seus produtos favoritos. Aproveite agora!\nNenhum cupom disponível no momento.\nNo momento, não há cupons disponíveis, mas fique de olho! Sempre temos novidades e promoções especiais para você. Volte em breve e aproveite nossas melhores ofertas!",
+      "url": "https://www.santigrill.com.br/cupons-de-desconto"
+    },
+    "faq": [
+      {
+        "pergunta": "Como trocar um produto?",
+        "resposta": "Na SantiGrill você pode efetuar a troca de qualquer produto, lacrado e não utilizado, em até 7 dias corridos após a data de recebimento.\nA saber, a troca será por um cupom no mesmo valor do produto comprado, para ser usado no site SantiGrill em uma nova compra. A SantiGrill não troca o produto por outro.\nImportante: Qualquer compra devolvida sem a prévia comunicação, fora do prazo ou com ausência de itens e/ou acessórios que acompanhem os produtos, não será aceita, e reenviaremos sem consulta prévia.\nPara sua comodidade, acesse sua conta e envie um e-mail para a SantiGrill  informando o número do pedido, qual produto deseja trocar e o motivo da troca. Responderemos o seu e-mail em até 1 dia útil.",
+        "fonte": "https://www.santigrill.com.br/trocas-devolucoes"
+      },
+      {
+        "pergunta": "Quais os prazos para troca ou devolução?",
+        "resposta": "Você pode solicitar a troca ou devolução do seu produto em até 7 dias corridos, do recebimento do pedido. Para produtos com defeito de fabricação e desde que o produto não apresente sinais de mau uso, o prazo é de até 30 dias corridos, a contar do recebimento do pedido.",
+        "fonte": "https://www.santigrill.com.br/trocas-devolucoes"
+      },
+      {
+        "pergunta": "Como devolver o produto que quero trocar SantiGrill?",
+        "resposta": "Você deverá devolver o produto em sua embalagem original, sem indícios de uso.\nJunto ao produto, inclua o manual do fabricante.\nProteja a embalagem original com papel ou caixa para evitar que seja danificada.\nVocê pode reutilizar a própria embalagem da SantiGrill para o envio do produto, ocultando as informações de remetente/destinatário.\nNão serão aceitos produtos nas seguintes condições:\n- Em embalagens abertas ou avariadas.\n- Embalado apenas em plástico bolha.\n- Sem embalagem.\n- Sem identificação do pedido.\nNão realizamos a troca de produtos utilizados.\nNão realizamos trocas de brindes, somente em caso de defeito e se estiver disponível em estoque.\nNo caso de cancelamento da compra ou devolução de produtos, os brindes correspondentes aos produtos que serão devolvidos devem ser enviados à SantiGrill.\nBrindes concedidos em compras acima de determinado valor devem ser devolvidos caso o cancelamento de itens interfira no valor final da compra.\nSe o valor final do carrinho permanecer igual ou acima do valor que dá direito ao brinde, não é preciso devolvê-lo.",
+        "fonte": "https://www.santigrill.com.br/trocas-devolucoes"
+      },
+      {
+        "pergunta": "Após solicitada a troca ou devolução, em quanto tempo receberei o meu pedido ou devolução do valor pago?",
+        "resposta": "Nossos prazos para troca podem variar de acordo com o item adquirido e a localidade de entrega do produto. Em geral o prazo para que essa devolução chegue na SantiGrill  é o mesmo prazo de entrega que levou para ser enviado à você,  nesse caso os Correios te informará o prazo quando fizer a sua postagem.\nAssim que o produto chegar em nosso centro de distribuição, o prazo para análise e liberação do novo produto nos casos de defeito são de até 10 (dez) dias úteis. Após esta data, o produto será enviado e o prazo de entrega será o mesmo do pedido inicial.\nEm caso de troca por outro produto, enviaremos um cupom no valor pago pelo produto para que use em outra compra. O valor pago pelo frete no pedido original não será computado no valor do cupom. O cupom será disponibilizado por e-mail em até 5(cinco) dias úteis após o recebimento do produto em nosso Centro de distribuição, desde que o produto esteja intacto e lacrado.\nEm caso de devolução de valores, após recebermos o produto, estando em perfeito estado, em até 5(cinco) dias úteis solicitaremos a devolução dos valores pagos por você, se o pagamento original foi em cartão de credito, e o estorno aparecerá em até suas próximas 2 faturas, se for boleto bancário faremos deposito em sua própria conta em até 10(dez) dias úteis. O valor pago pelo frete no pedido original não será devolvido. O valor pago pelo frete no pedido original não será computado no valor do estorno, descontaremos esse valor.",
+        "fonte": "https://www.santigrill.com.br/trocas-devolucoes"
+      },
+      {
+        "pergunta": "Recebi um produto diferente do comprado, o que devo fazer?",
+        "resposta": "Caso receba algum produto diferente do seu pedido, recuse a entrega e entre em contato imediatamente por e-mail: vendas@santigrill.com.br\nSe identificar o erro após o recebimento, não viole a embalagem do produto e notifique imediatamente nossa Central de atendimento com uma foto do produto recebido.\nCaso o produto esteja indisponível em nosso estoque, este poderá ser substituído por outra mercadoria que seja do mesmo valor ou cupom para uma nova compra com validade para até 90(noventa) dias, ou o cliente poderá aguardar até 15(quinze) dias nova remessa de recebimento (essa opção é mediante a confirmação da SantiGrill), após os 15(quinze) dias, chegando novo produto em estoque, em até 5(cinco) dias úteis faremos o reenvio de um novo pedido.\nEm caso de dúvidas entre em contato com a SantiGrill:\nE-mail: vendas@santigrill.com.br\nTelefone: 11-  4453-6755\nHorário de Atendimento: Segunda à Sexta feira das 8:00 às 16:30",
+        "fonte": "https://www.santigrill.com.br/trocas-devolucoes"
+      }
+    ],
+    "depoimentos": [],
+    "catalogosPdf": []
+  },
+  "pendencias": [
+    "Página \"Empresa\" (/empresa) está vazia no site: campo empresa.sobre = null.",
+    "Página \"Representantes\" (/representantes) está vazia no site.",
+    "Slogan não aparece em texto no site (meta description da home é \"-\"); empresa.slogan \"Churrasqueiras Práticas\" foi lido da imagem da logo.",
+    "Endereço sem número, complemento e bairro (o site mostra apenas \"Rua Caiapós, Santo André - SP, CEP 09195-510\").",
+    "Link do WhatsApp no topo do site está vazio (href=\"\"): apenas o número (11) 98827-7030 está disponível; whatsappUrl = null.",
+    "Somente Facebook encontrado como rede social (https://www.facebook.com/churrasqueirassantigrill). Instagram/YouTube/TikTok não aparecem no site. O widget do Facebook também cita https://www.facebook.com/SouSuporteLOL/ (aparentemente resto de template, ignorado).",
+    "Horário de atendimento divergente: contato/rodapé dizem \"segunda a sexta 7:30 às 17:30\"; página de trocas diz \"8:00 às 16:30\".",
+    "Logo oficial só existe em JPG 476x172 (letreiro branco sobre retângulo vermelho #d91819, sem transparência); logo.png foi convertido do JPG, sem canal alfa. Não há SVG nem versão sem fundo.",
+    "Nenhum produto tem preço promocional ativo (promotional_price = 0); dataLayer marca \"promotion: YES\" para os espetos 129 e 133, mas sem preço promocional informado.",
+    "Peso e dimensões estruturadas (weight/length/width/height) não são publicados pela loja: especificacoes.peso e especificacoes.dimensoes = null; medidas só aparecem em texto livre (especificacoes.medidasDescricao).",
+    "Garantia preenchida apenas em alguns produtos; nos demais especificacoes.garantia = null (página geral diz que varia por produto).",
+    "Estoque (quantidade) não é público; \"disponivel\" vem do campo available da API pública.",
+    "Variações dos espetos 129 e 133: a API lista uma única variação com Voltagem 127V e 220V no mesmo SKU (mesmo preço); a página do produto exibe apenas \"127V\" como opção selecionável.",
+    "Sem FAQ dedicada no site: faq foi montado com as perguntas da página \"Política de Trocas e Devoluções\".",
+    "Sem depoimentos/avaliações (rating count = 0 em todos os produtos).",
+    "Sem catálogos PDF para download.",
+    "Sem cupons ativos (\"Nenhum cupom disponível no momento\").",
+    "Frete: valores não são públicos (cálculo só no checkout; envio pelos Correios, postagem em até 2 dias úteis).",
+    "API pública de categorias (/web_api/categories) exige token; categorias foram levantadas pelo menu/sitemap/dataLayer."
+  ]
+}

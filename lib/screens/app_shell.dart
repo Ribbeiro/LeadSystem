@@ -2,15 +2,33 @@ import 'package:flutter/material.dart';
 
 import '../core/app_state.dart';
 import '../core/app_theme.dart';
+import '../core/external_links.dart';
 import '../models/app_models.dart';
 import '../models/product.dart';
 import '../widgets/shared.dart';
 import 'auth_admin.dart';
+import 'company_screen.dart';
 import 'detail_flows.dart';
 import 'profile_flows.dart';
+import 'settings_screens.dart';
 
-class AppShell extends StatelessWidget {
+class AppShell extends StatefulWidget {
   const AppShell({super.key});
+
+  @override
+  State<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends State<AppShell> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final notice = AppScope.of(context).consumeStartupNotice();
+      if (notice != null) showAppSnackBar(context, notice);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,8 +82,9 @@ class AppShell extends StatelessWidget {
 }
 
 void _openCart(BuildContext context) {
-  Navigator.of(context)
-      .push(MaterialPageRoute(builder: (_) => const CartScreen()));
+  Navigator.of(
+    context,
+  ).push(MaterialPageRoute(builder: (_) => const CartScreen()));
 }
 
 void _openProduct(BuildContext context, Product product) {
@@ -119,12 +138,8 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 18),
               if (featuredProducts.isNotEmpty) ...[
                 _PromoBanner(
-                  onTap: () => _openProduct(
-                    context,
-                    featuredProducts.length > 1
-                        ? featuredProducts[1]
-                        : featuredProducts.first,
-                  ),
+                  product: featuredProducts.first,
+                  onTap: () => _openProduct(context, featuredProducts.first),
                 ),
                 const SizedBox(height: 24),
               ],
@@ -139,6 +154,14 @@ class HomeScreen extends StatelessWidget {
                       .map(
                         (item) => _CategoryTile(
                           icon: _categoryIcon(item),
+                          image: state.products
+                              .where(
+                                (product) =>
+                                    product.category == item &&
+                                    product.coverImage != null,
+                              )
+                              .map((product) => product.coverImage)
+                              .firstOrNull,
                           label: item,
                           onTap: () => _selectCategory(state, item),
                         ),
@@ -148,7 +171,7 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               SectionHeading(
-                title: 'Mais vendidos',
+                title: 'Destaques da loja',
                 action: 'Ver todos',
                 onAction: () {
                   state.setSearch('');
@@ -158,7 +181,7 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               SizedBox(
-                height: 302,
+                height: 330,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: featuredProducts.length,
@@ -199,23 +222,24 @@ class HomeScreen extends StatelessWidget {
   }
 
   IconData _categoryIcon(String category) => switch (category) {
-    'Churrasqueiras' => Icons.outdoor_grill,
-    'Grelhas' => Icons.view_in_ar_outlined,
+    'Churrasqueira' => Icons.outdoor_grill,
+    'Grill Giratório' => Icons.rotate_right,
+    'Grelhas' => Icons.grid_on,
     'Espetos' => Icons.horizontal_rule_rounded,
-    'Kits' => Icons.inventory_2_outlined,
     _ => Icons.category_outlined,
   };
 }
 
 class _PromoBanner extends StatelessWidget {
-  const _PromoBanner({required this.onTap});
+  const _PromoBanner({required this.product, required this.onTap});
 
+  final Product product;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.darkRed,
+      color: const Color(0xFF9E0A0A),
       borderRadius: BorderRadius.circular(22),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -262,7 +286,7 @@ class _PromoBanner extends StatelessWidget {
                           child: const Text(
                             'PRIMEIRACOMPRA',
                             style: TextStyle(
-                              color: AppColors.darkRed,
+                              color: Color(0xFF9E0A0A),
                               fontSize: 11,
                               fontWeight: FontWeight.w800,
                             ),
@@ -273,11 +297,11 @@ class _PromoBanner extends StatelessWidget {
                   ),
                 ),
               ),
-              const Expanded(
+              Expanded(
                 flex: 5,
                 child: ProductImage(
-                  quadrant: 1,
-                  borderRadius: BorderRadius.only(
+                  path: product.coverImage,
+                  borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(38),
                     bottomLeft: Radius.circular(38),
                   ),
@@ -296,9 +320,11 @@ class _CategoryTile extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
+    this.image,
   });
 
   final IconData icon;
+  final String? image;
   final String label;
   final VoidCallback onTap;
 
@@ -310,17 +336,27 @@ class _CategoryTile extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          width: 108,
+          width: 120,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.border),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: AppColors.red),
+              if (image != null)
+                SizedBox(
+                  width: 44,
+                  height: 40,
+                  child: ProductImage(
+                    path: image,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                )
+              else
+                Icon(icon, color: AppColors.red),
               const SizedBox(height: 7),
               Text(
                 label,
@@ -344,11 +380,11 @@ class _TrustStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return const Card(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
+        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 18),
         child: Row(
-          children: const [
+          children: [
             Expanded(
               child: _TrustItem(
                 icon: Icons.verified_user_outlined,
@@ -405,14 +441,19 @@ class CatalogScreen extends StatefulWidget {
 
 class _CatalogScreenState extends State<CatalogScreen> {
   final TextEditingController _searchController = TextEditingController();
-  bool _initialized = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!_initialized) {
-      _searchController.text = AppScope.of(context).searchQuery;
-      _initialized = true;
+    // A busca pode ser alterada fora desta tela (ex.: campo da Home). O
+    // catálogo fica vivo no IndexedStack, então sincronizamos o campo sempre
+    // que o termo do estado divergir do texto exibido.
+    final query = AppScope.of(context).searchQuery;
+    if (_searchController.text != query) {
+      _searchController.value = TextEditingValue(
+        text: query,
+        selection: TextSelection.collapsed(offset: query.length),
+      );
     }
   }
 
@@ -491,11 +532,14 @@ class _CatalogScreenState extends State<CatalogScreen> {
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        Text(
-                          '${products.length} produtos',
-                          style: const TextStyle(color: AppColors.muted),
+                        Expanded(
+                          child: Text(
+                            '${products.length} produtos',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(color: AppColors.muted),
+                          ),
                         ),
-                        const Spacer(),
                         PopupMenuButton<ProductSort>(
                           tooltip: 'Ordenar produtos',
                           initialValue: state.productSort,
@@ -508,17 +552,22 @@ class _CatalogScreenState extends State<CatalogScreen> {
                                 ),
                               )
                               .toList(),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.swap_vert, size: 18),
-                              const SizedBox(width: 4),
-                              Text(
-                                state.productSort.label,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
+                          // Altura mínima de 48 dp: área de toque acessível.
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(minHeight: 48),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.swap_vert, size: 18),
+                                const SizedBox(width: 4),
+                                Text(
+                                  state.productSort.label,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -552,7 +601,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                           crossAxisCount: 2,
                           crossAxisSpacing: 12,
                           mainAxisSpacing: 12,
-                          childAspectRatio: .65,
+                          childAspectRatio: .58,
                         ),
                     itemCount: products.length,
                     itemBuilder: (context, index) {
@@ -600,85 +649,117 @@ class OrdersScreen extends StatelessWidget {
               ? EmptyState(
                   icon: Icons.lock_outline,
                   title: 'Entre para ver seus pedidos',
-                  description: 'Seu histórico, rastreamento e orçamentos ficam protegidos na sua conta.',
+                  description:
+                      'Seu histórico, rastreamento e orçamentos ficam protegidos na sua conta.',
                   actionLabel: 'Entrar',
                   onAction: () => Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const LoginScreen()),
                   ),
                 )
-              : ListView(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-                  children: [
-                    if (state.orders.isEmpty && state.quotes.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.only(top: 80),
-                        child: EmptyState(
-                          icon: Icons.receipt_long_outlined,
-                          title: 'Nenhum pedido ainda',
-                          description: 'Seus pedidos e solicitações de orçamento aparecerão aqui.',
-                        ),
-                      ),
-                    ...state.orders.map(
-                      (order) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _OrderCard(
-                          number: order.id,
-                          date: _shortDate(order.createdAt),
-                          total: money(order.total),
-                          status: order.status.label,
-                          current:
-                              order.status != OrderStatus.delivered &&
-                              order.status != OrderStatus.cancelled,
-                          onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => TrackingScreen(order: order),
-                            ),
+              : RefreshIndicator(
+                  onRefresh: state.syncNow,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+                    children: [
+                      if (state.onlineMode && state.syncMessage != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.cloud_off_outlined,
+                                size: 18,
+                                color: AppColors.warning,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  state.syncMessage!,
+                                  style: TextStyle(
+                                    color: AppColors.warning,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                    ),
-                    if (state.quotes.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Orçamentos',
-                        style: TextStyle(
-                          fontSize: 19,
-                          fontWeight: FontWeight.w800,
+                      if (state.myOrders.isEmpty && state.myQuotes.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 80),
+                          child: EmptyState(
+                            icon: Icons.receipt_long_outlined,
+                            title: 'Nenhum pedido ainda',
+                            description:
+                                'Seus pedidos e solicitações de orçamento aparecerão aqui.',
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      ...state.quotes.map(
-                        (quote) => Card(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.all(16),
-                            leading: CircleAvatar(
-                              backgroundColor:
-                                  quote.status == QuoteStatus.approved
-                                  ? AppColors.successSoft
-                                  : AppColors.warningSoft,
-                              foregroundColor:
-                                  quote.status == QuoteStatus.approved
-                                  ? AppColors.success
-                                  : AppColors.warning,
-                              child: const Icon(Icons.request_quote_outlined),
-                            ),
-                            title: Text(
-                              quote.id,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w800,
+                      ...state.myOrders.map(
+                        (order) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _OrderCard(
+                            number: order.id,
+                            date: _shortDate(order.createdAt),
+                            total: money(order.total),
+                            status: order.status.label,
+                            current:
+                                order.status != OrderStatus.delivered &&
+                                order.status != OrderStatus.cancelled,
+                            syncState: order.syncState,
+                            syncError: order.syncError,
+                            onRetry: () => state.retryOrderSync(order.id),
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => TrackingScreen(order: order),
                               ),
                             ),
-                            subtitle: Text(
-                              '${quote.productName} · ${quote.status.label}',
-                            ),
-                            trailing: const Icon(Icons.chevron_right),
-                            onTap: () => _showQuote(context, quote),
                           ),
                         ),
                       ),
+                      if (state.myQuotes.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Orçamentos',
+                          style: TextStyle(
+                            fontSize: 19,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        ...state.myQuotes.map(
+                          (quote) => Card(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.all(16),
+                              leading: CircleAvatar(
+                                backgroundColor:
+                                    quote.status == QuoteStatus.approved
+                                    ? AppColors.successSoft
+                                    : AppColors.warningSoft,
+                                foregroundColor:
+                                    quote.status == QuoteStatus.approved
+                                    ? AppColors.success
+                                    : AppColors.warning,
+                                child: const Icon(Icons.request_quote_outlined),
+                              ),
+                              title: Text(
+                                quote.id,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              subtitle: Text(
+                                '${quote.productName} · ${quote.status.label}',
+                              ),
+                              trailing: const Icon(Icons.chevron_right),
+                              onTap: () => _showQuote(context, quote),
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
         ),
       ],
@@ -707,7 +788,7 @@ class OrdersScreen extends StatelessWidget {
     return showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        icon: const Icon(Icons.request_quote_outlined, color: AppColors.red),
+        icon: Icon(Icons.request_quote_outlined, color: AppColors.red),
         title: Text('Orçamento ${quote.id}'),
         content: SingleChildScrollView(
           child: Column(
@@ -753,6 +834,9 @@ class _OrderCard extends StatelessWidget {
     required this.status,
     this.current = false,
     this.onTap,
+    this.syncState,
+    this.syncError,
+    this.onRetry,
   });
 
   final String number;
@@ -760,6 +844,9 @@ class _OrderCard extends StatelessWidget {
   final String total;
   final String status;
   final bool current;
+  final String? syncState;
+  final String? syncError;
+  final VoidCallback? onRetry;
   final VoidCallback? onTap;
 
   @override
@@ -775,14 +862,18 @@ class _OrderCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Text(
-                    number,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w900,
+                  Expanded(
+                    child: Text(
+                      number,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 8),
                   StatusPill(
                     label: status,
                     color: current ? AppColors.warning : AppColors.success,
@@ -795,26 +886,63 @@ class _OrderCard extends StatelessWidget {
               const SizedBox(height: 12),
               Text(
                 '$date  ·  $total',
-                style: const TextStyle(color: AppColors.muted),
+                style: TextStyle(color: AppColors.muted),
               ),
+              if (syncState == 'pending') ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(Icons.schedule, size: 16, color: AppColors.warning),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Aguardando envio ao servidor',
+                        style: TextStyle(
+                          color: AppColors.warning,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ] else if (syncState == 'failed') ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(Icons.error_outline, size: 16, color: AppColors.red),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Não enviado: ${syncError ?? 'erro no servidor'}',
+                        style: TextStyle(color: AppColors.red, fontSize: 12),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: onRetry,
+                      child: const Text('Tentar de novo'),
+                    ),
+                  ],
+                ),
+              ],
               if (onTap != null) ...[
                 const Divider(height: 28),
-                const Row(
+                Row(
                   children: [
                     Icon(
                       Icons.local_shipping_outlined,
                       color: AppColors.red,
                       size: 19,
                     ),
-                    SizedBox(width: 8),
-                    Text(
-                      'Acompanhar pedido',
-                      style: TextStyle(
-                        color: AppColors.red,
-                        fontWeight: FontWeight.w800,
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Acompanhar pedido',
+                        style: TextStyle(
+                          color: AppColors.red,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
-                    Spacer(),
                     Icon(Icons.chevron_right, color: AppColors.red),
                   ],
                 ),
@@ -849,16 +977,24 @@ class _HelpScreenState extends State<HelpScreen> {
   @override
   Widget build(BuildContext context) {
     final state = AppScope.of(context);
-    final query = _faqQuery.trim().toLowerCase();
-    final faqs = _faqEntries
-        .where(
-          (faq) =>
-              query.isEmpty ||
-              faq.title.toLowerCase().contains(query) ||
-              faq.subtitle.toLowerCase().contains(query) ||
-              faq.answer.toLowerCase().contains(query),
-        )
-        .toList();
+    final query = foldText(_faqQuery);
+    final faqs =
+        [
+              for (final item in state.catalog.faq)
+                _FaqData(title: item.question, answer: item.answer),
+              for (final section in state.catalog.info)
+                _FaqData(
+                  title: section.title,
+                  answer: section.body,
+                  url: section.url,
+                ),
+            ]
+            .where(
+              (faq) =>
+                  query.isEmpty ||
+                  foldText('${faq.title} ${faq.answer}').contains(query),
+            )
+            .toList();
     return Column(
       children: [
         AppTopBar(
@@ -889,12 +1025,24 @@ class _HelpScreenState extends State<HelpScreen> {
                 ),
                 onChanged: (value) => setState(() => _faqQuery = value),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
+              ContactActions(company: state.company),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const CompanyScreen()),
+                  ),
+                  icon: const Icon(Icons.storefront_outlined, size: 18),
+                  label: const Text('Endereço, horário e contatos'),
+                ),
+              ),
+              const SizedBox(height: 8),
               const SectionHeading(title: 'Encontre uma resposta'),
               const SizedBox(height: 8),
               if (faqs.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
                   child: Text(
                     'Nenhuma resposta encontrada. Envie sua dúvida no atendimento abaixo.',
                     textAlign: TextAlign.center,
@@ -912,26 +1060,27 @@ class _HelpScreenState extends State<HelpScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Row(
+                      Row(
                         children: [
                           CircleAvatar(
-                            backgroundColor: AppColors.successSoft,
-                            foregroundColor: AppColors.success,
-                            child: Text('M'),
+                            backgroundColor: AppColors.redSoft,
+                            foregroundColor: AppColors.red,
+                            child: const Icon(Icons.support_agent),
                           ),
-                          SizedBox(width: 10),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  'Mariana · Atendimento',
+                                const Text(
+                                  'Assistente SantiGrill',
                                   style: TextStyle(fontWeight: FontWeight.w800),
                                 ),
                                 Text(
-                                  '● Online · responde em cerca de 2 min',
+                                  'Respostas automáticas no app'
+                                  '${state.company.businessHours == null ? '' : ' · equipe: ${state.company.businessHours}'}',
                                   style: TextStyle(
-                                    color: AppColors.success,
+                                    color: AppColors.muted,
                                     fontSize: 12,
                                   ),
                                 ),
@@ -1004,26 +1153,32 @@ class _FaqTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
+      clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
-        leading: const CircleAvatar(
+        shape: const Border(),
+        leading: CircleAvatar(
           radius: 16,
-          backgroundColor: Color(0xFFF8DFE1),
+          backgroundColor: AppColors.redSoft,
           foregroundColor: AppColors.red,
-          child: Icon(Icons.question_mark, size: 17),
+          child: const Icon(Icons.question_mark, size: 17),
         ),
         title: Text(
           faq.title,
-          style: const TextStyle(fontWeight: FontWeight.w800),
+          style: const TextStyle(fontWeight: FontWeight.w700),
         ),
-        subtitle: Text(faq.subtitle),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        expandedCrossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Text(
-              faq.answer,
-              style: TextStyle(color: Colors.grey.shade700, height: 1.4),
-            ),
+          Text(
+            faq.answer,
+            style: TextStyle(color: AppColors.muted, height: 1.45),
           ),
+          if (faq.url != null)
+            TextButton.icon(
+              onPressed: () => ExternalLinks.url(context, faq.url!),
+              icon: const Icon(Icons.open_in_new, size: 16),
+              label: const Text('Ver no site'),
+            ),
         ],
       ),
     );
@@ -1031,34 +1186,12 @@ class _FaqTile extends StatelessWidget {
 }
 
 class _FaqData {
-  const _FaqData({
-    required this.title,
-    required this.subtitle,
-    required this.answer,
-  });
+  _FaqData({required this.title, required this.answer, this.url});
 
   final String title;
-  final String subtitle;
   final String answer;
+  final String? url;
 }
-
-const _faqEntries = <_FaqData>[
-  _FaqData(
-    title: 'Entrega e frete',
-    subtitle: 'Prazo, CEP e rastreio',
-    answer: 'Informe o CEP na página do produto para ver o prazo. Depois da compra, abra Meus pedidos e toque em Acompanhar pedido para consultar cada etapa.',
-  ),
-  _FaqData(
-    title: 'Pagamento',
-    subtitle: 'Pix, cartão e boleto',
-    answer: 'O Pix é aprovado imediatamente. O cartão pode ser parcelado em até 6 vezes e o boleto vence em dois dias úteis.',
-  ),
-  _FaqData(
-    title: 'Trocas e garantia',
-    subtitle: 'Prazos e condições',
-    answer: 'Você pode solicitar troca em até 7 dias após o recebimento. A garantia varia por produto e aparece nas especificações do catálogo.',
-  ),
-];
 
 class _MessageBubble extends StatelessWidget {
   const _MessageBubble({required this.message});
@@ -1076,9 +1209,7 @@ class _MessageBubble extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: message.fromUser
-              ? const Color(0xFFF8DFE1)
-              : const Color(0xFFF0ECE7),
+          color: message.fromUser ? AppColors.redSoft : AppColors.neutralSoft,
           borderRadius: BorderRadius.circular(14),
         ),
         child: Column(
@@ -1088,7 +1219,7 @@ class _MessageBubble extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               message.time,
-              style: const TextStyle(color: AppColors.muted, fontSize: 10),
+              style: TextStyle(color: AppColors.muted, fontSize: 10),
             ),
           ],
         ),
@@ -1120,11 +1251,11 @@ class ProfileScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(20),
                   child: Row(
                     children: [
-                      const CircleAvatar(
+                      CircleAvatar(
                         radius: 30,
-                        backgroundColor: Color(0xFFF8DFE1),
+                        backgroundColor: AppColors.redSoft,
                         foregroundColor: AppColors.red,
-                        child: Icon(Icons.person, size: 30),
+                        child: const Icon(Icons.person, size: 30),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -1143,7 +1274,7 @@ class ProfileScreen extends StatelessWidget {
                               state.loggedIn
                                   ? state.userEmail
                                   : 'Entre para acessar pedidos e orçamentos',
-                              style: const TextStyle(color: AppColors.muted),
+                              style: TextStyle(color: AppColors.muted),
                             ),
                           ],
                         ),
@@ -1197,6 +1328,36 @@ class ProfileScreen extends StatelessWidget {
                   const AccountSecurityScreen(),
                 ),
               ),
+              _ProfileTile(
+                icon: Icons.storefront_outlined,
+                title: 'Fale com a SantiGrill',
+                subtitle: 'WhatsApp, telefone, endereço e políticas',
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const CompanyScreen()),
+                ),
+              ),
+              _ProfileTile(
+                icon: Icons.dark_mode_outlined,
+                title: 'Aparência',
+                subtitle: themeModeLabel(state.themeMode),
+                onTap: () => showAppearanceSheet(context),
+              ),
+              _ProfileTile(
+                icon: state.onlineMode
+                    ? Icons.cloud_done_outlined
+                    : Icons.cloud_off_outlined,
+                title: 'Servidor e sincronização',
+                subtitle: state.onlineMode
+                    ? (state.pendingSyncCount > 0
+                          ? '${state.pendingSyncCount} alteração(ões) pendente(s)'
+                          : 'Conectado')
+                    : 'Modo offline',
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const ServerSettingsScreen(),
+                  ),
+                ),
+              ),
               const SizedBox(height: 20),
               OutlinedButton.icon(
                 onPressed: () => _openAdmin(context, state),
@@ -1216,7 +1377,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ],
               const SizedBox(height: 24),
-              const Center(
+              Center(
                 child: Text(
                   'LeadSystem · versão acadêmica 1.1.0',
                   style: TextStyle(color: AppColors.muted, fontSize: 12),
@@ -1231,13 +1392,15 @@ class ProfileScreen extends StatelessWidget {
 
   static Future<void> _openAccount(BuildContext context, AppState state) async {
     if (!state.loggedIn) {
-      await Navigator.of(context)
-          .push(MaterialPageRoute(builder: (_) => const LoginScreen()));
+      await Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const LoginScreen()));
       return;
     }
     if (!context.mounted) return;
-    await Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => const AccountSecurityScreen()));
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const AccountSecurityScreen()));
   }
 
   static Future<void> _openProtected(
@@ -1246,8 +1409,9 @@ class ProfileScreen extends StatelessWidget {
     Widget screen,
   ) async {
     if (!state.loggedIn) {
-      await Navigator.of(context)
-          .push(MaterialPageRoute(builder: (_) => const LoginScreen()));
+      await Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const LoginScreen()));
       if (!context.mounted || !state.loggedIn) return;
     }
     if (!context.mounted) return;
@@ -1256,8 +1420,9 @@ class ProfileScreen extends StatelessWidget {
 
   static Future<void> _openAdmin(BuildContext context, AppState state) async {
     if (!state.isAdmin) {
-      await Navigator.of(context)
-          .push(MaterialPageRoute(builder: (_) => const LoginScreen()));
+      await Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const LoginScreen()));
     }
     if (!context.mounted) return;
     if (!state.isAdmin) {
@@ -1267,8 +1432,9 @@ class ProfileScreen extends StatelessWidget {
       );
       return;
     }
-    await Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => const AdminDashboardScreen()));
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const AdminDashboardScreen()));
   }
 }
 

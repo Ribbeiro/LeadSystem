@@ -30,7 +30,7 @@ extension QuoteStatusLabel on QuoteStatus {
   };
 }
 
-enum ProductSort { relevance, name, priceLowToHigh, priceHighToLow, rating }
+enum ProductSort { relevance, name, priceLowToHigh, priceHighToLow }
 
 extension ProductSortLabel on ProductSort {
   String get label => switch (this) {
@@ -38,7 +38,6 @@ extension ProductSortLabel on ProductSort {
     ProductSort.name => 'Nome',
     ProductSort.priceLowToHigh => 'Menor preço',
     ProductSort.priceHighToLow => 'Maior preço',
-    ProductSort.rating => 'Melhor avaliação',
   };
 }
 
@@ -212,14 +211,20 @@ class OrderItem {
     required this.name,
     required this.unitPrice,
     required this.quantity,
-    required this.imageQuadrant,
+    this.image,
+    this.option,
   });
 
   final String productId;
   final String name;
   final double unitPrice;
   final int quantity;
-  final int imageQuadrant;
+
+  /// Imagem do produto no momento da compra (caminho de asset).
+  final String? image;
+
+  /// Variação escolhida (ex.: voltagem 220V).
+  final String? option;
 
   double get total => unitPrice * quantity;
 
@@ -228,7 +233,8 @@ class OrderItem {
     'name': name,
     'unitPrice': unitPrice,
     'quantity': quantity,
-    'imageQuadrant': imageQuadrant,
+    'image': image,
+    'option': option,
   };
 
   factory OrderItem.fromJson(Map<String, Object?> json) => OrderItem(
@@ -236,7 +242,8 @@ class OrderItem {
     name: json['name']?.toString() ?? '',
     unitPrice: (json['unitPrice'] as num?)?.toDouble() ?? 0,
     quantity: (json['quantity'] as num?)?.toInt() ?? 0,
-    imageQuadrant: (json['imageQuadrant'] as num?)?.toInt() ?? 0,
+    image: json['image']?.toString(),
+    option: json['option']?.toString(),
   );
 }
 
@@ -284,6 +291,12 @@ class CustomerOrder {
     required this.total,
     required this.paymentMethod,
     required this.deliveryAddress,
+    this.customerEmail,
+    this.customerName,
+    this.couponCode,
+    this.clientId,
+    this.syncState,
+    this.syncError,
     this.status = OrderStatus.received,
     this.timeline = const [],
   });
@@ -297,6 +310,20 @@ class CustomerOrder {
   final double total;
   final String paymentMethod;
   final Address deliveryAddress;
+
+  /// E-mail (normalizado) do cliente dono do pedido. Nulo em pedidos antigos,
+  /// criados antes de existir esse vínculo; esses só aparecem para a equipe.
+  final String? customerEmail;
+  final String? customerName;
+  final String? couponCode;
+
+  /// Id gerado no aparelho antes do envio (garante que o reenvio não duplica).
+  final String? clientId;
+
+  /// Sincronização com a API: null = sincronizado (ou modo offline),
+  /// 'pending' = aguardando envio, 'failed' = recusado pelo servidor.
+  final String? syncState;
+  final String? syncError;
   final OrderStatus status;
   final List<OrderTimelineEntry> timeline;
 
@@ -312,6 +339,13 @@ class CustomerOrder {
     double? total,
     String? paymentMethod,
     Address? deliveryAddress,
+    String? customerEmail,
+    String? customerName,
+    String? couponCode,
+    String? clientId,
+    String? syncState,
+    String? syncError,
+    bool clearSync = false,
     OrderStatus? status,
     List<OrderTimelineEntry>? timeline,
   }) {
@@ -325,6 +359,12 @@ class CustomerOrder {
       total: total ?? this.total,
       paymentMethod: paymentMethod ?? this.paymentMethod,
       deliveryAddress: deliveryAddress ?? this.deliveryAddress,
+      customerEmail: customerEmail ?? this.customerEmail,
+      customerName: customerName ?? this.customerName,
+      couponCode: couponCode ?? this.couponCode,
+      clientId: clientId ?? this.clientId,
+      syncState: clearSync ? null : syncState ?? this.syncState,
+      syncError: clearSync ? null : syncError ?? this.syncError,
       status: status ?? this.status,
       timeline: timeline ?? this.timeline,
     );
@@ -340,6 +380,12 @@ class CustomerOrder {
     'total': total,
     'paymentMethod': paymentMethod,
     'deliveryAddress': deliveryAddress.toJson(),
+    'customerEmail': customerEmail,
+    'customerName': customerName,
+    'couponCode': couponCode,
+    'clientId': clientId,
+    'syncState': syncState,
+    'syncError': syncError,
     'status': status.name,
     'timeline': timeline.map((item) => item.toJson()).toList(),
   };
@@ -354,6 +400,12 @@ class CustomerOrder {
     total: (json['total'] as num?)?.toDouble() ?? 0,
     paymentMethod: json['paymentMethod']?.toString() ?? '',
     deliveryAddress: Address.fromJson(_map(json['deliveryAddress'])),
+    customerEmail: json['customerEmail']?.toString(),
+    customerName: json['customerName']?.toString(),
+    couponCode: json['couponCode']?.toString(),
+    clientId: json['clientId']?.toString(),
+    syncState: json['syncState']?.toString(),
+    syncError: json['syncError']?.toString(),
     status: _enumByName(
       OrderStatus.values,
       json['status'],
@@ -376,6 +428,8 @@ class QuoteRequest {
     this.status = QuoteStatus.pending,
     this.response,
     this.updatedAt,
+    this.syncState,
+    this.syncError,
   });
 
   final String id;
@@ -390,6 +444,10 @@ class QuoteRequest {
   final String? response;
   final DateTime? updatedAt;
 
+  /// Igual a [CustomerOrder.syncState].
+  final String? syncState;
+  final String? syncError;
+
   QuoteRequest copyWith({
     String? id,
     String? productId,
@@ -402,6 +460,9 @@ class QuoteRequest {
     QuoteStatus? status,
     String? response,
     DateTime? updatedAt,
+    String? syncState,
+    String? syncError,
+    bool clearSync = false,
   }) {
     return QuoteRequest(
       id: id ?? this.id,
@@ -415,6 +476,8 @@ class QuoteRequest {
       status: status ?? this.status,
       response: response ?? this.response,
       updatedAt: updatedAt ?? this.updatedAt,
+      syncState: clearSync ? null : syncState ?? this.syncState,
+      syncError: clearSync ? null : syncError ?? this.syncError,
     );
   }
 
@@ -430,6 +493,8 @@ class QuoteRequest {
     'status': status.name,
     'response': response,
     'updatedAt': updatedAt?.toIso8601String(),
+    'syncState': syncState,
+    'syncError': syncError,
   };
 
   factory QuoteRequest.fromJson(Map<String, Object?> json) => QuoteRequest(
@@ -448,6 +513,8 @@ class QuoteRequest {
     ),
     response: json['response']?.toString(),
     updatedAt: json['updatedAt'] == null ? null : _date(json['updatedAt']),
+    syncState: json['syncState']?.toString(),
+    syncError: json['syncError']?.toString(),
   );
 }
 

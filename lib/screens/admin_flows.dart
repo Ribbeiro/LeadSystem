@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../core/app_state.dart';
 import '../core/app_theme.dart';
@@ -41,8 +42,8 @@ double? _decimal(String value) {
 Color _orderColor(OrderStatus status) {
   return switch (status) {
     OrderStatus.received || OrderStatus.preparing => AppColors.warning,
-    OrderStatus.paymentApproved => const Color(0xFF2F6495),
-    OrderStatus.shipped => const Color(0xFF6A55A5),
+    OrderStatus.paymentApproved => AppColors.info,
+    OrderStatus.shipped => AppColors.purple,
     OrderStatus.delivered => AppColors.success,
     OrderStatus.cancelled => AppColors.red,
   };
@@ -51,7 +52,7 @@ Color _orderColor(OrderStatus status) {
 Color _quoteColor(QuoteStatus status) {
   return switch (status) {
     QuoteStatus.pending => AppColors.warning,
-    QuoteStatus.reviewing => const Color(0xFF2F6495),
+    QuoteStatus.reviewing => AppColors.info,
     QuoteStatus.approved || QuoteStatus.answered => AppColors.success,
     QuoteStatus.rejected => AppColors.red,
   };
@@ -65,7 +66,7 @@ Future<bool> _confirmDelete(
   return await showDialog<bool>(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          icon: const Icon(Icons.delete_outline, color: AppColors.red),
+          icon: Icon(Icons.delete_outline, color: AppColors.red),
           title: Text(title),
           content: Text(description),
           actions: [
@@ -158,7 +159,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                     Expanded(
                       child: Text(
                         '${products.length} de ${state.products.length} produtos',
-                        style: const TextStyle(color: AppColors.muted),
+                        style: TextStyle(color: AppColors.muted),
                       ),
                     ),
                     FilterChip(
@@ -258,7 +259,8 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     final confirmed = await _confirmDelete(
       context,
       title: 'Excluir ${product.shortName}?',
-      description: 'O produto será removido do catálogo. Pedidos já registrados continuarão preservados.',
+      description:
+          'O produto será removido do catálogo. Pedidos já registrados continuarão preservados.',
     );
     if (!confirmed || !context.mounted) return;
     final removed = AppScope.of(context).removeProduct(product.id);
@@ -295,7 +297,7 @@ class _ProductAdminCard extends StatelessWidget {
             SizedBox(
               width: 72,
               height: 72,
-              child: ProductImage(quadrant: product.imageQuadrant),
+              child: ProductImage(path: product.coverImage),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -313,20 +315,17 @@ class _ProductAdminCard extends StatelessWidget {
                         ),
                       ),
                       if (!product.active)
-                        const StatusPill(
+                        StatusPill(
                           label: 'Inativo',
                           color: AppColors.muted,
-                          background: Color(0xFFEDEAE7),
+                          background: AppColors.neutralSoft,
                         ),
                     ],
                   ),
                   const SizedBox(height: 3),
                   Text(
                     '${product.id} · ${product.category}',
-                    style: const TextStyle(
-                      color: AppColors.muted,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: AppColors.muted, fontSize: 12),
                   ),
                   const SizedBox(height: 7),
                   Wrap(
@@ -336,7 +335,7 @@ class _ProductAdminCard extends StatelessWidget {
                     children: [
                       Text(
                         money(product.price),
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.darkRed,
                           fontWeight: FontWeight.w900,
                         ),
@@ -365,8 +364,8 @@ class _ProductAdminCard extends StatelessWidget {
                     onDelete();
                 }
               },
-              itemBuilder: (_) => const [
-                PopupMenuItem(
+              itemBuilder: (_) => [
+                const PopupMenuItem(
                   value: 'edit',
                   child: ListTile(
                     leading: Icon(Icons.edit_outlined),
@@ -374,7 +373,7 @@ class _ProductAdminCard extends StatelessWidget {
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),
-                PopupMenuItem(
+                const PopupMenuItem(
                   value: 'stock',
                   child: ListTile(
                     leading: Icon(Icons.inventory_outlined),
@@ -386,7 +385,7 @@ class _ProductAdminCard extends StatelessWidget {
                   value: 'delete',
                   child: ListTile(
                     leading: Icon(Icons.delete_outline, color: AppColors.red),
-                    title: Text('Excluir'),
+                    title: const Text('Excluir'),
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),
@@ -415,13 +414,12 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   late final TextEditingController _shortName;
   late final TextEditingController _description;
   late final TextEditingController _price;
-  late final TextEditingController _rating;
-  late final TextEditingController _reviews;
+  late final TextEditingController _promotionalPrice;
   late final TextEditingController _stock;
   late final TextEditingController _badge;
   late final TextEditingController _specifications;
   String? _category;
-  int _imageQuadrant = 0;
+  String? _image;
   bool _active = true;
 
   bool get _editing => widget.product != null;
@@ -437,8 +435,11 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     _price = TextEditingController(
       text: product?.price.toStringAsFixed(2).replaceAll('.', ',') ?? '',
     );
-    _rating = TextEditingController(text: '${product?.rating ?? 5}');
-    _reviews = TextEditingController(text: '${product?.reviewCount ?? 0}');
+    _promotionalPrice = TextEditingController(
+      text:
+          product?.promotionalPrice?.toStringAsFixed(2).replaceAll('.', ',') ??
+          '',
+    );
     _stock = TextEditingController(text: '${product?.stock ?? 0}');
     _badge = TextEditingController(text: product?.badge ?? '');
     _specifications = TextEditingController(
@@ -449,7 +450,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
           '',
     );
     _category = product?.category;
-    _imageQuadrant = product?.imageQuadrant ?? 0;
+    _image = product?.coverImage;
     _active = product?.active ?? true;
   }
 
@@ -460,8 +461,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     _shortName.dispose();
     _description.dispose();
     _price.dispose();
-    _rating.dispose();
-    _reviews.dispose();
+    _promotionalPrice.dispose();
     _stock.dispose();
     _badge.dispose();
     _specifications.dispose();
@@ -496,10 +496,12 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
             TextFormField(
               controller: _id,
               enabled: !_editing,
-              textCapitalization: TextCapitalization.characters,
-              decoration: const InputDecoration(labelText: 'SKU'),
+              decoration: const InputDecoration(
+                labelText: 'Código (SKU)',
+                helperText: 'Letras minúsculas, números e hífen',
+              ),
               validator: (value) {
-                final id = value?.trim().toUpperCase() ?? '';
+                final id = _normalizeId(value ?? '');
                 if (id.length < 3) {
                   return 'Informe um SKU com ao menos 3 caracteres.';
                 }
@@ -529,12 +531,13 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
             const SizedBox(height: 10),
             DropdownButtonFormField<String>(
               initialValue: _category,
+              isExpanded: true,
               decoration: const InputDecoration(labelText: 'Categoria'),
               items: orderedCategories
                   .map(
                     (category) => DropdownMenuItem(
                       value: category,
-                      child: Text(category),
+                      child: Text(category, overflow: TextOverflow.ellipsis),
                     ),
                   )
                   .toList(),
@@ -592,41 +595,23 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
               ],
             ),
             const SizedBox(height: 10),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _rating,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: const InputDecoration(labelText: 'Avaliação'),
-                    validator: (value) {
-                      final rating = _decimal(value ?? '');
-                      return rating == null || rating < 0 || rating > 5
-                          ? 'Use 0 a 5.'
-                          : null;
-                    },
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: TextFormField(
-                    controller: _reviews,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Nº avaliações',
-                    ),
-                    validator: (value) {
-                      final reviews = int.tryParse(value ?? '');
-                      return reviews == null || reviews < 0
-                          ? 'Valor inválido.'
-                          : null;
-                    },
-                  ),
-                ),
-              ],
+            TextFormField(
+              controller: _promotionalPrice,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Preço promocional (opcional)',
+                prefixText: 'R\$ ',
+              ),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) return null;
+                final promo = _decimal(value);
+                final price = _decimal(_price.text) ?? 0;
+                if (promo == null || promo <= 0) return 'Preço inválido.';
+                if (promo >= price) return 'Deve ser menor que o preço.';
+                return null;
+              },
             ),
             const SizedBox(height: 10),
             TextFormField(
@@ -637,20 +622,68 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
               ),
             ),
             const SizedBox(height: 10),
-            DropdownButtonFormField<int>(
-              initialValue: _imageQuadrant,
-              decoration: const InputDecoration(
-                labelText: 'Imagem do catálogo',
-              ),
-              items: List.generate(
-                4,
-                (index) => DropdownMenuItem(
-                  value: index,
-                  child: Text('Imagem ${index + 1}'),
+            DropdownButtonFormField<String?>(
+              key: ValueKey(_image),
+              initialValue: _image,
+              isExpanded: true,
+              decoration: const InputDecoration(labelText: 'Imagem principal'),
+              items: [
+                const DropdownMenuItem<String?>(
+                  value: null,
+                  child: Text('Sem imagem'),
                 ),
-              ),
-              onChanged: (value) => setState(() => _imageQuadrant = value ?? 0),
+                for (final path in _imageOptions(state))
+                  DropdownMenuItem<String?>(
+                    value: path,
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 36,
+                          height: 36,
+                          child: ProductImage(path: path),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            path.split('/').last,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+              onChanged: (value) => setState(() => _image = value),
             ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _uploading
+                        ? null
+                        : () => _pickImage(ImageSource.camera),
+                    icon: const Icon(Icons.photo_camera_outlined),
+                    label: const Text('Câmera'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _uploading
+                        ? null
+                        : () => _pickImage(ImageSource.gallery),
+                    icon: const Icon(Icons.photo_library_outlined),
+                    label: const Text('Galeria'),
+                  ),
+                ),
+              ],
+            ),
+            if (_uploading)
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: LinearProgressIndicator(),
+              ),
             const SizedBox(height: 10),
             TextFormField(
               controller: _specifications,
@@ -681,6 +714,65 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     );
   }
 
+  static String _normalizeId(String value) => value
+      .trim()
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+      .replaceAll(RegExp(r'^-+|-+$'), '');
+
+  bool _uploading = false;
+  final List<String> _pickedImages = [];
+
+  Future<void> _pickImage(ImageSource source) async {
+    final state = AppScope.of(context);
+    final XFile? file;
+    try {
+      file = await ImagePicker().pickImage(
+        source: source,
+        maxWidth: 1200,
+        maxHeight: 1200,
+        imageQuality: 82,
+      );
+    } catch (_) {
+      if (mounted) {
+        showAppSnackBar(context, 'Não foi possível abrir a câmera/galeria.');
+      }
+      return;
+    }
+    if (file == null || !mounted) return;
+    setState(() => _uploading = true);
+    try {
+      final stored = await state.storeProductImage(
+        await file.readAsBytes(),
+        file.name,
+      );
+      if (!mounted) return;
+      setState(() {
+        _pickedImages.insert(0, stored);
+        _image = stored;
+      });
+      showAppSnackBar(
+        context,
+        state.onlineMode
+            ? 'Foto enviada ao servidor.'
+            : 'Foto salva no aparelho (modo offline).',
+      );
+    } catch (error) {
+      if (mounted) showAppSnackBar(context, 'Falha ao salvar a foto: $error');
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
+  }
+
+  List<String> _imageOptions(AppState state) {
+    final paths = <String>{
+      ..._pickedImages,
+      ...?widget.product?.images,
+      for (final product in state.products) ...product.images,
+    };
+    return paths.toList();
+  }
+
   void _save() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final specifications = <String, String>{};
@@ -691,18 +783,45 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       final value = line.substring(separator + 1).trim();
       if (key.isNotEmpty && value.isNotEmpty) specifications[key] = value;
     }
+    final base =
+        widget.product ??
+        Product(
+          id: _normalizeId(_id.text),
+          name: '',
+          shortName: '',
+          category: _category!,
+          description: '',
+          price: 0,
+          stock: 0,
+        );
+    final images = [?_image, ...base.images.where((path) => path != _image)];
+    final promo = _promotionalPrice.text.trim().isEmpty
+        ? null
+        : _decimal(_promotionalPrice.text);
     final product = Product(
-      id: _id.text.trim().toUpperCase(),
+      id: base.id,
       name: _name.text.trim(),
       shortName: _shortName.text.trim(),
       category: _category!,
       description: _description.text.trim(),
       price: _decimal(_price.text)!,
-      rating: _decimal(_rating.text)!,
-      reviewCount: int.parse(_reviews.text),
+      promotionalPrice: promo,
+      // Pix/parcelamento vêm do site para o preço publicado; se o preço for
+      // alterado no painel, esses valores deixam de valer.
+      pixPrice: _decimal(_price.text) == base.price ? base.pixPrice : null,
+      installments: _decimal(_price.text) == base.price
+          ? base.installments
+          : null,
+      installmentValue: _decimal(_price.text) == base.price
+          ? base.installmentValue
+          : null,
       stock: int.parse(_stock.text),
-      imageQuadrant: _imageQuadrant,
+      images: _image == null ? [] : images,
       specifications: specifications,
+      measures: base.measures,
+      voltageOptions: base.voltageOptions,
+      videoUrl: base.videoUrl,
+      url: base.url,
       badge: _badge.text.trim().isEmpty ? null : _badge.text.trim(),
       active: _active,
     );
@@ -733,7 +852,7 @@ class _AdminFormHeading extends StatelessWidget {
           style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900),
         ),
         const SizedBox(height: 3),
-        Text(subtitle, style: const TextStyle(color: AppColors.muted)),
+        Text(subtitle, style: TextStyle(color: AppColors.muted)),
       ],
     );
   }
@@ -807,8 +926,8 @@ class CouponManagementScreen extends StatelessWidget {
                             children: [
                               CircleAvatar(
                                 backgroundColor: coupon.active && !expired
-                                    ? const Color(0xFFF8DFE1)
-                                    : const Color(0xFFEDEAE7),
+                                    ? AppColors.redSoft
+                                    : AppColors.neutralSoft,
                                 foregroundColor: coupon.active && !expired
                                     ? AppColors.red
                                     : AppColors.muted,
@@ -827,7 +946,7 @@ class CouponManagementScreen extends StatelessWidget {
                                     ),
                                     Text(
                                       '${coupon.discountPercent.toStringAsFixed(0)}% · mínimo ${money(coupon.minimumSubtotal)}',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         color: AppColors.muted,
                                         fontSize: 12,
                                       ),
@@ -877,7 +996,8 @@ class CouponManagementScreen extends StatelessWidget {
                                     final confirmed = await _confirmDelete(
                                       context,
                                       title: 'Excluir ${coupon.code}?',
-                                      description: 'O código deixará de ser aceito imediatamente no carrinho.',
+                                      description:
+                                          'O código deixará de ser aceito imediatamente no carrinho.',
                                     );
                                     if (confirmed && context.mounted) {
                                       final removed = state.removeCoupon(
@@ -892,12 +1012,12 @@ class CouponManagementScreen extends StatelessWidget {
                                     }
                                   }
                                 },
-                                itemBuilder: (_) => const [
-                                  PopupMenuItem(
+                                itemBuilder: (_) => [
+                                  const PopupMenuItem(
                                     value: 'edit',
                                     child: Text('Editar'),
                                   ),
-                                  PopupMenuItem(
+                                  const PopupMenuItem(
                                     value: 'delete',
                                     child: Text('Excluir'),
                                   ),
@@ -1058,7 +1178,7 @@ class _CouponFormScreenState extends State<CouponFormScreen> {
             const SizedBox(height: 10),
             Card(
               child: ListTile(
-                leading: const Icon(Icons.event_outlined, color: AppColors.red),
+                leading: Icon(Icons.event_outlined, color: AppColors.red),
                 title: Text(
                   _expiresAt == null
                       ? 'Sem data de expiração'
@@ -1218,17 +1338,19 @@ class CampaignManagementScreen extends StatelessWidget {
                                     );
                                     showAppSnackBar(
                                       context,
-                                      removed ? 'Campanha excluída.' : 'Não foi possível excluir a campanha.',
+                                      removed
+                                          ? 'Campanha excluída.'
+                                          : 'Não foi possível excluir a campanha.',
                                     );
                                   }
                                 }
                               },
-                              itemBuilder: (_) => const [
-                                PopupMenuItem(
+                              itemBuilder: (_) => [
+                                const PopupMenuItem(
                                   value: 'edit',
                                   child: Text('Editar'),
                                 ),
-                                PopupMenuItem(
+                                const PopupMenuItem(
                                   value: 'delete',
                                   child: Text('Excluir'),
                                 ),
@@ -1252,14 +1374,14 @@ class CampaignManagementScreen extends StatelessWidget {
                                   : AppColors.muted,
                               background: campaign.active
                                   ? AppColors.successSoft
-                                  : const Color(0xFFEDEAE7),
+                                  : AppColors.neutralSoft,
                             ),
                             if (campaign.startAt != null)
                               StatusPill(
                                 label:
                                     'Início ${_shortDate(campaign.startAt!)}',
-                                color: const Color(0xFF2F6495),
-                                background: const Color(0xFFE7F1FA),
+                                color: AppColors.info,
+                                background: AppColors.infoSoft,
                               ),
                             if (campaign.endAt != null)
                               StatusPill(
@@ -1331,7 +1453,8 @@ class _CampaignFormScreenState extends State<CampaignFormScreen> {
           children: [
             const _AdminFormHeading(
               title: 'Comunicação da campanha',
-              subtitle: 'A mensagem fica salva e pode ser pausada a qualquer momento.',
+              subtitle:
+                  'A mensagem fica salva e pode ser pausada a qualquer momento.',
             ),
             const SizedBox(height: 14),
             TextFormField(
@@ -1467,7 +1590,7 @@ class _DateSelector extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(12, 10, 6, 10),
           child: Row(
             children: [
-              const Icon(Icons.event_outlined, color: AppColors.red),
+              Icon(Icons.event_outlined, color: AppColors.red),
               const SizedBox(width: 8),
               Expanded(
                 child: Column(
@@ -1475,10 +1598,7 @@ class _DateSelector extends StatelessWidget {
                   children: [
                     Text(
                       label,
-                      style: const TextStyle(
-                        color: AppColors.muted,
-                        fontSize: 11,
-                      ),
+                      style: TextStyle(color: AppColors.muted, fontSize: 11),
                     ),
                     Text(
                       value == null ? 'Livre' : _shortDate(value!),
@@ -1518,13 +1638,13 @@ class _AdminSummaryBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8DFE1),
+        color: AppColors.redSoft,
         borderRadius: BorderRadius.circular(18),
       ),
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.surface,
             foregroundColor: AppColors.red,
             child: Icon(icon),
           ),
@@ -1540,7 +1660,7 @@ class _AdminSummaryBanner extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: const TextStyle(color: AppColors.muted, fontSize: 12),
+                  style: TextStyle(color: AppColors.muted, fontSize: 12),
                 ),
               ],
             ),
@@ -1598,7 +1718,7 @@ class AdminReportsScreen extends StatelessWidget {
                   _ReportMetric(
                     width: width,
                     icon: Icons.payments_outlined,
-                    value: money(state.totalRevenue),
+                    value: money(state.deliveredRevenue),
                     label: 'receita entregue',
                     color: AppColors.success,
                   ),
@@ -1607,7 +1727,7 @@ class AdminReportsScreen extends StatelessWidget {
                     icon: Icons.receipt_long_outlined,
                     value: '${state.orders.length}',
                     label: '$completedOrders concluídos',
-                    color: const Color(0xFF2F6495),
+                    color: AppColors.info,
                   ),
                   _ReportMetric(
                     width: width,
@@ -1656,10 +1776,10 @@ class AdminReportsScreen extends StatelessWidget {
             child: Column(
               children: [
                 ListTile(
-                  leading: const CircleAvatar(
+                  leading: CircleAvatar(
                     backgroundColor: AppColors.successSoft,
                     foregroundColor: AppColors.success,
-                    child: Icon(Icons.check_circle_outline),
+                    child: const Icon(Icons.check_circle_outline),
                   ),
                   title: const Text(
                     'Produtos ativos',
@@ -1675,10 +1795,10 @@ class AdminReportsScreen extends StatelessWidget {
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  leading: const CircleAvatar(
+                  leading: CircleAvatar(
                     backgroundColor: AppColors.warningSoft,
                     foregroundColor: AppColors.warning,
-                    child: Icon(Icons.warning_amber),
+                    child: const Icon(Icons.warning_amber),
                   ),
                   title: const Text(
                     'Estoque baixo',
@@ -1706,7 +1826,7 @@ class AdminReportsScreen extends StatelessWidget {
           Text(
             'Atualizado em ${_dateTime(DateTime.now())}',
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.muted, fontSize: 11),
+            style: TextStyle(color: AppColors.muted, fontSize: 11),
           ),
         ],
       ),
@@ -1755,7 +1875,7 @@ class _ReportMetric extends StatelessWidget {
               Text(
                 label,
                 maxLines: 2,
-                style: const TextStyle(color: AppColors.muted, fontSize: 12),
+                style: TextStyle(color: AppColors.muted, fontSize: 12),
               ),
             ],
           ),
@@ -1865,54 +1985,60 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                     description:
                         'Selecione outro filtro para consultar a fila.',
                   )
-                : ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
-                    itemCount: orders.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 9),
-                    itemBuilder: (context, index) {
-                      final order = orders[index];
-                      final color = _orderColor(order.status);
-                      return Card(
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          leading: CircleAvatar(
-                            backgroundColor: color.withValues(alpha: .12),
-                            foregroundColor: color,
-                            child: const Icon(Icons.receipt_long_outlined),
-                          ),
-                          title: Text(
-                            order.id,
-                            style: const TextStyle(fontWeight: FontWeight.w900),
-                          ),
-                          subtitle: Text(
-                            '${_shortDate(order.createdAt)} · ${order.items.length} itens\n${order.status.label}',
-                          ),
-                          isThreeLine: true,
-                          trailing: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                money(order.total),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w900,
-                                ),
+                : RefreshIndicator(
+                    onRefresh: AppScope.of(context).syncNow,
+                    child: ListView.separated(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
+                      itemCount: orders.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 9),
+                      itemBuilder: (context, index) {
+                        final order = orders[index];
+                        final color = _orderColor(order.status);
+                        return Card(
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            leading: CircleAvatar(
+                              backgroundColor: color.withValues(alpha: .12),
+                              foregroundColor: color,
+                              child: const Icon(Icons.receipt_long_outlined),
+                            ),
+                            title: Text(
+                              order.id,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w900,
                               ),
-                              const Icon(Icons.chevron_right),
-                            ],
-                          ),
-                          onTap: () => Navigator.of(context).push<void>(
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  AdminOrderDetailScreen(orderId: order.id),
+                            ),
+                            subtitle: Text(
+                              '${_shortDate(order.createdAt)} · ${order.items.length} itens\n${order.status.label}',
+                            ),
+                            isThreeLine: true,
+                            trailing: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  money(order.total),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                                const Icon(Icons.chevron_right),
+                              ],
+                            ),
+                            onTap: () => Navigator.of(context).push<void>(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    AdminOrderDetailScreen(orderId: order.id),
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   ),
           ),
         ],
@@ -1986,7 +2112,7 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
                   leading: SizedBox(
                     width: 52,
                     height: 52,
-                    child: ProductImage(quadrant: item.imageQuadrant),
+                    child: ProductImage(path: item.image),
                   ),
                   title: Text(
                     item.name,
@@ -2008,7 +2134,7 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(
+                  leading: Icon(
                     Icons.location_on_outlined,
                     color: AppColors.red,
                   ),
@@ -2020,10 +2146,7 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  leading: const Icon(
-                    Icons.payments_outlined,
-                    color: AppColors.red,
-                  ),
+                  leading: Icon(Icons.payments_outlined, color: AppColors.red),
                   title: const Text('Pagamento'),
                   subtitle: Text(currentOrder.paymentMethod),
                   trailing: Text(
@@ -2039,6 +2162,7 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
           const SizedBox(height: 8),
           DropdownButtonFormField<OrderStatus>(
             initialValue: _selectedStatus,
+            isExpanded: true,
             decoration: const InputDecoration(labelText: 'Novo status'),
             items: OrderStatus.values
                 .map(
@@ -2076,8 +2200,9 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
                   return ListTile(
                     leading: CircleAvatar(
                       radius: 15,
-                      backgroundColor: _orderColor(entry.status)
-                          .withValues(alpha: .12),
+                      backgroundColor: _orderColor(
+                        entry.status,
+                      ).withValues(alpha: .12),
                       foregroundColor: _orderColor(entry.status),
                       child: const Icon(Icons.check, size: 16),
                     ),
@@ -2106,7 +2231,7 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          icon: const Icon(Icons.warning_amber, color: AppColors.warning),
+          icon: Icon(Icons.warning_amber, color: AppColors.warning),
           title: const Text('Cancelar este pedido?'),
           content: const Text(
             'O cancelamento ficará registrado no histórico do pedido.',
@@ -2180,10 +2305,10 @@ class CategoryManagementScreen extends StatelessWidget {
                       horizontal: 16,
                       vertical: 6,
                     ),
-                    leading: const CircleAvatar(
-                      backgroundColor: Color(0xFFF8DFE1),
+                    leading: CircleAvatar(
+                      backgroundColor: AppColors.redSoft,
                       foregroundColor: AppColors.red,
-                      child: Icon(Icons.category_outlined),
+                      child: const Icon(Icons.category_outlined),
                     ),
                     title: Text(
                       category,
@@ -2201,9 +2326,15 @@ class CategoryManagementScreen extends StatelessWidget {
                           _delete(context, state, category, count);
                         }
                       },
-                      itemBuilder: (_) => const [
-                        PopupMenuItem(value: 'rename', child: Text('Renomear')),
-                        PopupMenuItem(value: 'delete', child: Text('Excluir')),
+                      itemBuilder: (_) => [
+                        const PopupMenuItem(
+                          value: 'rename',
+                          child: Text('Renomear'),
+                        ),
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: Text('Excluir'),
+                        ),
                       ],
                     ),
                     onTap: () => _rename(context, state, category),
@@ -2423,8 +2554,8 @@ class _UserAdminCard extends StatelessWidget {
           children: [
             CircleAvatar(
               backgroundColor: user.blocked
-                  ? const Color(0xFFEDEAE7)
-                  : const Color(0xFFF8DFE1),
+                  ? AppColors.neutralSoft
+                  : AppColors.redSoft,
               foregroundColor: user.blocked ? AppColors.muted : AppColors.red,
               child: Text(initial),
             ),
@@ -2439,10 +2570,7 @@ class _UserAdminCard extends StatelessWidget {
                   ),
                   Text(
                     user.email,
-                    style: const TextStyle(
-                      color: AppColors.muted,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: AppColors.muted, fontSize: 12),
                   ),
                   const SizedBox(height: 6),
                   Wrap(
@@ -2453,17 +2581,17 @@ class _UserAdminCard extends StatelessWidget {
                             ? 'Administrador'
                             : 'Cliente',
                         color: user.role == 'admin'
-                            ? const Color(0xFF2F6495)
+                            ? AppColors.info
                             : AppColors.success,
                         background: user.role == 'admin'
-                            ? const Color(0xFFE7F1FA)
+                            ? AppColors.infoSoft
                             : AppColors.successSoft,
                       ),
                       if (user.blocked)
-                        const StatusPill(
+                        StatusPill(
                           label: 'Bloqueado',
                           color: AppColors.red,
-                          background: Color(0xFFFFE7E8),
+                          background: AppColors.redSoft,
                         ),
                     ],
                   ),
@@ -2473,6 +2601,44 @@ class _UserAdminCard extends StatelessWidget {
             PopupMenuButton<String>(
               tooltip: 'Gerenciar usuário',
               onSelected: (value) async {
+                if (value == 'delete') {
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (dialogContext) => AlertDialog(
+                      title: Text('Excluir a conta de ${user.name}?'),
+                      content: const Text(
+                        'A conta deixa de existir e a pessoa não consegue mais '
+                        'entrar. Pedidos já feitos continuam no histórico. '
+                        'Esta ação não pode ser desfeita.',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () =>
+                              Navigator.of(dialogContext).pop(false),
+                          child: const Text('Cancelar'),
+                        ),
+                        FilledButton(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.red,
+                          ),
+                          onPressed: () =>
+                              Navigator.of(dialogContext).pop(true),
+                          child: const Text('Excluir conta'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirmed == true && context.mounted) {
+                    final removed = state.deleteUser(user.id);
+                    showAppSnackBar(
+                      context,
+                      removed
+                          ? 'Conta excluída.'
+                          : 'Não é possível excluir a própria conta.',
+                    );
+                  }
+                  return;
+                }
                 if (value == 'role') {
                   final role = user.role == 'admin' ? 'client' : 'admin';
                   final confirmed = await showDialog<bool>(
@@ -2558,6 +2724,14 @@ class _UserAdminCard extends StatelessWidget {
                   value: 'block',
                   child: Text(user.blocked ? 'Desbloquear' : 'Bloquear'),
                 ),
+                if (user.id != state.currentUser?.id)
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: Text(
+                      'Excluir conta',
+                      style: TextStyle(color: AppColors.red),
+                    ),
+                  ),
               ],
             ),
           ],
@@ -2740,19 +2914,13 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen> {
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(
-                    Icons.person_outline,
-                    color: AppColors.red,
-                  ),
+                  leading: Icon(Icons.person_outline, color: AppColors.red),
                   title: Text(currentQuote.customerName),
                   subtitle: Text(currentQuote.email),
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  leading: const Icon(
-                    Icons.phone_outlined,
-                    color: AppColors.red,
-                  ),
+                  leading: Icon(Icons.phone_outlined, color: AppColors.red),
                   title: const Text('Telefone'),
                   subtitle: Text(currentQuote.phone),
                 ),
@@ -2808,7 +2976,7 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen> {
             Text(
               'Última atualização em ${_dateTime(currentQuote.updatedAt!)}',
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.muted, fontSize: 11),
+              style: TextStyle(color: AppColors.muted, fontSize: 11),
             ),
           ],
         ],

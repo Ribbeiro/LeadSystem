@@ -2,15 +2,23 @@ import 'package:flutter/material.dart';
 
 import '../core/app_state.dart';
 import '../core/app_theme.dart';
+import '../core/external_links.dart';
 import '../models/app_models.dart';
 import '../models/product.dart';
 import '../widgets/shared.dart';
 import 'auth_admin.dart';
 
 class ProductDetailScreen extends StatefulWidget {
-  const ProductDetailScreen({super.key, required this.product});
+  const ProductDetailScreen({
+    super.key,
+    required this.product,
+    this.heroScope = 'list',
+  });
 
   final Product product;
+
+  /// Mesmo valor usado no card de origem para a animação Hero da foto.
+  final String heroScope;
 
   @override
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
@@ -18,6 +26,9 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   int quantity = 1;
+  int _imageIndex = 0;
+  bool _descriptionExpanded = false;
+  String? _voltage;
   final TextEditingController _postalCodeController = TextEditingController();
   String? _deliveryResult;
   String? _postalCodeError;
@@ -31,8 +42,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final state = AppScope.of(context);
-    final product = widget.product;
+    final product = state.findProductById(widget.product.id) ?? widget.product;
     final favorite = state.favorites.contains(product.id);
+    final voltage =
+        _voltage ??
+        state.cartOption(product.id) ??
+        (product.voltageOptions.isEmpty ? null : product.voltageOptions.first);
+    if (quantity > product.stock && product.stock > 0) {
+      quantity = product.stock;
+    }
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -45,8 +63,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             label: Text('${state.cartCount}'),
             child: IconButton(
               tooltip: 'Carrinho',
-              onPressed: () => Navigator.of(context)
-                  .push(MaterialPageRoute(builder: (_) => const CartScreen())),
+              onPressed: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const CartScreen())),
               icon: const Icon(Icons.shopping_bag_outlined),
             ),
           ),
@@ -57,12 +76,58 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
         children: [
           AspectRatio(
-            aspectRatio: 1.35,
+            aspectRatio: 1.15,
             child: Stack(
               children: [
                 Positioned.fill(
-                  child: ProductImage(quadrant: product.imageQuadrant),
+                  child: product.images.length <= 1
+                      ? Hero(
+                          tag: 'product-${product.id}-${widget.heroScope}',
+                          child: ProductImage(path: product.coverImage),
+                        )
+                      : PageView.builder(
+                          itemCount: product.images.length,
+                          onPageChanged: (index) =>
+                              setState(() => _imageIndex = index),
+                          itemBuilder: (context, index) {
+                            final image = ProductImage(
+                              path: product.images[index],
+                              fit: BoxFit.contain,
+                            );
+                            return index == 0
+                                ? Hero(
+                                    tag:
+                                        'product-${product.id}-${widget.heroScope}',
+                                    child: image,
+                                  )
+                                : image;
+                          },
+                        ),
                 ),
+                if (product.images.length > 1)
+                  Positioned(
+                    bottom: 10,
+                    left: 0,
+                    right: 0,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        for (var i = 0; i < product.images.length; i++)
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            margin: const EdgeInsets.symmetric(horizontal: 3),
+                            width: i == _imageIndex ? 18 : 7,
+                            height: 7,
+                            decoration: BoxDecoration(
+                              color: i == _imageIndex
+                                  ? AppColors.red
+                                  : AppColors.border,
+                              borderRadius: BorderRadius.circular(99),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                 if (product.badge != null)
                   Positioned(
                     left: 12,
@@ -70,7 +135,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     child: StatusPill(
                       label: product.badge!,
                       color: AppColors.red,
-                      background: const Color(0xFFFFE7E8),
+                      background: AppColors.redSoft,
                     ),
                   ),
                 Positioned(
@@ -88,7 +153,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
+          Text(
+            product.category.toUpperCase(),
+            style: TextStyle(
+              color: AppColors.red,
+              fontSize: 12,
+              letterSpacing: .8,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -96,71 +171,177 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 child: Text(
                   product.name,
                   style: const TextStyle(
-                    fontSize: 25,
-                    height: 1.1,
-                    fontWeight: FontWeight.w900,
+                    fontSize: 23,
+                    height: 1.2,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
               const SizedBox(width: 10),
-              const StatusPill(label: 'Em estoque'),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              const Icon(
-                Icons.star_rounded,
-                color: AppColors.warning,
-                size: 19,
-              ),
-              Text(
-                ' ${product.rating.toStringAsFixed(1).replaceAll('.', ',')}  ',
-              ),
-              Text(
-                '${product.reviewCount} avaliações',
-                style: const TextStyle(color: AppColors.muted),
-              ),
-              const Spacer(),
-              Text(
-                'SKU ${product.id}',
-                style: const TextStyle(color: AppColors.muted, fontSize: 12),
-              ),
+              product.inStock
+                  ? const StatusPill(label: 'Em estoque')
+                  : StatusPill(
+                      label: 'Esgotado',
+                      color: AppColors.muted,
+                      background: AppColors.neutralSoft,
+                    ),
             ],
           ),
           const SizedBox(height: 14),
-          Text(
-            money(product.price),
-            style: const TextStyle(
-              color: AppColors.darkRed,
-              fontSize: 28,
-              fontWeight: FontWeight.w900,
+          PriceTag(product: product, large: true),
+          if (product.voltageOptions.isNotEmpty) ...[
+            const SizedBox(height: 18),
+            const Text(
+              'Voltagem',
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: [
+                for (final option in product.voltageOptions)
+                  ChoiceChip(
+                    label: Text(option),
+                    selected: voltage == option,
+                    onSelected: (_) => setState(() => _voltage = option),
+                  ),
+              ],
+            ),
+          ],
+          const SizedBox(height: 18),
+          const SectionHeading(title: 'Descrição'),
+          const SizedBox(height: 6),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOut,
+            alignment: Alignment.topCenter,
+            child: Text(
+              product.description,
+              maxLines: _descriptionExpanded ? null : 5,
+              overflow: _descriptionExpanded
+                  ? TextOverflow.visible
+                  : TextOverflow.fade,
+              style: const TextStyle(height: 1.5),
             ),
           ),
-          const SizedBox(height: 8),
-          Text(product.description, style: const TextStyle(height: 1.5)),
-          const SizedBox(height: 22),
+          if (product.description.length > 280)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: () => setState(
+                  () => _descriptionExpanded = !_descriptionExpanded,
+                ),
+                child: Text(_descriptionExpanded ? 'Ver menos' : 'Ver mais'),
+              ),
+            ),
+          const SizedBox(height: 16),
           const SectionHeading(title: 'Especificações'),
           const SizedBox(height: 8),
+          // Causa do crash: ListTile com `trailing` de texto longo ocupava toda a
+          // largura do tile e o Flutter abortava o layout da lista inteira.
           Card(
-            child: Column(
-              children: product.specifications.entries
-                  .map(
-                    (entry) => ListTile(
-                      dense: true,
-                      title: Text(
-                        entry.key,
-                        style: const TextStyle(color: AppColors.muted),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              child: Column(
+                children: product.specifications.entries
+                    .map(
+                      (entry) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 7),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: Text(
+                                entry.key,
+                                style: TextStyle(color: AppColors.muted),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              flex: 3,
+                              child: Text(
+                                entry.value,
+                                textAlign: TextAlign.end,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      trailing: Text(
-                        entry.value,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                  )
-                  .toList(),
+                    )
+                    .toList(),
+              ),
             ),
           ),
+          if (product.measures.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            const SectionHeading(title: 'Medidas e detalhes'),
+            const SizedBox(height: 8),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (final line in product.measures)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 3),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(top: 7, right: 8),
+                              child: Icon(
+                                Icons.circle,
+                                size: 5,
+                                color: AppColors.red,
+                              ),
+                            ),
+                            Expanded(child: Text(line)),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+          if (product.videoUrl != null || product.url != null) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (product.videoUrl != null)
+                  ActionChip(
+                    avatar: const Icon(Icons.play_circle_outline, size: 18),
+                    label: const Text('Ver vídeo'),
+                    onPressed: () =>
+                        ExternalLinks.url(context, product.videoUrl!),
+                  ),
+                if (product.url != null)
+                  ActionChip(
+                    avatar: const Icon(Icons.open_in_new, size: 18),
+                    label: const Text('Ver no site'),
+                    onPressed: () => ExternalLinks.url(context, product.url!),
+                  ),
+                ActionChip(
+                  avatar: const Icon(Icons.chat_outlined, size: 18),
+                  label: const Text('Dúvidas no WhatsApp'),
+                  onPressed: () => ExternalLinks.whatsapp(
+                    context,
+                    state.company,
+                    message:
+                        'Olá! Tenho interesse no produto ${product.name}'
+                        '${voltage == null ? '' : ' ($voltage)'}.',
+                  ),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: 20),
           const Text(
             'Calcule o frete',
@@ -176,7 +357,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   maxLength: 9,
                   decoration: InputDecoration(
                     hintText: 'CEP',
-                    prefixIcon: Icon(Icons.location_on_outlined),
+                    prefixIcon: const Icon(Icons.location_on_outlined),
                     errorText: _postalCodeError,
                     counterText: '',
                   ),
@@ -203,15 +384,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(
-                    Icons.local_shipping_outlined,
-                    color: AppColors.success,
-                  ),
+                  Icon(Icons.local_shipping_outlined, color: AppColors.success),
                   const SizedBox(width: 9),
                   Expanded(
                     child: Text(
                       _deliveryResult!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.success,
                         fontWeight: FontWeight.w700,
                       ),
@@ -253,16 +431,26 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
           const SizedBox(height: 16),
           FilledButton.icon(
-            onPressed: () {
-              state.addToCart(product, quantity: quantity);
-              showAppSnackBar(
-                context,
-                '$quantity item(ns) adicionado(s) ao carrinho.',
-              );
-            },
+            onPressed: product.stock <= 0
+                ? null
+                : () {
+                    state.addToCart(
+                      product,
+                      quantity: quantity,
+                      option: voltage,
+                    );
+                    showAppSnackBar(
+                      context,
+                      '$quantity item(ns) adicionado(s) ao carrinho.',
+                    );
+                  },
             icon: const Icon(Icons.shopping_bag_outlined),
             label: Text(
-              'Adicionar ao carrinho · ${money(product.price * quantity)}',
+              product.stock <= 0
+                  ? 'Produto esgotado'
+                  : 'Adicionar · ${money(product.salePrice * quantity)}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           const SizedBox(height: 10),
@@ -290,8 +478,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   void _calculateDelivery() {
-    final estimate = AppScope.of(context)
-        .calculateShipping(_postalCodeController.text);
+    final estimate = AppScope.of(
+      context,
+    ).calculateShipping(_postalCodeController.text);
     if (estimate == null) {
       setState(() {
         _postalCodeError = 'Digite os 8 números do CEP.';
@@ -340,7 +529,8 @@ class _CartScreenState extends State<CartScreen> {
           ? EmptyState(
               icon: Icons.shopping_bag_outlined,
               title: 'Seu carrinho está vazio',
-              description: 'Adicione produtos para revisar quantidades, usar cupom e concluir a compra.',
+              description:
+                  'Adicione produtos para revisar quantidades, usar cupom e concluir a compra.',
               actionLabel: 'Continuar comprando',
               onAction: () => Navigator.of(context).pop(),
             )
@@ -353,7 +543,7 @@ class _CartScreenState extends State<CartScreen> {
                     label:
                         '${state.cartCount} ${state.cartCount == 1 ? 'item' : 'itens'}',
                     color: AppColors.red,
-                    background: const Color(0xFFFFE7E8),
+                    background: AppColors.redSoft,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -364,6 +554,7 @@ class _CartScreenState extends State<CartScreen> {
                     child: _CartItem(
                       product: product,
                       quantity: entry.value,
+                      option: state.cartOption(product.id),
                       onDecrease: () =>
                           state.setQuantity(product.id, entry.value - 1),
                       onIncrease: () {
@@ -403,10 +594,12 @@ class _CartScreenState extends State<CartScreen> {
                           final valid = state.applyCoupon(
                             _couponController.text,
                           );
+                          final coupon = state.appliedCoupon;
                           showAppSnackBar(
                             context,
-                            valid
-                                ? 'Cupom aplicado: 10% de desconto.'
+                            valid && coupon != null
+                                ? 'Cupom ${coupon.code} aplicado: '
+                                      '${_percent(coupon.discountPercent)} de desconto.'
                                 : 'Cupom inválido ou expirado.',
                           );
                         },
@@ -417,19 +610,22 @@ class _CartScreenState extends State<CartScreen> {
                 ),
                 if (state.couponApplied) ...[
                   const SizedBox(height: 10),
-                  const Row(
+                  Row(
                     children: [
                       Icon(
                         Icons.check_circle,
                         color: AppColors.success,
                         size: 18,
                       ),
-                      SizedBox(width: 6),
-                      Text(
-                        'PRIMEIRACOMPRA aplicado',
-                        style: TextStyle(
-                          color: AppColors.success,
-                          fontWeight: FontWeight.w700,
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          '${state.appliedCoupon!.code} aplicado · '
+                          '${_percent(state.appliedCoupon!.discountPercent)} de desconto',
+                          style: TextStyle(
+                            color: AppColors.success,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     ],
@@ -488,10 +684,12 @@ class _CartItem extends StatelessWidget {
     required this.onDecrease,
     required this.onIncrease,
     required this.onRemove,
+    this.option,
   });
 
   final Product product;
   final int quantity;
+  final String? option;
   final VoidCallback onDecrease;
   final VoidCallback onIncrease;
   final VoidCallback onRemove;
@@ -506,7 +704,7 @@ class _CartItem extends StatelessWidget {
             SizedBox(
               width: 86,
               height: 86,
-              child: ProductImage(quadrant: product.imageQuadrant),
+              child: ProductImage(path: product.coverImage),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -520,9 +718,14 @@ class _CartItem extends StatelessWidget {
                     style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 5),
+                  if (option != null)
+                    Text(
+                      'Voltagem: $option',
+                      style: TextStyle(color: AppColors.muted, fontSize: 12),
+                    ),
                   Text(
-                    money(product.price),
-                    style: const TextStyle(
+                    money(product.salePrice),
+                    style: TextStyle(
                       color: AppColors.darkRed,
                       fontWeight: FontWeight.w900,
                     ),
@@ -546,7 +749,7 @@ class _CartItem extends StatelessWidget {
               child: Row(
                 children: [
                   IconButton(
-                    visualDensity: VisualDensity.compact,
+                    tooltip: 'Diminuir quantidade',
                     onPressed: onDecrease,
                     icon: const Icon(Icons.remove, size: 17),
                   ),
@@ -555,7 +758,7 @@ class _CartItem extends StatelessWidget {
                     style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                   IconButton(
-                    visualDensity: VisualDensity.compact,
+                    tooltip: 'Aumentar quantidade',
                     onPressed: quantity < product.stock ? onIncrease : null,
                     icon: const Icon(Icons.add, size: 17),
                   ),
@@ -570,9 +773,12 @@ class _CartItem extends StatelessWidget {
 }
 
 class _OrderSummary extends StatelessWidget {
-  const _OrderSummary({required this.state});
+  const _OrderSummary({required this.state, this.paymentMethod});
 
   final AppState state;
+
+  /// Quando informado (checkout), aplica o desconto do Pix no total.
+  final String? paymentMethod;
 
   @override
   Widget build(BuildContext context) {
@@ -590,14 +796,42 @@ class _OrderSummary extends StatelessWidget {
                   : 'R\$ 0,00',
               success: state.discount > 0,
             ),
+            if (paymentMethod == 'Pix' && state.pixDiscount > 0) ...[
+              const SizedBox(height: 8),
+              _SummaryRow(
+                label: 'Desconto Pix',
+                value: '- ${money(state.pixDiscount)}',
+                success: true,
+              ),
+            ],
             const SizedBox(height: 8),
-            _SummaryRow(label: 'Frete', value: money(state.shipping)),
+            _SummaryRow(
+              label: 'Frete (estimado)',
+              value: money(state.shipping),
+            ),
             const Divider(height: 24),
             _SummaryRow(
               label: 'Total',
-              value: money(state.total),
+              value: money(
+                paymentMethod == null
+                    ? state.total
+                    : state.totalFor(paymentMethod!),
+              ),
               emphasis: true,
             ),
+            if (paymentMethod == null && state.pixDiscount > 0) ...[
+              const SizedBox(height: 6),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  'ou ${money(state.totalFor('Pix'))} no Pix',
+                  style: TextStyle(
+                    color: AppColors.success,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -621,6 +855,7 @@ class _SummaryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
@@ -629,15 +864,18 @@ class _SummaryRow extends StatelessWidget {
             fontSize: emphasis ? 17 : 14,
           ),
         ),
-        const Spacer(),
-        Text(
-          value,
-          style: TextStyle(
-            color: success
-                ? AppColors.success
-                : (emphasis ? AppColors.darkRed : AppColors.ink),
-            fontWeight: emphasis ? FontWeight.w900 : FontWeight.w600,
-            fontSize: emphasis ? 18 : 14,
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: TextStyle(
+              color: success
+                  ? AppColors.success
+                  : (emphasis ? AppColors.darkRed : AppColors.ink),
+              fontWeight: emphasis ? FontWeight.w900 : FontWeight.w600,
+              fontSize: emphasis ? 18 : 14,
+            ),
           ),
         ),
       ],
@@ -664,6 +902,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final TextEditingController _cardHolderController = TextEditingController();
   final TextEditingController _cardCvvController = TextEditingController();
   String payment = 'Pix';
+  bool _lookingUp = false;
   bool accepted = true;
   bool processing = false;
   bool _initialized = false;
@@ -681,6 +920,40 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     _postalCodeController.text = address?.postalCode ?? '';
     _cardHolderController.text = AppScope.of(context).userName;
     _initialized = true;
+    if (_postalCodeController.text.isNotEmpty) {
+      // Depois do primeiro quadro: a cotação notifica o estado.
+      final state = AppScope.of(context);
+      final postalCode = _postalCodeController.text;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) state.quoteShipping(postalCode);
+      });
+    }
+  }
+
+  String? _lastLookup;
+
+  Future<void> _onPostalCodeChanged(String value) async {
+    final digits = value.replaceAll(RegExp(r'\D'), '');
+    if (digits.length != 8 || digits == _lastLookup) return;
+    _lastLookup = digits;
+    final state = AppScope.of(context);
+    setState(() => _lookingUp = true);
+    final results = await Future.wait([
+      state.lookupPostalCode(digits),
+      state.quoteShipping(digits),
+    ]);
+    if (!mounted) return;
+    setState(() => _lookingUp = false);
+    final address = results[0] as Map<String, String>?;
+    if (address == null) return;
+    void fill(TextEditingController controller, String? text) {
+      if (text != null && text.isNotEmpty) controller.text = text;
+    }
+
+    fill(_streetController, address['street']);
+    fill(_neighborhoodController, address['neighborhood']);
+    fill(_cityController, address['city']);
+    fill(_stateController, address['state']);
   }
 
   @override
@@ -764,7 +1037,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   child: TextFormField(
                     controller: _postalCodeController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'CEP'),
+                    decoration: InputDecoration(
+                      labelText: 'CEP',
+                      suffixIcon: _lookingUp
+                          ? const Padding(
+                              padding: EdgeInsets.all(14),
+                              child: SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            )
+                          : null,
+                    ),
+                    onChanged: _onPostalCodeChanged,
                     validator: (value) =>
                         (value ?? '').replaceAll(RegExp(r'\D'), '').length == 8
                         ? null
@@ -809,7 +1097,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             const SizedBox(height: 12),
             Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.location_on_outlined,
                   color: AppColors.success,
                   size: 18,
@@ -820,14 +1108,54 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     state.defaultAddress == null
                         ? 'O endereço será salvo para as próximas compras.'
                         : 'Você pode alterar os dados para este pedido.',
-                    style: const TextStyle(
-                      color: AppColors.success,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: AppColors.success, fontSize: 12),
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: 24),
+            const Text(
+              'Entrega',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 8),
+            if (state.shippingOptions.isEmpty)
+              Text(
+                'Informe o CEP para calcular o frete.',
+                style: TextStyle(color: AppColors.muted),
+              )
+            else
+              RadioGroup<String>(
+                groupValue: state.shippingService,
+                onChanged: (value) {
+                  if (value != null) state.selectShipping(value);
+                },
+                child: Column(
+                  children: [
+                    for (final option in state.shippingOptions)
+                      Card(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        child: RadioListTile<String>(
+                          value: option.service,
+                          title: Text(
+                            '${option.service} · ${money(option.price)}',
+                            style: const TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                          subtitle: Text(
+                            'Até ${option.days} dias úteis após a postagem'
+                            '${option.estimated ? ' (estimativa)' : ''}',
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            if (state.shippingOptions.any((option) => option.estimated))
+              Text(
+                'Valor estimado por região. O frete final é confirmado pelos '
+                'Correios no envio.',
+                style: TextStyle(color: AppColors.muted, fontSize: 12),
+              ),
             const SizedBox(height: 24),
             const Text(
               'Forma de pagamento',
@@ -843,17 +1171,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 children: [
                   _PaymentTile(
                     value: 'Pix',
-                    subtitle: 'Aprovação imediata',
+                    subtitle: 'À vista, com desconto',
                     selected: payment == 'Pix',
                   ),
                   _PaymentTile(
                     value: 'Cartão',
-                    subtitle: 'Até 6x sem juros',
+                    subtitle: 'Em até 12x (juros de 1,99% a.m.)',
                     selected: payment == 'Cartão',
                   ),
                   _PaymentTile(
                     value: 'Boleto',
-                    subtitle: 'Vencimento em 2 dias',
+                    subtitle: 'Boleto bancário',
                     selected: payment == 'Boleto',
                   ),
                 ],
@@ -917,7 +1245,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF0ECE7),
+                  color: AppColors.neutralSoft,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -941,7 +1269,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
             ],
             const SizedBox(height: 18),
-            _OrderSummary(state: state),
+            _OrderSummary(state: state, paymentMethod: payment),
             const SizedBox(height: 10),
             CheckboxListTile(
               value: accepted,
@@ -967,7 +1295,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         color: Colors.white,
                       ),
                     )
-                  : Text('Finalizar pedido · ${money(state.total)}'),
+                  : Text(
+                      'Finalizar pedido · ${money(state.totalFor(payment))}',
+                    ),
             ),
           ],
         ),
@@ -1024,12 +1354,12 @@ class _CheckoutSteps extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      children: const [
-        _StepBadge(number: '1', label: 'Entrega', done: true),
+      children: [
+        const _StepBadge(number: '1', label: 'Entrega', done: true),
         Expanded(child: Divider(color: AppColors.red)),
-        _StepBadge(number: '2', label: 'Pagamento', active: true),
-        Expanded(child: Divider()),
-        _StepBadge(number: '3', label: 'Revisão'),
+        const _StepBadge(number: '2', label: 'Pagamento', active: true),
+        const Expanded(child: Divider()),
+        const _StepBadge(number: '3', label: 'Revisão'),
       ],
     );
   }
@@ -1055,7 +1385,7 @@ class _StepBadge extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 15,
-          backgroundColor: highlighted ? AppColors.red : Colors.white,
+          backgroundColor: highlighted ? AppColors.red : AppColors.surface,
           foregroundColor: highlighted ? Colors.white : AppColors.muted,
           child: done ? const Icon(Icons.check, size: 17) : Text(number),
         ),
@@ -1113,73 +1443,82 @@ class OrderSuccessScreen extends StatelessWidget {
     final state = AppScope.of(context);
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const CircleAvatar(
-                radius: 46,
-                backgroundColor: AppColors.successSoft,
-                foregroundColor: AppColors.success,
-                child: Icon(Icons.check_rounded, size: 52),
-              ),
-              const SizedBox(height: 22),
-              const Text(
-                'Pedido realizado!',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Recebemos seu pedido e enviaremos atualizações a cada mudança de status.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.muted, height: 1.5),
-              ),
-              const SizedBox(height: 24),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(18),
-                  child: Column(
-                    children: [
-                      _SummaryRow(label: 'Pedido', value: order.id),
-                      const SizedBox(height: 10),
-                      _SummaryRow(
-                        label: 'Pagamento',
-                        value: order.paymentMethod,
-                      ),
-                      const SizedBox(height: 10),
-                      _SummaryRow(
-                        label: 'Total',
-                        value: money(order.total),
-                        emphasis: true,
-                      ),
-                      const SizedBox(height: 10),
-                      const _SummaryRow(
-                        label: 'Previsão',
-                        value: '12 a 14 de setembro',
-                      ),
-                    ],
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                CircleAvatar(
+                  radius: 46,
+                  backgroundColor: AppColors.successSoft,
+                  foregroundColor: AppColors.success,
+                  child: const Icon(Icons.check_rounded, size: 52),
+                ),
+                const SizedBox(height: 22),
+                const Text(
+                  'Pedido realizado!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Recebemos seu pedido e enviaremos atualizações a cada mudança de status.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: AppColors.muted, height: 1.5),
+                ),
+                const SizedBox(height: 24),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: Column(
+                      children: [
+                        _SummaryRow(label: 'Pedido', value: order.id),
+                        const SizedBox(height: 10),
+                        _SummaryRow(
+                          label: 'Pagamento',
+                          value: order.paymentMethod,
+                        ),
+                        const SizedBox(height: 10),
+                        _SummaryRow(
+                          label: 'Total',
+                          value: money(order.total),
+                          emphasis: true,
+                        ),
+                        const SizedBox(height: 10),
+                        _SummaryRow(
+                          label: 'Previsão',
+                          value: deliveryWindow(order.createdAt),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed: () {
-                  state.setNavigationIndex(2);
-                  Navigator.of(context).popUntil((route) => route.isFirst);
-                },
-                child: const Text('Acompanhar pedido'),
-              ),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () {
-                  state.setNavigationIndex(0);
-                  Navigator.of(context).popUntil((route) => route.isFirst);
-                },
-                child: const Text('Voltar ao início'),
-              ),
-            ],
+                const SizedBox(height: 24),
+                FilledButton(
+                  onPressed: () {
+                    state.setNavigationIndex(2);
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  },
+                  child: const Text('Acompanhar pedido'),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () =>
+                      ExternalLinks.sendOrder(context, state.company, order),
+                  icon: const Icon(Icons.chat_outlined),
+                  label: const Text('Enviar pedido pelo WhatsApp'),
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () {
+                    state.setNavigationIndex(0);
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  },
+                  child: const Text('Voltar ao início'),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1214,10 +1553,10 @@ class TrackingScreen extends StatelessWidget {
               padding: const EdgeInsets.all(18),
               child: Row(
                 children: [
-                  const CircleAvatar(
+                  CircleAvatar(
                     backgroundColor: AppColors.successSoft,
                     foregroundColor: AppColors.success,
-                    child: Icon(Icons.local_shipping_outlined),
+                    child: const Icon(Icons.local_shipping_outlined),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -1231,11 +1570,11 @@ class TrackingScreen extends StatelessWidget {
                         const SizedBox(height: 3),
                         Text(
                           order.status.label,
-                          style: const TextStyle(color: AppColors.success),
+                          style: TextStyle(color: AppColors.success),
                         ),
                         Text(
                           'Atualizado em ${_dateTime(updatedAt)}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.muted,
                             fontSize: 12,
                           ),
@@ -1251,7 +1590,7 @@ class TrackingScreen extends StatelessWidget {
                         ? AppColors.red
                         : AppColors.success,
                     background: order.status == OrderStatus.cancelled
-                        ? const Color(0xFFFFE7E8)
+                        ? AppColors.redSoft
                         : AppColors.successSoft,
                   ),
                 ],
@@ -1272,7 +1611,7 @@ class TrackingScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Entrega estimada',
                     style: TextStyle(color: AppColors.muted),
                   ),
@@ -1286,7 +1625,7 @@ class TrackingScreen extends StatelessWidget {
                   ),
                   Text(
                     order.deliveryAddress.formatted,
-                    style: const TextStyle(color: AppColors.muted),
+                    style: TextStyle(color: AppColors.muted),
                   ),
                 ],
               ),
@@ -1388,7 +1727,7 @@ class _TimelineItem extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 12,
-                  backgroundColor: done ? AppColors.red : Colors.white,
+                  backgroundColor: done ? AppColors.red : AppColors.surface,
                   foregroundColor: done ? Colors.white : AppColors.muted,
                   child: done
                       ? const Icon(Icons.check, size: 15)
@@ -1414,10 +1753,7 @@ class _TimelineItem extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     subtitle,
-                    style: const TextStyle(
-                      color: AppColors.muted,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: AppColors.muted, fontSize: 12),
                   ),
                 ],
               ),
@@ -1489,9 +1825,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
                     SizedBox(
                       width: 78,
                       height: 78,
-                      child: ProductImage(
-                        quadrant: widget.product.imageQuadrant,
-                      ),
+                      child: ProductImage(path: widget.product.coverImage),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -1504,8 +1838,8 @@ class _QuoteScreenState extends State<QuoteScreen> {
                           ),
                           const SizedBox(height: 5),
                           Text(
-                            money(widget.product.price),
-                            style: const TextStyle(
+                            money(widget.product.salePrice),
+                            style: TextStyle(
                               color: AppColors.darkRed,
                               fontWeight: FontWeight.w800,
                             ),
@@ -1556,15 +1890,17 @@ class _QuoteScreenState extends State<QuoteScreen> {
                   : null,
             ),
             const SizedBox(height: 12),
-            const Row(
+            Row(
               children: [
                 Icon(Icons.schedule, color: AppColors.success, size: 18),
-                SizedBox(width: 7),
-                Text(
-                  'Resposta em até 1 dia útil',
-                  style: TextStyle(
-                    color: AppColors.success,
-                    fontWeight: FontWeight.w700,
+                const SizedBox(width: 7),
+                Expanded(
+                  child: Text(
+                    'Resposta em até 1 dia útil',
+                    style: TextStyle(
+                      color: AppColors.success,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],
@@ -1606,16 +1942,18 @@ class _QuoteScreenState extends State<QuoteScreen> {
     final openOrders = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        icon: const Icon(
-          Icons.check_circle,
-          color: AppColors.success,
-          size: 42,
-        ),
+        icon: Icon(Icons.check_circle, color: AppColors.success, size: 42),
         title: const Text('Orçamento enviado'),
         content: Text(
           'Protocolo ${quote.id}. A solicitação já está salva e aparecerá na área de pedidos.',
         ),
         actions: [
+          TextButton.icon(
+            onPressed: () =>
+                ExternalLinks.sendQuote(context, state.company, quote),
+            icon: const Icon(Icons.chat_outlined),
+            label: const Text('Enviar no WhatsApp'),
+          ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
             child: const Text('Continuar no produto'),
@@ -1636,3 +1974,33 @@ class _QuoteScreenState extends State<QuoteScreen> {
     }
   }
 }
+
+const _monthNames = [
+  'janeiro',
+  'fevereiro',
+  'março',
+  'abril',
+  'maio',
+  'junho',
+  'julho',
+  'agosto',
+  'setembro',
+  'outubro',
+  'novembro',
+  'dezembro',
+];
+
+/// Janela de entrega estimada (2 a 4 dias após o pedido), mesma regra do
+/// cálculo de frete em [AppState.calculateShipping].
+String deliveryWindow(DateTime createdAt) {
+  final start = createdAt.add(const Duration(days: 2));
+  final end = createdAt.add(const Duration(days: 4));
+  if (start.month == end.month) {
+    return '${start.day} a ${end.day} de ${_monthNames[end.month - 1]}';
+  }
+  return '${start.day} de ${_monthNames[start.month - 1]} a '
+      '${end.day} de ${_monthNames[end.month - 1]}';
+}
+
+String _percent(double value) =>
+    '${value == value.roundToDouble() ? value.toInt() : value.toString().replaceAll('.', ',')}%';
