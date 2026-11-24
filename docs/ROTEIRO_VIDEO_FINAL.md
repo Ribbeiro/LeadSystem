@@ -3,7 +3,7 @@
 ## LeadSystem — SantiGrill
 
 - **Duração planejada:** cerca de 11 minutos (limite de 15)
-- **Onde gravar:** emulador Android **Pixel 7** no PC, gravado com **Win + Alt + R**, já com o microfone
+- **Onde gravar:** no **celular**, com o gravador de tela do Android (com áudio do microfone); ou no emulador **Pixel 7** do PC, com **Win + Alt + R**
 - **Apresentador:** Leandro
 - **Objetivo:** mostrar o aplicativo funcionando com o servidor e **comparar com a demonstração de 18/10/2026**
 
@@ -11,7 +11,17 @@ Durante o roteiro, os quadros **Novidade desde outubro** marcam os pontos que a 
 
 ---
 
-## Preparação (antes de apertar o gravar)
+## Preparação no celular (Android, mesma rede Wi-Fi do computador)
+
+1. Instale o APK `SantiGrill_LeadSystem.apk` (pasta `Documentacao_Final`).
+2. No computador, deixe o servidor rodando (`cd server && npm run demo`). Ele mostra a linha **Celular (Wi-Fi): http://…:3000**.
+3. No app: **Perfil > Servidor e sincronização**, digite esse endereço (por exemplo `http://172.22.108.123:3000`) e toque em **Testar e conectar**. Precisa aparecer **Conectado**.
+   - Se não conectar: confira se o celular está no mesmo Wi-Fi e se o Windows não bloqueou o Node.js no firewall (na primeira vez, ele pergunta; marque **Permitir**).
+4. Ative o **Não perturbe** no celular e feche notificações pessoais.
+5. Para gravar: abra o painel rápido do Android, toque em **Gravar tela** e escolha **com áudio do microfone**. Fale perto do celular.
+6. Siga a partir do item 7 da preparação abaixo (contas e dados para o vídeo). No bloco 8.1 (sem internet), o servidor é parado no computador do mesmo jeito.
+
+## Preparação no emulador (alternativa)
 
 1. **Ligar o emulador** (terminal 1):
 

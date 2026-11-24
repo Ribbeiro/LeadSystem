@@ -113,7 +113,9 @@ function loadCatalog() {
  * Nunca sobrescreve dados existentes.
  */
 async function seed() {
-  if ((await Product.estimatedDocumentCount()) === 0) {
+  // countDocuments conta de verdade: estimatedDocumentCount pode voltar 0 depois
+  // de o MongoDB ser encerrado sem aviso, e a carga duplicaria os produtos.
+  if ((await Product.countDocuments()) === 0) {
     await Product.insertMany(loadCatalog());
   }
   if (!(await Coupon.exists({ _id: 'PRIMEIRACOMPRA' }))) {
