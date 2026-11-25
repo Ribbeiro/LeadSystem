@@ -3,10 +3,13 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <!-- Avisos de mudança de status do pedido (Android 13+ pede permissão). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- usesCleartextTraffic: o modo de demonstração usa http:// na rede local
+         (npm run demo). Em produção, a API fica atrás de HTTPS. -->
     <application
         android:label="SantiGrill"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true">
         <activity
             android:name=".MainActivity"
             android:exported="true"
